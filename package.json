@@ -1,0 +1,28 @@
+{
+  "name": "qualityops",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"api,web\" -c \"blue,green\" \"npm run dev -w @qualityops/api\" \"npm run dev -w @qualityops/web\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "npm run typecheck -w @qualityops/contracts && npm run typecheck -w @qualityops/api && npm run typecheck -w @qualityops/web",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build -w @qualityops/contracts && npm run build -w @qualityops/api && npm run build -w @qualityops/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.21.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.26.0"
+  }
+}
