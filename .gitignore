@@ -1,0 +1,37 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Node
+node_modules/
+dist/
+build/
+coverage/
+.npm/
+
+# Python (future analytics service)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Logs / local data
+*.log
+logs/
+*.dump
+*.sql.gz
+local-data/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test / generated artifacts
+playwright-report/
+test-results/
+*.tsbuildinfo
