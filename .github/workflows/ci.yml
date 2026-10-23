@@ -43,6 +43,9 @@ jobs:
       - name: Install dependencies (clean from lockfile)
         run: npm ci
 
+      - name: Build shared contracts
+        run: npm run build:contracts
+
       - name: Prettier format check
         run: npm run format:check
 

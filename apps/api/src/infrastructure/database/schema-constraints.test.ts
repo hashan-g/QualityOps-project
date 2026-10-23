@@ -124,28 +124,160 @@ describe('Database Schema & Migration Constraints', () => {
     });
   });
 
-  describe('Live Database Constraints (when PostgreSQL is accessible)', () => {
-    it('executes live constraint checks if DATABASE_URL is accessible', async () => {
+  describe('Live Database Constraints (PostgreSQL Integration)', () => {
+    it('executes live schema and constraint checks against PostgreSQL', async () => {
+      const isCI = process.env.CI === 'true';
       const pool = new pg.Pool({
         connectionString: config.DATABASE_URL,
-        connectionTimeoutMillis: 1000,
+        connectionTimeoutMillis: 3000,
       });
 
       let client: pg.PoolClient | null = null;
       try {
         client = await pool.connect();
-        const res = await client.query('SELECT 1 AS live;');
-        expect(res.rows[0]?.live).toBe(1);
-      } catch {
-        // When local PostgreSQL requires specific external credentials or Docker is in setup,
-        // live integration tests are skipped with diagnostic reporting as designed.
-        console.log(
-          '[Live Database Test] Live DB not currently accessible with default dev credentials; skipping live query assertions.',
-        );
-      } finally {
-        if (client) {
-          client.release();
+      } catch (err) {
+        if (isCI) {
+          // In CI environment, PostgreSQL service container MUST be accessible. Never silently skip.
+          throw new Error(
+            `Database connection failed in CI environment (${config.DATABASE_URL}): ${
+              err instanceof Error ? err.message : String(err)
+            }`,
+          );
         }
+
+        // When running locally without local Docker/DB, log diagnostic notice
+        console.log(
+          '[Live Database Test] Local DB not currently accessible with default dev credentials; skipping live query assertions.',
+        );
+        await pool.end();
+        return;
+      }
+
+      try {
+        // 1. Verify connection
+        const ping = await client.query('SELECT 1 AS live;');
+        expect(ping.rows[0]?.live).toBe(1);
+
+        // 2. Verify all migrated tables exist in information_schema
+        const tablesResult = await client.query<{ table_name: string }>(
+          "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';",
+        );
+        const existingTables = new Set(tablesResult.rows.map((r) => r.table_name));
+
+        const requiredTables = [
+          'users',
+          'roles',
+          'user_roles',
+          'products',
+          'production_lines',
+          'machines',
+          'shifts',
+          'defect_types',
+          'production_batches',
+          'quality_inspections',
+          'defect_records',
+          'downtime_records',
+          'capa_cases',
+          'capa_actions',
+          'audit_logs',
+        ];
+
+        for (const table of requiredTables) {
+          expect(existingTables.has(table)).toBe(true);
+        }
+
+        // 3. Test check constraints inside an isolated rolled-back transaction
+        await client.query('BEGIN;');
+
+        // Seed minimal references for constraint tests
+        const userRes = await client.query<{ id: string }>(
+          "INSERT INTO users (username, email, password_hash, full_name) VALUES ('test_user', 'test@test.local', 'hash', 'Test User') RETURNING id;",
+        );
+        const userId = userRes.rows[0]?.id;
+
+        const prodRes = await client.query<{ id: string }>(
+          "INSERT INTO products (code, name) VALUES ('PRD-TEST-001', 'Test Product') RETURNING id;",
+        );
+        const prodId = prodRes.rows[0]?.id;
+
+        const lineRes = await client.query<{ id: string }>(
+          "INSERT INTO production_lines (code, name) VALUES ('LINE-TEST-001', 'Test Line') RETURNING id;",
+        );
+        const lineId = lineRes.rows[0]?.id;
+
+        const shiftRes = await client.query<{ id: string }>(
+          "INSERT INTO shifts (code, name, start_time, end_time) VALUES ('SHF-TEST-001', 'Test Shift', '08:00', '16:00') RETURNING id;",
+        );
+        const shiftId = shiftRes.rows[0]?.id;
+
+        // Test A: Production batch disposition sum constraint
+        // accepted(80) + scrap(30) = 110 > produced(100) -> MUST FAIL (code 23514)
+        await expect(
+          client.query(
+            `INSERT INTO production_batches (
+              batch_number, product_id, production_line_id, shift_id, planned_quantity, produced_quantity, accepted_quantity, scrap_quantity
+            ) VALUES ('BATCH-TEST-FAIL-01', $1, $2, $3, 100, 100, 80, 30);`,
+            [prodId, lineId, shiftId],
+          ),
+        ).rejects.toThrow(/chk_batch_disposition_sum|23514/);
+
+        // Test B: Completed batch reconciliation constraint
+        // status = 'COMPLETED', but accepted(50) != produced(100) -> MUST FAIL (code 23514)
+        await expect(
+          client.query(
+            `INSERT INTO production_batches (
+              batch_number, product_id, production_line_id, shift_id, status, planned_quantity, produced_quantity, accepted_quantity
+            ) VALUES ('BATCH-TEST-FAIL-02', $1, $2, $3, 'COMPLETED', 100, 100, 50);`,
+            [prodId, lineId, shiftId],
+          ),
+        ).rejects.toThrow(/chk_batch_completed_reconciled|23514/);
+
+        // Insert valid batch for inspection tests
+        const batchRes = await client.query<{ id: string }>(
+          `INSERT INTO production_batches (
+            batch_number, product_id, production_line_id, shift_id, planned_quantity, produced_quantity, accepted_quantity
+          ) VALUES ('BATCH-TEST-OK-01', $1, $2, $3, 100, 100, 100) RETURNING id;`,
+          [prodId, lineId, shiftId],
+        );
+        const batchId = batchRes.rows[0]?.id;
+
+        // Test C: Quality inspection units sum constraint
+        // sample_size = 10, passed(8) + failed(4) = 12 > 10 -> MUST FAIL (code 23514)
+        await expect(
+          client.query(
+            `INSERT INTO quality_inspections (
+              inspection_number, batch_id, inspector_id, stage, sample_size, passed_units, failed_units
+            ) VALUES ('INS-TEST-FAIL-01', $1, $2, 'FINAL', 10, 8, 4);`,
+            [batchId, userId],
+          ),
+        ).rejects.toThrow(/chk_inspection_units_sum|23514/);
+
+        // Test D: CAPA closed verification constraint
+        // status = 'CLOSED' without verified_by / verified_at -> MUST FAIL (code 23514)
+        await expect(
+          client.query(
+            `INSERT INTO capa_cases (
+              case_number, title, description, source, status, created_by
+            ) VALUES ('CAPA-TEST-FAIL-01', 'Test Title', 'Test Desc', 'PROCESS_DEVIATION', 'CLOSED', $1);`,
+            [userId],
+          ),
+        ).rejects.toThrow(/chk_capa_closed_verified|23514/);
+
+        // Test E: Downtime end after start constraint
+        // ended_at <= started_at -> MUST FAIL (code 23514)
+        await expect(
+          client.query(
+            `INSERT INTO downtime_records (
+              production_line_id, reason, started_at, ended_at
+            ) VALUES ($1, 'Test Breakdown', '2026-10-23 10:00:00+00', '2026-10-23 09:00:00+00');`,
+            [lineId],
+          ),
+        ).rejects.toThrow(/chk_downtime_ended_after_started|23514/);
+
+        // Clean up transaction
+        await client.query('ROLLBACK;');
+      } finally {
+        client.release();
         await pool.end();
       }
     });
