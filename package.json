@@ -15,7 +15,12 @@
     "format": "prettier --write .",
     "typecheck": "npm run typecheck -w @qualityops/contracts && npm run typecheck -w @qualityops/api && npm run typecheck -w @qualityops/web",
     "test": "npm run test --workspaces --if-present",
-    "build": "npm run build -w @qualityops/contracts && npm run build -w @qualityops/api && npm run build -w @qualityops/web"
+    "build": "npm run build -w @qualityops/contracts && npm run build -w @qualityops/api && npm run build -w @qualityops/web",
+    "db:migrate": "node-pg-migrate --migrations-dir database/migrations up",
+    "db:migrate:down": "node-pg-migrate --migrations-dir database/migrations down 1",
+    "db:migrate:status": "node-pg-migrate --migrations-dir database/migrations up --dry-run",
+    "db:migrate:create": "node-pg-migrate --migrations-dir database/migrations --migration-file-language sql create",
+    "db:migrate:redo": "node-pg-migrate --migrations-dir database/migrations redo"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
@@ -24,5 +29,10 @@
     "prettier": "^3.5.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.26.0"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "node-pg-migrate": "^9.0.0",
+    "pg": "^8.23.1"
   }
 }

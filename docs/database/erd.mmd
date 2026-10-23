@@ -1,0 +1,221 @@
+erDiagram
+    users ||--o{ user_roles : has
+    roles ||--o{ user_roles : assigned_to
+
+    users ||--o{ production_batches : creates
+    users ||--o{ quality_inspections : inspects
+    users ||--o{ capa_cases : creates
+    users ||--o{ capa_cases : assigned_to
+    users ||--o{ capa_cases : verifies
+    users ||--o{ capa_actions : assigned_to
+    users ||--o{ downtime_records : records
+    users ||--o{ audit_logs : performs
+
+    production_lines ||--o{ machines : contains
+    production_lines ||--o{ production_batches : executes
+    production_lines ||--o{ downtime_records : affects
+
+    products ||--o{ production_batches : produces
+    shifts ||--o{ production_batches : operates_during
+    machines ||--o{ production_batches : utilized_in
+    machines ||--o{ downtime_records : halts
+
+    production_batches ||--o{ quality_inspections : inspected_by
+    production_batches ||--o{ downtime_records : interrupts
+    production_batches ||--o{ capa_cases : triggers
+
+    quality_inspections ||--o{ defect_records : identifies
+    defect_types ||--o{ defect_records : categorizes
+
+    defect_records ||--o{ capa_cases : investigates
+
+    capa_cases ||--o{ capa_actions : contains
+
+    users {
+        uuid id PK
+        varchar username UK
+        varchar email UK
+        varchar password_hash
+        varchar full_name
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    roles {
+        uuid id PK
+        varchar name UK
+        text description
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    user_roles {
+        uuid user_id PK, FK
+        uuid role_id PK, FK
+        timestamptz assigned_at
+    }
+
+    products {
+        uuid id PK
+        varchar code UK
+        varchar name
+        text description
+        numeric target_cycle_time_seconds
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    production_lines {
+        uuid id PK
+        varchar code UK
+        varchar name
+        varchar location
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    machines {
+        uuid id PK
+        varchar code UK
+        varchar name
+        uuid production_line_id FK
+        varchar status
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    shifts {
+        uuid id PK
+        varchar code UK
+        varchar name
+        time start_time
+        time end_time
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    defect_types {
+        uuid id PK
+        varchar code UK
+        varchar name
+        varchar category
+        varchar severity
+        boolean is_active
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    production_batches {
+        uuid id PK
+        varchar batch_number UK
+        uuid product_id FK
+        uuid production_line_id FK
+        uuid shift_id FK
+        uuid machine_id FK
+        uuid created_by FK
+        varchar status
+        int planned_quantity
+        int produced_quantity
+        int accepted_quantity
+        int scrap_quantity
+        int rework_pending_quantity
+        timestamptz started_at
+        timestamptz completed_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    quality_inspections {
+        uuid id PK
+        varchar inspection_number UK
+        uuid batch_id FK
+        uuid inspector_id FK
+        varchar stage
+        int attempt_number
+        varchar status
+        varchar result
+        int sample_size
+        int passed_units
+        int failed_units
+        timestamptz inspected_at
+        text notes
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    defect_records {
+        uuid id PK
+        uuid inspection_id FK
+        uuid defect_type_id FK
+        int occurrence_count
+        int affected_unit_count
+        text notes
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    downtime_records {
+        uuid id PK
+        uuid production_line_id FK
+        uuid machine_id FK
+        uuid batch_id FK
+        varchar reason
+        varchar category
+        timestamptz started_at
+        timestamptz ended_at
+        int duration_seconds
+        uuid recorded_by FK
+        text notes
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    capa_cases {
+        uuid id PK
+        varchar case_number UK
+        varchar title
+        text description
+        varchar source
+        uuid batch_id FK
+        uuid defect_record_id FK
+        varchar status
+        uuid assigned_to FK
+        uuid created_by FK
+        date due_date
+        text root_cause
+        uuid verified_by FK
+        timestamptz verified_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    capa_actions {
+        uuid id PK
+        uuid capa_case_id FK
+        varchar action_type
+        text description
+        uuid assigned_to FK
+        varchar status
+        date due_date
+        timestamptz completed_at
+        text completion_notes
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    audit_logs {
+        uuid id PK
+        uuid actor_id FK
+        varchar action
+        varchar entity_type
+        uuid entity_id
+        varchar request_id
+        jsonb before_state
+        jsonb after_state
+        varchar ip_address
+        timestamptz created_at
+    }

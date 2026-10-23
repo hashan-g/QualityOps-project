@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 1: Architecture & Repository Foundation**  
+**Phase 2: Database Design & Implementation**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -11,8 +11,8 @@
 
 QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, and process analytics.
 
-> **Phase 1 Scope Guard Notice:**  
-> This phase establishes only the clean, reproducible repository foundation, workspace configurations, shared contracts, technical smoke tests, and Dockerized database infrastructure. **Manufacturing business features (products, production batches, inspections, defect records, CAPA, KPI analytics dashboards, and authentication) are deliberately deferred to subsequent phases.**
+> **Phase 2 Scope Guard Notice:**  
+> This phase establishes the versioned PostgreSQL data foundation, schema constraints, migration management, and database readiness diagnostic probe. **Business endpoints, authentication flows, master-data CRUD, and dashboards are deliberately deferred to future phases.**
 
 ---
 
@@ -21,10 +21,10 @@ QualityOps is an engineering platform designed for manufacturing quality trackin
 The repository is structured as an npm workspace monorepo:
 
 - **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6
-- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript (modular monolith)
+- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool
 - **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas
-- **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); migrations will live under `database/migrations`
-- **Quality Gates:** Strict TypeScript, Prettier, ESLint flat config, Vitest, and GitHub Actions CI
+- **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); versioned SQL migrations under `database/migrations` via `node-pg-migrate`
+- **Quality Gates:** Strict TypeScript, Prettier, ESLint flat config, Vitest, Supertest, and GitHub Actions CI
 
 ---
 
@@ -47,7 +47,7 @@ cp .env.example .env
 ```
 
 _(On Windows PowerShell: `Copy-Item .env.example .env`)_  
-Set a local development password for `POSTGRES_PASSWORD` in `.env`. **Never commit `.env` files.**
+Set local development passwords in `.env`. **Never commit `.env` files.**
 
 ### Step 2: Start PostgreSQL Database
 
@@ -57,12 +57,18 @@ docker compose up -d postgres
 
 This spins up PostgreSQL 18 with a persistent volume (`qualityops_postgres_data`), bound to `127.0.0.1:5432`, with an automated health check (`pg_isready`).
 
-### Step 3: Install Dependencies
+### Step 3: Run Database Migrations
 
-Install dependencies from the committed lockfile:
+Apply versioned schema migrations:
 
 ```bash
-npm ci
+npm run db:migrate
+```
+
+To check migration status:
+
+```bash
+npm run db:migrate:status
 ```
 
 ### Step 4: Run Development Services
@@ -75,7 +81,8 @@ npm run dev
 
 - **Web App:** Available at [http://localhost:5173](http://localhost:5173)
 - **API Server:** Available at [http://localhost:4000](http://localhost:4000)
-- **API Health Check:** `GET http://localhost:4000/api/v1/health`
+- **API Liveness Probe:** `GET http://localhost:4000/api/v1/health` (independent of database)
+- **API Readiness Probe:** `GET http://localhost:4000/api/v1/health/ready` (actively verifies database connectivity)
 
 ---
 
@@ -83,23 +90,29 @@ npm run dev
 
 All quality commands can be executed from the root workspace:
 
-| Command                | Purpose                                                                  |
-| ---------------------- | ------------------------------------------------------------------------ |
-| `npm run dev`          | Starts API (`apps/api`) and Web (`apps/web`) concurrently                |
-| `npm run lint`         | Runs ESLint check across all packages and workspaces                     |
-| `npm run format:check` | Checks code formatting with Prettier                                     |
-| `npm run format`       | Formats all files with Prettier                                          |
-| `npm run typecheck`    | Runs strict TypeScript compiler check (`tsc --noEmit`) across workspaces |
-| `npm test`             | Executes unit and smoke tests with Vitest across all workspaces          |
-| `npm run build`        | Builds production artifacts for contracts, API, and web                  |
+| Command                     | Purpose                                                                  |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `npm run dev`               | Starts API (`apps/api`) and Web (`apps/web`) concurrently                |
+| `npm run lint`              | Runs ESLint check across all packages and workspaces                     |
+| `npm run format:check`      | Checks code formatting with Prettier                                     |
+| `npm run format`            | Formats all files with Prettier                                          |
+| `npm run typecheck`         | Runs strict TypeScript compiler check (`tsc --noEmit`) across workspaces |
+| `npm test`                  | Executes unit and smoke tests with Vitest across all workspaces          |
+| `npm run build`             | Builds production artifacts for contracts, API, and web                  |
+| `npm run db:migrate`        | Applies pending database migrations (`node-pg-migrate up`)               |
+| `npm run db:migrate:status` | Inspects pending migrations (`node-pg-migrate up --dry-run`)             |
+| `npm run db:migrate:down`   | Rolls back the most recent migration (`node-pg-migrate down 1`)          |
+| `npm run db:migrate:create` | Creates a new SQL migration file                                         |
 
 ---
 
-## 6. Architecture & Engineering Documentation
+## 6. Architecture & Database Documentation
 
 - [System Architecture](file:///docs/architecture/system-architecture.md)
 - [Architecture Decision Records (ADRs)](file:///docs/architecture/architecture-decision-records.md)
-- [Repository Structure & Ownership](file:///docs/architecture/repository-structure.md)
-- [Development Workflow & Definition of Done](file:///docs/engineering/development-workflow.md)
-- [Environment & Secrets Policy](file:///docs/engineering/environment-and-secrets.md)
+- [Database Schema Design & KPI Definitions](file:///docs/database/schema-design.md)
+- [Entity Relationship Diagram (ERD)](file:///docs/database/erd.mmd)
+- [Data Dictionary](file:///docs/database/data-dictionary.md)
+- [Database Migrations Guide](file:///docs/database/migrations.md)
 - [Phase 1 Acceptance Checklist](file:///docs/phase-1/acceptance-checklist.md)
+- [Phase 2 Acceptance Checklist](file:///docs/phase-2/acceptance-checklist.md)

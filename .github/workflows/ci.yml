@@ -11,6 +11,25 @@ jobs:
     name: Lint, Typecheck, Test & Build
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: qualityops_test
+          POSTGRES_USER: qualityops_dev
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      DATABASE_URL: postgresql://qualityops_dev:test_password@localhost:5432/qualityops_test
+      NODE_ENV: test
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,6 +51,12 @@ jobs:
 
       - name: TypeScript type-check
         run: npm run typecheck
+
+      - name: Run database migrations
+        run: npm run db:migrate
+
+      - name: Check migration status
+        run: npm run db:migrate:status
 
       - name: Automated tests
         run: npm test
