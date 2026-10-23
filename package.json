@@ -21,7 +21,8 @@
     "db:migrate:down": "node-pg-migrate --migrations-dir database/migrations down 1",
     "db:migrate:status": "node-pg-migrate --migrations-dir database/migrations up --dry-run",
     "db:migrate:create": "node-pg-migrate --migrations-dir database/migrations --migration-file-language sql create",
-    "db:migrate:redo": "node-pg-migrate --migrations-dir database/migrations redo"
+    "db:migrate:redo": "node-pg-migrate --migrations-dir database/migrations redo",
+    "db:bootstrap-admin": "tsx apps/api/src/scripts/bootstrap-admin.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

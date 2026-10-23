@@ -71,11 +71,17 @@ async function assertConstraintViolation(
 }
 
 describe('Database Schema & Migration Constraints', () => {
-  const migrationPath = path.resolve(
+  const migration001Path = path.resolve(
     process.cwd(),
     '../../database/migrations/001_initial_schema.sql',
   );
-  const migrationSql = fs.readFileSync(migrationPath, 'utf-8');
+  const migration001Sql = fs.readFileSync(migration001Path, 'utf-8');
+
+  const migration002Path = path.resolve(
+    process.cwd(),
+    '../../database/migrations/002_auth_sessions.sql',
+  );
+  const migration002Sql = fs.readFileSync(migration002Path, 'utf-8');
 
   describe('assertConstraintViolation Helper Integrity', () => {
     it('rolls back to savepoint and validates error code and constraint on violation', async () => {
@@ -145,13 +151,18 @@ describe('Database Schema & Migration Constraints', () => {
     });
   });
 
-  describe('Static Schema & Constraint Definitions', () => {
-    it('migration file exists and contains Up and Down sections', () => {
-      expect(migrationSql).toContain('-- Up Migration');
-      expect(migrationSql).toContain('-- Down Migration');
+  describe('Static Schema & Constraint Definitions (Phase 2 & 3)', () => {
+    it('migration 001 exists and contains Up and Down sections', () => {
+      expect(migration001Sql).toContain('-- Up Migration');
+      expect(migration001Sql).toContain('-- Down Migration');
     });
 
-    it('defines all 14 canonical database tables', () => {
+    it('migration 002 exists and contains Up and Down sections', () => {
+      expect(migration002Sql).toContain('-- Up Migration');
+      expect(migration002Sql).toContain('-- Down Migration');
+    });
+
+    it('defines all canonical database tables across migrations', () => {
       const requiredTables = [
         'users',
         'roles',
@@ -171,82 +182,106 @@ describe('Database Schema & Migration Constraints', () => {
       ];
 
       for (const table of requiredTables) {
-        expect(migrationSql).toMatch(new RegExp(`CREATE TABLE (IF NOT EXISTS )?${table}\\b`, 'i'));
+        expect(migration001Sql).toMatch(
+          new RegExp(`CREATE TABLE (IF NOT EXISTS )?${table}\\b`, 'i'),
+        );
       }
+
+      expect(migration002Sql).toMatch(/CREATE TABLE (IF NOT EXISTS )?refresh_sessions\b/i);
+    });
+
+    it('seeds the 6 canonical roles idempotently in migration 002', () => {
+      expect(migration002Sql).toContain('ADMIN');
+      expect(migration002Sql).toContain('QUALITY_MANAGER');
+      expect(migration002Sql).toContain('SUPERVISOR');
+      expect(migration002Sql).toContain('INSPECTOR');
+      expect(migration002Sql).toContain('OPERATOR');
+      expect(migration002Sql).toContain('VIEWER');
+      expect(migration002Sql).toContain('ON CONFLICT (name) DO UPDATE');
+    });
+
+    it('enforces session timestamps and constraints in refresh_sessions', () => {
+      expect(migration002Sql).toContain('token_hash VARCHAR(64) NOT NULL UNIQUE');
+      expect(migration002Sql).toContain(
+        'user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE',
+      );
+      expect(migration002Sql).toContain('expires_at TIMESTAMPTZ NOT NULL');
+      expect(migration002Sql).toContain('idx_refresh_sessions_user_id');
+      expect(migration002Sql).toContain('idx_refresh_sessions_token_hash');
+      expect(migration002Sql).toContain(
+        'CONSTRAINT chk_refresh_sessions_revoked_after_created CHECK (revoked_at IS NULL OR revoked_at >= created_at)',
+      );
     });
 
     it('enforces production quantity invariants in production_batches', () => {
-      // Non-negative counts
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'produced_quantity INT NOT NULL DEFAULT 0 CHECK (produced_quantity >= 0)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'accepted_quantity INT NOT NULL DEFAULT 0 CHECK (accepted_quantity >= 0)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'scrap_quantity INT NOT NULL DEFAULT 0 CHECK (scrap_quantity >= 0)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'rework_pending_quantity INT NOT NULL DEFAULT 0 CHECK (rework_pending_quantity >= 0)',
       );
-
-      // Disposition sum must not exceed produced quantity
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'CONSTRAINT chk_batch_disposition_sum CHECK (accepted_quantity + scrap_quantity + rework_pending_quantity <= produced_quantity)',
       );
-
-      // Completed batch must reconcile
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         "CONSTRAINT chk_batch_completed_reconciled CHECK (status <> 'COMPLETED' OR (accepted_quantity + scrap_quantity + rework_pending_quantity = produced_quantity))",
       );
     });
 
     it('enforces inspection sample invariants in quality_inspections', () => {
-      expect(migrationSql).toContain('sample_size INT NOT NULL CHECK (sample_size > 0)');
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain('sample_size INT NOT NULL CHECK (sample_size > 0)');
+      expect(migration001Sql).toContain(
         'passed_units INT NOT NULL DEFAULT 0 CHECK (passed_units >= 0)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'failed_units INT NOT NULL DEFAULT 0 CHECK (failed_units >= 0)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'CONSTRAINT chk_inspection_units_sum CHECK (passed_units + failed_units <= sample_size)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         "CONSTRAINT chk_inspection_completed_reconciled CHECK (status <> 'COMPLETED' OR (passed_units + failed_units = sample_size))",
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'CONSTRAINT uq_inspection_batch_stage_attempt UNIQUE (batch_id, stage, attempt_number)',
       );
     });
 
     it('enforces defect occurrence and affected-unit distinction in defect_records', () => {
-      expect(migrationSql).toContain('occurrence_count INT NOT NULL CHECK (occurrence_count >= 1)');
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
+        'occurrence_count INT NOT NULL CHECK (occurrence_count >= 1)',
+      );
+      expect(migration001Sql).toContain(
         'affected_unit_count INT NOT NULL CHECK (affected_unit_count >= 1)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'CONSTRAINT chk_defect_affected_le_occurrence CHECK (affected_unit_count <= occurrence_count)',
       );
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'CONSTRAINT uq_defect_record_inspection_type UNIQUE (inspection_id, defect_type_id)',
       );
     });
 
     it('enforces CAPA closure verification in capa_cases', () => {
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         "CONSTRAINT chk_capa_closed_verified CHECK (status <> 'CLOSED' OR (verified_by IS NOT NULL AND verified_at IS NOT NULL))",
       );
     });
 
     it('enforces downtime duration integrity in downtime_records', () => {
-      expect(migrationSql).toContain(
+      expect(migration001Sql).toContain(
         'CONSTRAINT chk_downtime_ended_after_started CHECK (ended_at IS NULL OR ended_at > started_at)',
       );
     });
 
-    it('down migration cleanly drops all tables in reverse order', () => {
-      const downSection = migrationSql.split('-- Down Migration')[1] ?? '';
+    it('down migration 001 cleanly drops tables in reverse order', () => {
+      const downSection = migration001Sql.split('-- Down Migration')[1] ?? '';
       expect(downSection).toContain('DROP TABLE IF EXISTS audit_logs');
       expect(downSection).toContain('DROP TABLE IF EXISTS capa_actions');
       expect(downSection).toContain('DROP TABLE IF EXISTS capa_cases');
@@ -255,6 +290,11 @@ describe('Database Schema & Migration Constraints', () => {
       expect(downSection).toContain('DROP TABLE IF EXISTS quality_inspections');
       expect(downSection).toContain('DROP TABLE IF EXISTS production_batches');
       expect(downSection).toContain('DROP TABLE IF EXISTS users');
+    });
+
+    it('down migration 002 cleanly drops refresh_sessions', () => {
+      const downSection = migration002Sql.split('-- Down Migration')[1] ?? '';
+      expect(downSection).toContain('DROP TABLE IF EXISTS refresh_sessions');
     });
   });
 
@@ -314,6 +354,7 @@ describe('Database Schema & Migration Constraints', () => {
           'capa_cases',
           'capa_actions',
           'audit_logs',
+          'refresh_sessions',
         ];
 
         for (const table of requiredTables) {
@@ -422,6 +463,19 @@ describe('Database Schema & Migration Constraints', () => {
               [lineId],
             ),
           'chk_downtime_ended_after_started',
+        );
+
+        // Test F: Refresh session revoked_at must not be before created_at
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO refresh_sessions (
+                user_id, token_hash, expires_at, created_at, revoked_at
+              ) VALUES ($1, 'dummy_token_hash_value_for_constraint_check', '2026-10-31 00:00:00+00', '2026-10-24 10:00:00+00', '2026-10-24 09:00:00+00');`,
+              [userId],
+            ),
+          'chk_refresh_sessions_revoked_after_created',
         );
 
         // Clean up transaction

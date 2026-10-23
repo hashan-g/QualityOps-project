@@ -4,6 +4,10 @@ import {
   HealthResponseSchema,
   HealthStatusSchema,
   DatabaseStatusSchema,
+  CanonicalRoleSchema,
+  LoginRequestSchema,
+  CreateUserRequestSchema,
+  UserResponseSchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -100,5 +104,71 @@ describe('Contracts — Foundation Schemas', () => {
     expect(DatabaseStatusSchema.safeParse('down').success).toBe(true);
     expect(DatabaseStatusSchema.safeParse('degraded').success).toBe(true);
     expect(DatabaseStatusSchema.safeParse('offline').success).toBe(false);
+  });
+});
+
+describe('Contracts — Phase 3 Identity & RBAC Schemas', () => {
+  it('validates canonical roles', () => {
+    const validRoles = [
+      'ADMIN',
+      'QUALITY_MANAGER',
+      'SUPERVISOR',
+      'INSPECTOR',
+      'OPERATOR',
+      'VIEWER',
+    ];
+    for (const role of validRoles) {
+      expect(CanonicalRoleSchema.safeParse(role).success).toBe(true);
+    }
+    expect(CanonicalRoleSchema.safeParse('SUPERUSER').success).toBe(false);
+    expect(CanonicalRoleSchema.safeParse('ROOT').success).toBe(false);
+  });
+
+  it('validates LoginRequestSchema requirements', () => {
+    expect(
+      LoginRequestSchema.safeParse({ username: 'user1', password: 'password123' }).success,
+    ).toBe(true);
+    expect(LoginRequestSchema.safeParse({ username: '', password: 'password123' }).success).toBe(
+      false,
+    );
+    expect(LoginRequestSchema.safeParse({ username: 'user1', password: '' }).success).toBe(false);
+  });
+
+  it('validates CreateUserRequestSchema constraints', () => {
+    const valid = {
+      username: 'inspector_bob',
+      email: 'bob@qualityops.local',
+      password: 'StrongPassword123!',
+      fullName: 'Bob Inspector',
+      roles: ['INSPECTOR'],
+    };
+    expect(CreateUserRequestSchema.safeParse(valid).success).toBe(true);
+
+    // Too short password
+    expect(CreateUserRequestSchema.safeParse({ ...valid, password: 'short' }).success).toBe(false);
+
+    // Invalid email
+    expect(CreateUserRequestSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(
+      false,
+    );
+
+    // Invalid username characters
+    expect(
+      CreateUserRequestSchema.safeParse({ ...valid, username: 'invalid name with spaces' }).success,
+    ).toBe(false);
+  });
+
+  it('validates UserResponseSchema structure', () => {
+    const userPayload = {
+      id: '11111111-1111-1111-1111-111111111111',
+      username: 'admin',
+      email: 'admin@qualityops.local',
+      fullName: 'System Administrator',
+      isActive: true,
+      roles: ['ADMIN'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    expect(UserResponseSchema.safeParse(userPayload).success).toBe(true);
   });
 });
