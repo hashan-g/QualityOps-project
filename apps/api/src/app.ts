@@ -19,9 +19,15 @@ export function createApp(): Express {
   app.use(express.json());
   app.use(requestIdMiddleware);
 
-  // Health endpoint
+  // Health and readiness endpoints
   app.use('/api/v1/health', healthRouter);
   app.use('/health', healthRouter);
+
+  // Convenience aliases for container orchestrators
+  app.get('/ready', (req, res, next) => {
+    req.url = '/ready';
+    healthRouter(req, res, next);
+  });
 
   // Fallback 404 and Error handling
   app.use(notFoundHandler);
