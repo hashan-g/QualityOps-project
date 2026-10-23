@@ -25,6 +25,41 @@ export class AppError extends Error {
   }
 }
 
+export class UnauthorizedError extends AppError {
+  constructor(message = 'Authentication required', details?: unknown) {
+    super(message, 401, 'UNAUTHORIZED', details);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+export class ForbiddenError extends AppError {
+  constructor(message = 'Insufficient permissions', details?: unknown) {
+    super(message, 403, 'FORBIDDEN', details);
+    this.name = 'ForbiddenError';
+  }
+}
+
+export class BadRequestError extends AppError {
+  constructor(message = 'Invalid request', details?: unknown) {
+    super(message, 400, 'BAD_REQUEST', details);
+    this.name = 'BadRequestError';
+  }
+}
+
+export class NotFoundError extends AppError {
+  constructor(message = 'Resource not found', details?: unknown) {
+    super(message, 404, 'NOT_FOUND', details);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class ConflictError extends AppError {
+  constructor(message = 'Resource conflict', details?: unknown) {
+    super(message, 409, 'CONFLICT', details);
+    this.name = 'ConflictError';
+  }
+}
+
 export function notFoundHandler(req: Request, res: Response): void {
   const response: ApiErrorResponse = {
     error: {

@@ -42,6 +42,12 @@ export async function query<R extends QueryResultRow = QueryResultRow>(
   return pool.query<R>(text, params);
 }
 
+export const pool = {
+  query,
+  connect: () => getPool().connect(),
+  end: () => getPool().end(),
+};
+
 export interface DatabaseReadinessResult {
   ok: boolean;
   latencyMs?: number;

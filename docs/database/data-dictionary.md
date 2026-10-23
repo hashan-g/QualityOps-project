@@ -38,6 +38,20 @@
 | `role_id`     | UUID        | No       | None                | PRIMARY KEY, FK `roles(id)` ON DELETE CASCADE | Associated role.               |
 | `assigned_at` | TIMESTAMPTZ | No       | `CURRENT_TIMESTAMP` | None                                          | Role assignment instant (UTC). |
 
+### 1.4 `refresh_sessions` (Phase 3 Baseline)
+
+| Column Name    | Data Type   | Nullable | Default             | Constraints / Allowed Values              | Description                                                |
+| -------------- | ----------- | -------- | ------------------- | ----------------------------------------- | ---------------------------------------------------------- |
+| `id`           | UUID        | No       | `gen_random_uuid()` | PRIMARY KEY                               | Unique session identifier.                                 |
+| `user_id`      | UUID        | No       | None                | FK `users(id)` ON DELETE CASCADE          | Associated user account.                                   |
+| `token_hash`   | VARCHAR(64) | No       | None                | UNIQUE                                    | SHA-256 hash of rotating refresh token (raw token not DB). |
+| `expires_at`   | TIMESTAMPTZ | No       | None                | Index                                     | Absolute expiration timestamp of refresh session.          |
+| `revoked_at`   | TIMESTAMPTZ | Yes      | None                | Index, `CHECK (revoked_at >= created_at)` | Instant when session was explicitly revoked or rotated.    |
+| `created_at`   | TIMESTAMPTZ | No       | `CURRENT_TIMESTAMP` | None                                      | Record creation instant (UTC).                             |
+| `last_used_at` | TIMESTAMPTZ | Yes      | None                | None                                      | Timestamp of last token rotation / session use.            |
+| `user_agent`   | TEXT        | Yes      | None                | None                                      | User-Agent header string for device auditability.          |
+| `ip_address`   | VARCHAR(45) | Yes      | None                | None                                      | Client IP address (IPv4/IPv6) at session creation.         |
+
 ---
 
 ## 2. Master Data
