@@ -83,6 +83,12 @@ describe('Database Schema & Migration Constraints', () => {
   );
   const migration002Sql = fs.readFileSync(migration002Path, 'utf-8');
 
+  const migration003Path = path.resolve(
+    process.cwd(),
+    '../../database/migrations/003_shifts_is_active.sql',
+  );
+  const migration003Sql = fs.readFileSync(migration003Path, 'utf-8');
+
   describe('assertConstraintViolation Helper Integrity', () => {
     it('rolls back to savepoint and validates error code and constraint on violation', async () => {
       const executedQueries: string[] = [];
@@ -160,6 +166,20 @@ describe('Database Schema & Migration Constraints', () => {
     it('migration 002 exists and contains Up and Down sections', () => {
       expect(migration002Sql).toContain('-- Up Migration');
       expect(migration002Sql).toContain('-- Down Migration');
+    });
+
+    it('migration 003 exists and contains Up and Down sections', () => {
+      expect(migration003Sql).toContain('-- Up Migration');
+      expect(migration003Sql).toContain('-- Down Migration');
+    });
+
+    it('migration 003 adds is_active to shifts table with index', () => {
+      expect(migration003Sql).toContain(
+        'ALTER TABLE shifts ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true',
+      );
+      expect(migration003Sql).toContain(
+        'CREATE INDEX IF NOT EXISTS idx_shifts_is_active ON shifts(is_active)',
+      );
     });
 
     it('defines all canonical database tables across migrations', () => {
@@ -296,6 +316,12 @@ describe('Database Schema & Migration Constraints', () => {
       const downSection = migration002Sql.split('-- Down Migration')[1] ?? '';
       expect(downSection).toContain('DROP TABLE IF EXISTS refresh_sessions');
     });
+
+    it('down migration 003 cleanly drops shifts is_active column and index', () => {
+      const downSection = migration003Sql.split('-- Down Migration')[1] ?? '';
+      expect(downSection).toContain('DROP INDEX IF EXISTS idx_shifts_is_active');
+      expect(downSection).toContain('ALTER TABLE shifts DROP COLUMN IF EXISTS is_active');
+    });
   });
 
   describe('Live Database Constraints (PostgreSQL Integration)', () => {
@@ -360,6 +386,12 @@ describe('Database Schema & Migration Constraints', () => {
         for (const table of requiredTables) {
           expect(existingTables.has(table)).toBe(true);
         }
+
+        // Verify shifts.is_active column added in migration 003
+        const shiftColRes = await client.query<{ column_name: string }>(
+          "SELECT column_name FROM information_schema.columns WHERE table_name = 'shifts' AND column_name = 'is_active';",
+        );
+        expect(shiftColRes.rows.length).toBe(1);
 
         // 3. Test check constraints inside an isolated rolled-back transaction
         await client.query('BEGIN;');
