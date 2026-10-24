@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 4: Master Data Management**  
+**Phase 5: Production Management**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -11,8 +11,8 @@
 
 QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, and process analytics.
 
-> **Phase 4 Scope Guard Notice:**  
-> This phase establishes authenticated CRUD workflows for core master-data entities (Products, Production Lines, Machines, Shifts, and Defect Types) with server-side RBAC and immutable audit logging. **Production batches, quality inspection records, defect occurrence entries, CAPA remediation workflows, and analytics engines remain out-of-scope until subsequent phases.**
+> **Phase 5 Scope Guard Notice:**  
+> This phase establishes production batch tracking, lifecycle state transitions, quantity reconciliation, and downtime stoppage event logging with server-side RBAC and immutable audit logging. **Sample-based quality inspections, defect records, CAPA remediation workflows, and analytics engines remain out-of-scope until subsequent phases.**
 
 ---
 
@@ -20,9 +20,9 @@ QualityOps is an engineering platform designed for manufacturing quality trackin
 
 The repository is structured as an npm workspace monorepo:
 
-- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, master-data management shell with search, pagination, confirmation modals, and role-aware action guards)
-- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Master Data modules & Audit Logging service
-- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for all master-data entities, query parameters, mutations, and API responses
+- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
+- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Production Management & Downtime modules & Audit Logging service
+- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for all production batches, downtime records, query parameters, mutations, and API responses
 - **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); versioned SQL migrations under `database/migrations` via `node-pg-migrate`
 - **Quality Gates:** Strict TypeScript (`exactOptionalPropertyTypes`), Prettier, ESLint flat config, Vitest, Supertest, and GitHub Actions CI
 
@@ -59,7 +59,7 @@ This spins up PostgreSQL 18 with a persistent volume (`qualityops_postgres_data`
 
 ### Step 3: Run Database Migrations
 
-Apply versioned schema migrations (creates core tables, `refresh_sessions`, `shifts.is_active`, and seeds the 6 canonical roles):
+Apply versioned schema migrations:
 
 ```bash
 npm run db:migrate
@@ -116,6 +116,13 @@ npm run dev
   - `/api/v1/master-data/machines` (CRUD, status, & line-association for machines)
   - `/api/v1/master-data/shifts` (CRUD & 24h clock for operating shifts)
   - `/api/v1/master-data/defect-types` (CRUD, category, & severity classifications)
+- **Production Management Endpoints (Write: ADMIN, SUPERVISOR, OPERATOR; Elevated transitions: ADMIN, SUPERVISOR; Read: All Roles):**
+  - `/api/v1/production/batches` (List, filter, create, update quantities, lifecycle transitions)
+  - `/api/v1/production/batches/:id` (Batch detail view)
+  - `/api/v1/production/batches/:id/status` (Dedicated lifecycle status transitions)
+  - `/api/v1/production/downtime` (List, filter, and record equipment/line downtime events)
+  - `/api/v1/production/downtime/:id` (Downtime detail view)
+  - `/api/v1/production/downtime/:id/close` (Close event and compute duration)
 
 ---
 
@@ -146,6 +153,7 @@ All quality commands can be executed from the root workspace:
 - [Architecture Decision Records (ADRs)](file:///docs/architecture/architecture-decision-records.md)
 - [Authentication & Authorization Specification](file:///docs/security/authentication-and-authorization.md)
 - [Master Data API Specification](file:///docs/api/master-data.md)
+- [Production Management API Specification](file:///docs/api/production-management.md)
 - [Database Schema Design & KPI Definitions](file:///docs/database/schema-design.md)
 - [Entity Relationship Diagram (ERD)](file:///docs/database/erd.mmd)
 - [Data Dictionary](file:///docs/database/data-dictionary.md)
@@ -154,3 +162,4 @@ All quality commands can be executed from the root workspace:
 - [Phase 2 Acceptance Checklist](file:///docs/phase-2/acceptance-checklist.md)
 - [Phase 3 Acceptance Checklist](file:///docs/phase-3/acceptance-checklist.md)
 - [Phase 4 Acceptance Checklist](file:///docs/phase-4/acceptance-checklist.md)
+- [Phase 5 Acceptance Checklist](file:///docs/phase-5/acceptance-checklist.md)

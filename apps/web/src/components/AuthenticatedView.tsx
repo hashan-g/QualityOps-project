@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { UserResponse, CanonicalRole } from '@qualityops/contracts';
 import { MasterDataView } from './MasterDataView';
+import { ProductionBatchesView } from './ProductionBatchesView';
+import { DowntimeView } from './DowntimeView';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN');
 
-  const [activeSection, setActiveSection] = useState<'master-data' | 'users'>('master-data');
+  const [activeSection, setActiveSection] = useState<
+    'batches' | 'downtime' | 'master-data' | 'users'
+  >('batches');
 
   // Admin user list state
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -163,9 +167,41 @@ export const AuthenticatedView: React.FC = () => {
         }}
       >
         <button
+          onClick={() => setActiveSection('batches')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: activeSection === 'batches' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'batches' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'batches' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          Production Batches
+        </button>
+
+        <button
+          onClick={() => setActiveSection('downtime')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: activeSection === 'downtime' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'downtime' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'downtime' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          Downtime Events
+        </button>
+
+        <button
           onClick={() => setActiveSection('master-data')}
           style={{
-            padding: '10px 20px',
+            padding: '10px 18px',
             borderRadius: '6px',
             border: activeSection === 'master-data' ? '2px solid #3182ce' : '1px solid #cbd5e0',
             backgroundColor: activeSection === 'master-data' ? '#ebf8ff' : '#ffffff',
@@ -182,7 +218,7 @@ export const AuthenticatedView: React.FC = () => {
           <button
             onClick={() => setActiveSection('users')}
             style={{
-              padding: '10px 20px',
+              padding: '10px 18px',
               borderRadius: '6px',
               border: activeSection === 'users' ? '2px solid #3182ce' : '1px solid #cbd5e0',
               backgroundColor: activeSection === 'users' ? '#ebf8ff' : '#ffffff',
@@ -197,7 +233,11 @@ export const AuthenticatedView: React.FC = () => {
         )}
       </nav>
 
-      {activeSection === 'master-data' ? (
+      {activeSection === 'batches' ? (
+        <ProductionBatchesView />
+      ) : activeSection === 'downtime' ? (
+        <DowntimeView />
+      ) : activeSection === 'master-data' ? (
         <MasterDataView />
       ) : isAdmin ? (
         <section

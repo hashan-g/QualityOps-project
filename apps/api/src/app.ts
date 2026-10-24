@@ -9,6 +9,7 @@ import { healthRouter } from './routes/health.router.js';
 import { authRouter } from './routes/auth.router.js';
 import { usersRouter } from './routes/users.router.js';
 import { masterDataRouter } from './routes/master-data/index.js';
+import { productionRouter } from './routes/production/index.js';
 
 export function createApp(): Express {
   const app = express();
@@ -30,6 +31,9 @@ export function createApp(): Express {
 
   // Master Data Management routes (Phase 4)
   app.use('/api/v1/master-data', masterDataRouter);
+
+  // Production Management routes (Phase 5)
+  app.use('/api/v1/production', productionRouter);
 
   // Health and readiness endpoints
   app.use('/api/v1/health', healthRouter);
