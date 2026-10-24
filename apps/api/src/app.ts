@@ -8,6 +8,7 @@ import { errorHandler, notFoundHandler } from './middleware/error.middleware.js'
 import { healthRouter } from './routes/health.router.js';
 import { authRouter } from './routes/auth.router.js';
 import { usersRouter } from './routes/users.router.js';
+import { masterDataRouter } from './routes/master-data/index.js';
 
 export function createApp(): Express {
   const app = express();
@@ -26,6 +27,9 @@ export function createApp(): Express {
   // Authentication & RBAC routes (Phase 3)
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/users', usersRouter);
+
+  // Master Data Management routes (Phase 4)
+  app.use('/api/v1/master-data', masterDataRouter);
 
   // Health and readiness endpoints
   app.use('/api/v1/health', healthRouter);

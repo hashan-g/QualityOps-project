@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { UserResponse, CanonicalRole } from '@qualityops/contracts';
+import { MasterDataView } from './MasterDataView';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN');
+
+  const [activeSection, setActiveSection] = useState<'master-data' | 'users'>('master-data');
 
   // Admin user list state
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -150,7 +153,53 @@ export const AuthenticatedView: React.FC = () => {
         on every use. Local/session storage is not used for credentials.
       </div>
 
-      {isAdmin ? (
+      {/* Top Section Navigation */}
+      <nav
+        aria-label="Application Sections"
+        style={{
+          display: 'flex',
+          gap: '12px',
+          marginBottom: '20px',
+        }}
+      >
+        <button
+          onClick={() => setActiveSection('master-data')}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '6px',
+            border: activeSection === 'master-data' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'master-data' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'master-data' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          Master Data
+        </button>
+
+        {isAdmin && (
+          <button
+            onClick={() => setActiveSection('users')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '6px',
+              border: activeSection === 'users' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+              backgroundColor: activeSection === 'users' ? '#ebf8ff' : '#ffffff',
+              color: activeSection === 'users' ? '#2b6cb0' : '#4a5568',
+              fontWeight: 600,
+              fontSize: '14px',
+              cursor: 'pointer',
+            }}
+          >
+            User Administration
+          </button>
+        )}
+      </nav>
+
+      {activeSection === 'master-data' ? (
+        <MasterDataView />
+      ) : isAdmin ? (
         <section
           aria-labelledby="admin-panel-heading"
           style={{

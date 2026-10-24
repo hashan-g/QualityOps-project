@@ -96,15 +96,16 @@
 
 ### 2.4 `shifts`
 
-| Column Name  | Data Type    | Nullable | Default             | Constraints / Allowed Values | Description                        |
-| ------------ | ------------ | -------- | ------------------- | ---------------------------- | ---------------------------------- |
-| `id`         | UUID         | No       | `gen_random_uuid()` | PRIMARY KEY                  | Unique shift identifier.           |
-| `code`       | VARCHAR(50)  | No       | None                | UNIQUE                       | Shift code (e.g. `SHIFT-MORNING`). |
-| `name`       | VARCHAR(100) | No       | None                | None                         | Shift name.                        |
-| `start_time` | TIME         | No       | None                | None                         | Scheduled start time of shift.     |
-| `end_time`   | TIME         | No       | None                | None                         | Scheduled end time of shift.       |
-| `created_at` | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                         | Record creation instant (UTC).     |
-| `updated_at` | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                         | Last update instant (UTC).         |
+| Column Name  | Data Type    | Nullable | Default             | Constraints / Allowed Values | Description                            |
+| ------------ | ------------ | -------- | ------------------- | ---------------------------- | -------------------------------------- |
+| `id`         | UUID         | No       | `gen_random_uuid()` | PRIMARY KEY                  | Unique shift identifier.               |
+| `code`       | VARCHAR(50)  | No       | None                | UNIQUE                       | Shift code (e.g. `SHIFT-MORNING`).     |
+| `name`       | VARCHAR(100) | No       | None                | None                         | Shift name.                            |
+| `start_time` | TIME         | No       | None                | None                         | Scheduled start time of shift.         |
+| `end_time`   | TIME         | No       | None                | None                         | Scheduled end time of shift.           |
+| `is_active`  | BOOLEAN      | No       | `true`              | None                         | Operational status (Phase 4 addition). |
+| `created_at` | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                         | Record creation instant (UTC).         |
+| `updated_at` | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                         | Last update instant (UTC).             |
 
 ### 2.5 `defect_types`
 
