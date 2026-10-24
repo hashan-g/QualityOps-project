@@ -497,6 +497,16 @@ describe('Database Schema & Migration Constraints', () => {
           'chk_downtime_ended_after_started',
         );
 
+        // Test E2: Downtime duration_seconds is automatically computed by PostgreSQL generated column
+        const dtRes = await client.query<{ duration_seconds: number }>(
+          `INSERT INTO downtime_records (
+            production_line_id, reason, started_at, ended_at
+          ) VALUES ($1, 'Valid Breakdown', '2026-10-23 10:00:00+00', '2026-10-23 10:30:00+00')
+          RETURNING duration_seconds;`,
+          [lineId],
+        );
+        expect(dtRes.rows[0]?.duration_seconds).toBe(1800);
+
         // Test F: Refresh session revoked_at must not be before created_at
         await assertConstraintViolation(
           client,

@@ -17,6 +17,12 @@ import {
   CreateDefectTypeRequestSchema,
   MachineStatusSchema,
   DefectSeveritySchema,
+  BatchStatusSchema,
+  CreateProductionBatchRequestSchema,
+  UpdateProductionBatchRequestSchema,
+  CreateDowntimeRequestSchema,
+  CloseDowntimeRequestSchema,
+  DowntimeCategorySchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -326,5 +332,175 @@ describe('Contracts — Phase 4 Master Data Management Schemas', () => {
         category: 'VISUAL',
       }).success,
     ).toBe(false);
+  });
+
+  describe('Phase 5 — Production Management Schemas', () => {
+    it('validates canonical batch status enum values', () => {
+      const valid = ['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'ON_HOLD'];
+      for (const s of valid) {
+        expect(BatchStatusSchema.safeParse(s).success).toBe(true);
+      }
+      expect(BatchStatusSchema.safeParse('UNKNOWN').success).toBe(false);
+      expect(BatchStatusSchema.safeParse('FINISHED').success).toBe(false);
+    });
+
+    it('validates CreateProductionBatchRequestSchema invariants', () => {
+      const valid = {
+        batchNumber: 'BATCH-2026-001',
+        productId: '11111111-1111-1111-1111-111111111111',
+        productionLineId: '22222222-2222-2222-2222-222222222222',
+        shiftId: '33333333-3333-3333-3333-333333333333',
+        plannedQuantity: 500,
+      };
+      expect(CreateProductionBatchRequestSchema.safeParse(valid).success).toBe(true);
+
+      // Non-positive planned quantity rejected
+      expect(
+        CreateProductionBatchRequestSchema.safeParse({
+          ...valid,
+          plannedQuantity: 0,
+        }).success,
+      ).toBe(false);
+
+      expect(
+        CreateProductionBatchRequestSchema.safeParse({
+          ...valid,
+          plannedQuantity: -10,
+        }).success,
+      ).toBe(false);
+
+      // Invalid UUIDs rejected
+      expect(
+        CreateProductionBatchRequestSchema.safeParse({
+          ...valid,
+          productId: 'not-a-uuid',
+        }).success,
+      ).toBe(false);
+    });
+
+    it('enforces chk_batch_disposition_sum on batch quantity updates', () => {
+      // Valid disposition sum: 80 + 10 + 10 = 100 <= 100
+      const valid = {
+        producedQuantity: 100,
+        acceptedQuantity: 80,
+        scrapQuantity: 10,
+        reworkPendingQuantity: 10,
+      };
+      expect(UpdateProductionBatchRequestSchema.safeParse(valid).success).toBe(true);
+
+      // In-progress partial disposition: 50 + 0 + 0 = 50 <= 100 is valid
+      expect(
+        UpdateProductionBatchRequestSchema.safeParse({
+          producedQuantity: 100,
+          acceptedQuantity: 50,
+          scrapQuantity: 0,
+          reworkPendingQuantity: 0,
+        }).success,
+      ).toBe(true);
+
+      // Invalid disposition: 80 + 30 + 0 = 110 > 100 must fail
+      const invalid = {
+        producedQuantity: 100,
+        acceptedQuantity: 80,
+        scrapQuantity: 30,
+        reworkPendingQuantity: 0,
+      };
+      const res = UpdateProductionBatchRequestSchema.safeParse(invalid);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.issues[0]?.message).toContain('Disposition sum');
+      }
+    });
+
+    it('enforces chk_batch_completed_reconciled when status is COMPLETED', () => {
+      // Reconciled completed batch: 90 + 5 + 5 = 100 === 100
+      const reconciled = {
+        status: 'COMPLETED' as const,
+        producedQuantity: 100,
+        acceptedQuantity: 90,
+        scrapQuantity: 5,
+        reworkPendingQuantity: 5,
+      };
+      expect(UpdateProductionBatchRequestSchema.safeParse(reconciled).success).toBe(true);
+
+      // Unreconciled completed batch: 80 + 0 + 0 = 80 !== 100 must fail
+      const unreconciled = {
+        status: 'COMPLETED' as const,
+        producedQuantity: 100,
+        acceptedQuantity: 80,
+        scrapQuantity: 0,
+        reworkPendingQuantity: 0,
+      };
+      const res = UpdateProductionBatchRequestSchema.safeParse(unreconciled);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.issues[0]?.message).toContain('must exactly equal produced quantity');
+      }
+    });
+
+    it('enforces timestamp ordering on batch and downtime updates', () => {
+      const now = new Date();
+      const past = new Date(now.getTime() - 3600000);
+
+      // Completed earlier than started must fail
+      expect(
+        UpdateProductionBatchRequestSchema.safeParse({
+          startedAt: now.toISOString(),
+          completedAt: past.toISOString(),
+        }).success,
+      ).toBe(false);
+
+      // Downtime ended earlier or equal to started must fail
+      expect(
+        CreateDowntimeRequestSchema.safeParse({
+          productionLineId: '11111111-1111-1111-1111-111111111111',
+          reason: 'Jam on feeder',
+          startedAt: now.toISOString(),
+          endedAt: past.toISOString(),
+        }).success,
+      ).toBe(false);
+
+      expect(
+        CreateDowntimeRequestSchema.safeParse({
+          productionLineId: '11111111-1111-1111-1111-111111111111',
+          reason: 'Jam on feeder',
+          startedAt: now.toISOString(),
+          endedAt: now.toISOString(),
+        }).success,
+      ).toBe(false);
+
+      // Downtime ended after started is valid
+      const future = new Date(now.getTime() + 1800000);
+      expect(
+        CreateDowntimeRequestSchema.safeParse({
+          productionLineId: '11111111-1111-1111-1111-111111111111',
+          reason: 'Jam on feeder',
+          category: 'UNPLANNED',
+          startedAt: now.toISOString(),
+          endedAt: future.toISOString(),
+        }).success,
+      ).toBe(true);
+    });
+
+    it('validates CloseDowntimeRequestSchema', () => {
+      expect(
+        CloseDowntimeRequestSchema.safeParse({
+          endedAt: new Date().toISOString(),
+          notes: 'Motor cleared and restarted',
+        }).success,
+      ).toBe(true);
+
+      expect(
+        CloseDowntimeRequestSchema.safeParse({
+          endedAt: 'invalid-time',
+        }).success,
+      ).toBe(false);
+    });
+
+    it('validates downtime category enum', () => {
+      expect(DowntimeCategorySchema.safeParse('PLANNED').success).toBe(true);
+      expect(DowntimeCategorySchema.safeParse('UNPLANNED').success).toBe(true);
+      expect(DowntimeCategorySchema.safeParse('OTHER').success).toBe(false);
+    });
   });
 });

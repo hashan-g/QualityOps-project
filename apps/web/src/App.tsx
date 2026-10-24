@@ -37,7 +37,7 @@ const AppContent: React.FC = () => {
               borderRadius: '4px',
             }}
           >
-            Phase 4: Master Data Management
+            Phase 5: Production Management
           </span>
           <span
             style={{
@@ -58,8 +58,8 @@ const AppContent: React.FC = () => {
           QualityOps Platform
         </h1>
         <p style={{ color: '#718096', margin: 0 }}>
-          Manufacturing Quality & Process Analytics Platform &mdash; Master Data Management &
-          Role-Based Access Control
+          Manufacturing Quality & Process Analytics Platform &mdash; Production Batches, Downtime &
+          Master Data
         </p>
       </header>
 

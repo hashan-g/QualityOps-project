@@ -410,3 +410,224 @@ export const DefectTypeListResponseSchema = z.object({
   totalPages: z.number().nonnegative(),
 });
 export type DefectTypeListResponse = z.infer<typeof DefectTypeListResponseSchema>;
+
+// ==========================================
+// Phase 5: Production Management Contracts
+// ==========================================
+
+// 1. Production Batches
+export const BatchStatusSchema = z.enum([
+  'PLANNED',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'CANCELLED',
+  'ON_HOLD',
+]);
+export type BatchStatus = z.infer<typeof BatchStatusSchema>;
+
+export const ProductionBatchSchema = z.object({
+  id: z.string().uuid(),
+  batchNumber: z.string().min(1).max(100),
+  productId: z.string().uuid(),
+  productCode: z.string().optional(),
+  productName: z.string().optional(),
+  productionLineId: z.string().uuid(),
+  productionLineCode: z.string().optional(),
+  productionLineName: z.string().optional(),
+  shiftId: z.string().uuid(),
+  shiftCode: z.string().optional(),
+  shiftName: z.string().optional(),
+  machineId: z.string().uuid().nullable().optional(),
+  machineCode: z.string().nullable().optional(),
+  machineName: z.string().nullable().optional(),
+  createdBy: z.string().uuid().nullable().optional(),
+  createdByName: z.string().nullable().optional(),
+  status: BatchStatusSchema,
+  plannedQuantity: z.number().int().positive(),
+  producedQuantity: z.number().int().nonnegative(),
+  acceptedQuantity: z.number().int().nonnegative(),
+  scrapQuantity: z.number().int().nonnegative(),
+  reworkPendingQuantity: z.number().int().nonnegative(),
+  startedAt: z.string().datetime().nullable().optional(),
+  completedAt: z.string().datetime().nullable().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type ProductionBatch = z.infer<typeof ProductionBatchSchema>;
+
+export const CreateProductionBatchRequestSchema = z.object({
+  batchNumber: z.string().min(1, 'Batch number is required').max(100).trim(),
+  productId: z.string().uuid('Valid product UUID is required'),
+  productionLineId: z.string().uuid('Valid production line UUID is required'),
+  shiftId: z.string().uuid('Valid shift UUID is required'),
+  machineId: z.string().uuid('Valid machine UUID required').nullable().optional(),
+  plannedQuantity: z
+    .number({ invalid_type_error: 'Planned quantity must be a number' })
+    .int('Planned quantity must be an integer')
+    .positive('Planned quantity must be greater than zero'),
+  status: BatchStatusSchema.optional().default('PLANNED'),
+  startedAt: z.string().datetime().nullable().optional(),
+});
+export type CreateProductionBatchRequest = z.infer<typeof CreateProductionBatchRequestSchema>;
+
+export const UpdateProductionBatchRequestSchema = z
+  .object({
+    machineId: z.string().uuid().nullable().optional(),
+    producedQuantity: z.number().int().nonnegative().optional(),
+    acceptedQuantity: z.number().int().nonnegative().optional(),
+    scrapQuantity: z.number().int().nonnegative().optional(),
+    reworkPendingQuantity: z.number().int().nonnegative().optional(),
+    status: BatchStatusSchema.optional(),
+    startedAt: z.string().datetime().nullable().optional(),
+    completedAt: z.string().datetime().nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      data.producedQuantity !== undefined &&
+      data.acceptedQuantity !== undefined &&
+      data.scrapQuantity !== undefined &&
+      data.reworkPendingQuantity !== undefined
+    ) {
+      const sum = data.acceptedQuantity + data.scrapQuantity + data.reworkPendingQuantity;
+      if (sum > data.producedQuantity) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Disposition sum (accepted + scrap + rework) cannot exceed produced quantity',
+          path: ['acceptedQuantity'],
+        });
+      }
+      if (data.status === 'COMPLETED' && sum !== data.producedQuantity) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            'When completing a batch, disposition sum (accepted + scrap + rework) must exactly equal produced quantity',
+          path: ['status'],
+        });
+      }
+    }
+
+    if (data.startedAt && data.completedAt) {
+      if (new Date(data.completedAt) < new Date(data.startedAt)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Completed timestamp cannot be earlier than started timestamp',
+          path: ['completedAt'],
+        });
+      }
+    }
+  });
+export type UpdateProductionBatchRequest = z.infer<typeof UpdateProductionBatchRequestSchema>;
+
+export const ProductionBatchListQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().optional(),
+  productId: z.string().uuid().optional(),
+  productionLineId: z.string().uuid().optional(),
+  machineId: z.string().uuid().optional(),
+  shiftId: z.string().uuid().optional(),
+  status: BatchStatusSchema.optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+export type ProductionBatchListQuery = z.infer<typeof ProductionBatchListQuerySchema>;
+
+export const ProductionBatchListResponseSchema = z.object({
+  items: z.array(ProductionBatchSchema),
+  total: z.number().nonnegative(),
+  page: z.number().positive(),
+  limit: z.number().positive(),
+  totalPages: z.number().nonnegative(),
+});
+export type ProductionBatchListResponse = z.infer<typeof ProductionBatchListResponseSchema>;
+
+// 2. Downtime Records
+export const DowntimeCategorySchema = z.enum(['PLANNED', 'UNPLANNED']);
+export type DowntimeCategory = z.infer<typeof DowntimeCategorySchema>;
+
+export const DowntimeRecordSchema = z.object({
+  id: z.string().uuid(),
+  productionLineId: z.string().uuid(),
+  productionLineCode: z.string().optional(),
+  productionLineName: z.string().optional(),
+  machineId: z.string().uuid().nullable().optional(),
+  machineCode: z.string().nullable().optional(),
+  machineName: z.string().nullable().optional(),
+  batchId: z.string().uuid().nullable().optional(),
+  batchNumber: z.string().nullable().optional(),
+  reason: z.string().min(1).max(100),
+  category: DowntimeCategorySchema,
+  startedAt: z.string().datetime(),
+  endedAt: z.string().datetime().nullable().optional(),
+  durationSeconds: z.number().int().nonnegative().nullable().optional(),
+  recordedBy: z.string().uuid().nullable().optional(),
+  recordedByName: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type DowntimeRecord = z.infer<typeof DowntimeRecordSchema>;
+
+export const CreateDowntimeRequestSchema = z
+  .object({
+    productionLineId: z.string().uuid('Valid production line UUID is required'),
+    machineId: z.string().uuid().nullable().optional(),
+    batchId: z.string().uuid().nullable().optional(),
+    reason: z
+      .string()
+      .min(1, 'Reason is required')
+      .max(100, 'Reason cannot exceed 100 characters')
+      .trim(),
+    category: DowntimeCategorySchema.optional().default('UNPLANNED'),
+    startedAt: z.string().datetime('Valid startedAt ISO timestamp is required'),
+    endedAt: z.string().datetime().nullable().optional(),
+    notes: z.string().max(1000).nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.startedAt && data.endedAt) {
+      if (new Date(data.endedAt) <= new Date(data.startedAt)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Downtime end time must be strictly after start time',
+          path: ['endedAt'],
+        });
+      }
+    }
+  });
+export type CreateDowntimeRequest = z.infer<typeof CreateDowntimeRequestSchema>;
+
+export const CloseDowntimeRequestSchema = z.object({
+  endedAt: z.string().datetime('Valid endedAt ISO timestamp is required'),
+  notes: z.string().max(1000).nullable().optional(),
+});
+export type CloseDowntimeRequest = z.infer<typeof CloseDowntimeRequestSchema>;
+
+export const UpdateDowntimeRequestSchema = z.object({
+  reason: z.string().min(1).max(100).trim().optional(),
+  category: DowntimeCategorySchema.optional(),
+  endedAt: z.string().datetime().nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+});
+export type UpdateDowntimeRequest = z.infer<typeof UpdateDowntimeRequestSchema>;
+
+export const DowntimeListQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().optional(),
+  productionLineId: z.string().uuid().optional(),
+  machineId: z.string().uuid().optional(),
+  batchId: z.string().uuid().optional(),
+  category: DowntimeCategorySchema.optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+export type DowntimeListQuery = z.infer<typeof DowntimeListQuerySchema>;
+
+export const DowntimeListResponseSchema = z.object({
+  items: z.array(DowntimeRecordSchema),
+  total: z.number().nonnegative(),
+  page: z.number().positive(),
+  limit: z.number().positive(),
+  totalPages: z.number().nonnegative(),
+});
+export type DowntimeListResponse = z.infer<typeof DowntimeListResponseSchema>;
