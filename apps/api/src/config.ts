@@ -1,7 +1,63 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-dotenv.config();
+/**
+ * Searches upwards from process.cwd() and import.meta.url to locate .env files.
+ * Loading deepest files first allows workspace-specific .env files (e.g. apps/api/.env)
+ * to override monorepo root .env files, while ensuring root .env is discovered regardless
+ * of which workspace or directory the process is launched from.
+ */
+export function resolveEnvFiles(): string[] {
+  const loadedFiles: string[] = [];
+  const candidateFiles: string[] = [];
+
+  const startDirs = [process.cwd(), path.dirname(fileURLToPath(import.meta.url))];
+
+  for (const startDir of startDirs) {
+    let current = path.resolve(startDir);
+    while (current && current !== path.dirname(current)) {
+      const envPath = path.join(current, '.env');
+      if (fs.existsSync(envPath) && !candidateFiles.includes(envPath)) {
+        candidateFiles.push(envPath);
+      }
+      current = path.dirname(current);
+    }
+  }
+
+  // Sort candidate files: deepest (e.g. apps/api/.env) first, closest to root last.
+  // Since dotenv does not overwrite existing process.env values by default,
+  // loading deepest first gives workspace-specific .env precedence over parent .env.
+  candidateFiles.sort((a, b) => b.length - a.length);
+
+  for (const envFile of candidateFiles) {
+    const result = dotenv.config({ path: envFile });
+    if (!result.error) {
+      loadedFiles.push(envFile);
+    }
+  }
+
+  return loadedFiles;
+}
+
+export const loadedEnvFiles = resolveEnvFiles();
+
+/**
+ * Strips password and sensitive query parameters from a database connection string,
+ * returning safe connection coordinates (protocol, user, host, port, database).
+ */
+export function sanitizeDatabaseUrl(connString: string): string {
+  try {
+    const parsed = new URL(connString);
+    const port = parsed.port ? `:${parsed.port}` : '';
+    const user = parsed.username ? `${parsed.username}@` : '';
+    return `${parsed.protocol}//${user}${parsed.hostname}${port}${parsed.pathname}`;
+  } catch {
+    return 'invalid-database-url';
+  }
+}
 
 const EnvironmentSchema = z
   .object({
@@ -20,9 +76,19 @@ const EnvironmentSchema = z
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
     DATABASE_URL: z
       .string()
-      .default(
-        'postgresql://qualityops_dev:replace_with_a_local_only_password@127.0.0.1:5432/qualityops',
-      ),
+      .optional()
+      .transform((val) => {
+        if (val && val.trim().length > 0) return val;
+        const user = process.env.POSTGRES_USER;
+        const password = process.env.POSTGRES_PASSWORD;
+        const host = process.env.POSTGRES_HOST || '127.0.0.1';
+        const port = process.env.POSTGRES_PORT || '5432';
+        const db = process.env.POSTGRES_DB || 'qualityops';
+        if (user && password) {
+          return `postgresql://${user}:${password}@${host}:${port}/${db}`;
+        }
+        return 'postgresql://qualityops_dev:replace_with_a_local_only_password@127.0.0.1:5432/qualityops';
+      }),
     DB_POOL_MAX: z
       .string()
       .default('10')
@@ -74,6 +140,9 @@ const EnvironmentSchema = z
           data.JWT_ACCESS_SECRET === 'dev-qualityops-jwt-access-secret-32-chars-minimum' ||
           data.JWT_ACCESS_SECRET.length < 32
         ) {
+          return false;
+        }
+        if (data.DATABASE_URL.includes('replace_with_a_local_only_password')) {
           return false;
         }
       }

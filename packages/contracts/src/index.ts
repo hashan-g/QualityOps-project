@@ -631,3 +631,161 @@ export const DowntimeListResponseSchema = z.object({
   totalPages: z.number().nonnegative(),
 });
 export type DowntimeListResponse = z.infer<typeof DowntimeListResponseSchema>;
+
+// ==============================================================================
+// Phase 6: Quality Inspection Management Schemas & Contracts
+// ==============================================================================
+
+export const InspectionStageSchema = z.enum(['IN_PROCESS', 'FINAL', 'RECEIVING', 'FIRST_ARTICLE']);
+export type InspectionStage = z.infer<typeof InspectionStageSchema>;
+
+export const InspectionStatusSchema = z.enum(['IN_PROGRESS', 'COMPLETED', 'CANCELLED']);
+export type InspectionStatus = z.infer<typeof InspectionStatusSchema>;
+
+export const InspectionResultSchema = z.enum(['PASS', 'FAIL', 'CONDITIONAL']);
+export type InspectionResult = z.infer<typeof InspectionResultSchema>;
+
+export const QualityInspectionSchema = z.object({
+  id: z.string().uuid(),
+  inspectionNumber: z.string(),
+  batchId: z.string().uuid(),
+  inspectorId: z.string().uuid(),
+  stage: z.string(),
+  attemptNumber: z.number().int().positive(),
+  status: InspectionStatusSchema,
+  result: InspectionResultSchema.nullable(),
+  sampleSize: z.number().int().positive(),
+  passedUnits: z.number().int().nonnegative(),
+  failedUnits: z.number().int().nonnegative(),
+  inspectedAt: z.string(),
+  notes: z.string().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  // Joined context
+  batchNumber: z.string().optional(),
+  productCode: z.string().optional(),
+  productName: z.string().optional(),
+  inspectorUsername: z.string().optional(),
+  inspectorFullName: z.string().optional(),
+});
+export type QualityInspection = z.infer<typeof QualityInspectionSchema>;
+
+export const CreateInspectionRequestSchema = z
+  .object({
+    batchId: z.string().uuid(),
+    stage: z.string().min(1).max(50),
+    attemptNumber: z.number().int().positive().optional(),
+    sampleSize: z.number().int().positive({ message: 'Sample size must be a positive integer' }),
+    passedUnits: z.number().int().nonnegative().default(0),
+    failedUnits: z.number().int().nonnegative().default(0),
+    status: InspectionStatusSchema.default('COMPLETED'),
+    result: InspectionResultSchema.optional(),
+    inspectedAt: z.string().datetime().optional(),
+    notes: z.string().max(2000).optional(),
+  })
+  .refine((data) => data.passedUnits + data.failedUnits <= data.sampleSize, {
+    message: 'Sum of passed and failed units cannot exceed sample size',
+    path: ['passedUnits'],
+  })
+  .refine(
+    (data) =>
+      data.status !== 'COMPLETED' || data.passedUnits + data.failedUnits === data.sampleSize,
+    {
+      message: 'For completed inspections, passed + failed units must equal sample size',
+      path: ['passedUnits'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.result === 'PASS' && data.failedUnits > 0) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Inspection result cannot be PASS when there are failed units',
+      path: ['result'],
+    },
+  );
+export type CreateInspectionRequest = z.infer<typeof CreateInspectionRequestSchema>;
+
+export const UpdateInspectionRequestSchema = z
+  .object({
+    sampleSize: z.number().int().positive().optional(),
+    passedUnits: z.number().int().nonnegative().optional(),
+    failedUnits: z.number().int().nonnegative().optional(),
+    status: InspectionStatusSchema.optional(),
+    result: InspectionResultSchema.optional(),
+    notes: z.string().max(2000).optional(),
+    inspectedAt: z.string().datetime().optional(),
+    reasonForCorrection: z.string().min(1).max(500).optional(),
+  })
+  .refine(
+    (data) => {
+      if (
+        data.sampleSize !== undefined &&
+        data.passedUnits !== undefined &&
+        data.failedUnits !== undefined
+      ) {
+        return data.passedUnits + data.failedUnits <= data.sampleSize;
+      }
+      return true;
+    },
+    {
+      message: 'Sum of passed and failed units cannot exceed sample size',
+      path: ['passedUnits'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (
+        data.status === 'COMPLETED' &&
+        data.sampleSize !== undefined &&
+        data.passedUnits !== undefined &&
+        data.failedUnits !== undefined
+      ) {
+        return data.passedUnits + data.failedUnits === data.sampleSize;
+      }
+      return true;
+    },
+    {
+      message: 'For completed inspections, passed + failed units must equal sample size',
+      path: ['passedUnits'],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.result === 'PASS' && data.failedUnits !== undefined && data.failedUnits > 0) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'Inspection result cannot be PASS when there are failed units',
+      path: ['result'],
+    },
+  );
+export type UpdateInspectionRequest = z.infer<typeof UpdateInspectionRequestSchema>;
+
+export const InspectionListQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().optional(),
+  batchId: z.string().uuid().optional(),
+  stage: z.string().optional(),
+  status: InspectionStatusSchema.optional(),
+  result: InspectionResultSchema.optional(),
+  inspectorId: z.string().uuid().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+export type InspectionListQuery = z.infer<typeof InspectionListQuerySchema>;
+
+export const InspectionListResponseSchema = z.object({
+  items: z.array(QualityInspectionSchema),
+  total: z.number().nonnegative(),
+  page: z.number().positive(),
+  limit: z.number().positive(),
+  totalPages: z.number().nonnegative(),
+});
+export type InspectionListResponse = z.infer<typeof InspectionListResponseSchema>;

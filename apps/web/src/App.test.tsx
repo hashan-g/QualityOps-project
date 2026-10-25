@@ -4,16 +4,31 @@ import { App } from './App.js';
 import { MasterDataView } from './components/MasterDataView.js';
 import { ProductionBatchesView } from './components/ProductionBatchesView.js';
 import { DowntimeView } from './components/DowntimeView.js';
+import { QualityInspectionsView } from './components/QualityInspectionsView.js';
 import { AuthProvider } from './context/AuthContext.js';
 
-describe('QualityOps Web — Phase 5 Production Management Shell', () => {
-  it('renders the platform screen with title and phase 5 tag', () => {
+describe('QualityOps Web — Phase 6 Quality Inspection Management Shell', () => {
+  it('renders the platform screen with title and phase 6 tag', () => {
     const html = renderToString(<App />);
 
     expect(html).toContain('QualityOps Platform');
-    expect(html).toContain('Phase 5: Production Management');
+    expect(html).toContain('Phase 6: Quality Inspection Management');
     expect(html).toContain('PostgreSQL 18');
     expect(html).toContain('Manufacturing Quality &amp; Process Analytics Platform');
+  });
+
+  it('renders QualityInspectionsView structure with table, filters, and read-only banner', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <QualityInspectionsView />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('Quality Inspection Management');
+    expect(html).toContain('Stage-gate quality sampling');
+    expect(html).toContain('Read-Only Mode');
+    expect(html).toContain('Inspection Data Rule:');
+    expect(html).toContain('Search');
   });
 
   it('renders MasterDataView structure with tablist and entity options', () => {

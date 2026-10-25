@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "bootstrap:admin": "tsx src/scripts/bootstrap-admin.ts"
+    "bootstrap:admin": "tsx src/scripts/bootstrap-admin.ts",
+    "reset:admin-password": "tsx src/scripts/reset-admin-password.ts"
   },
   "dependencies": {
     "@qualityops/contracts": "*",

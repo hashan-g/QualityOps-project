@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 5: Production Management**  
+**Phase 6: Quality Inspection Management**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -11,8 +11,8 @@
 
 QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, and process analytics.
 
-> **Phase 5 Scope Guard Notice:**  
-> This phase establishes production batch tracking, lifecycle state transitions, quantity reconciliation, and downtime stoppage event logging with server-side RBAC and immutable audit logging. **Sample-based quality inspections, defect records, CAPA remediation workflows, and analytics engines remain out-of-scope until subsequent phases.**
+> **Phase 6 Scope Guard Notice:**  
+> This phase establishes stage-gate sample-based quality inspections, sample metric reconciliation, automated result derivation, role-based access control, and immutable audit trails. **Detailed defect occurrence taxonomy/Pareto analytics, CAPA remediation workflows, and advanced analytics engines remain out-of-scope until subsequent phases.**
 
 ---
 
@@ -20,9 +20,9 @@ QualityOps is an engineering platform designed for manufacturing quality trackin
 
 The repository is structured as an npm workspace monorepo:
 
-- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
-- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Production Management & Downtime modules & Audit Logging service
-- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for all production batches, downtime records, query parameters, mutations, and API responses
+- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, quality inspections view with live sample validation and auto-derivation, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
+- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
+- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for all quality inspections, production batches, downtime records, query parameters, mutations, and API responses
 - **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); versioned SQL migrations under `database/migrations` via `node-pg-migrate`
 - **Quality Gates:** Strict TypeScript (`exactOptionalPropertyTypes`), Prettier, ESLint flat config, Vitest, Supertest, and GitHub Actions CI
 
@@ -84,6 +84,9 @@ npm run db:bootstrap-admin
 
 # Interactive mode (prompts securely for password):
 npm run db:bootstrap-admin
+
+# Reset administrator password (prompts securely with hidden password input):
+npm run db:reset-admin-password
 ```
 
 ### Step 5: Run Development Services
@@ -123,6 +126,11 @@ npm run dev
   - `/api/v1/production/downtime` (List, filter, and record equipment/line downtime events)
   - `/api/v1/production/downtime/:id` (Downtime detail view)
   - `/api/v1/production/downtime/:id/close` (Close event and compute duration)
+- **Quality Inspection Endpoints (Create: ADMIN, QUALITY_MANAGER, INSPECTOR; Correct: ADMIN, QUALITY_MANAGER; Read: All Roles):**
+  - `/api/v1/quality/inspections` (List, filter, pagination, and record inspection events)
+  - `/api/v1/quality/inspections/:id` (Detail view with joined batch, product, and inspector context)
+  - `PATCH /api/v1/quality/inspections/:id` (Audited supervisor/manager corrections)
+  - _Note: DELETE is strictly forbidden; historical quality inspections are non-destructive and immutable._
 
 ---
 
@@ -130,20 +138,21 @@ npm run dev
 
 All quality commands can be executed from the root workspace:
 
-| Command                      | Purpose                                                                  |
-| ---------------------------- | ------------------------------------------------------------------------ |
-| `npm run dev`                | Starts API (`apps/api`) and Web (`apps/web`) concurrently                |
-| `npm run lint`               | Runs ESLint check across all packages and workspaces                     |
-| `npm run format:check`       | Checks code formatting with Prettier                                     |
-| `npm run format`             | Formats all files with Prettier                                          |
-| `npm run typecheck`          | Runs strict TypeScript compiler check (`tsc --noEmit`) across workspaces |
-| `npm test`                   | Executes unit and smoke tests with Vitest across all workspaces          |
-| `npm run build`              | Builds production artifacts for contracts, API, and web                  |
-| `npm run db:migrate`         | Applies pending database migrations (`node-pg-migrate up`)               |
-| `npm run db:migrate:status`  | Inspects pending migrations (`node-pg-migrate up --dry-run`)             |
-| `npm run db:migrate:down`    | Rolls back the most recent migration (`node-pg-migrate down 1`)          |
-| `npm run db:migrate:create`  | Creates a new SQL migration file                                         |
-| `npm run db:bootstrap-admin` | Safely creates or verifies initial administrator account                 |
+| Command                           | Purpose                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `npm run dev`                     | Starts API (`apps/api`) and Web (`apps/web`) concurrently                |
+| `npm run lint`                    | Runs ESLint check across all packages and workspaces                     |
+| `npm run format:check`            | Checks code formatting with Prettier                                     |
+| `npm run format`                  | Formats all files with Prettier                                          |
+| `npm run typecheck`               | Runs strict TypeScript compiler check (`tsc --noEmit`) across workspaces |
+| `npm test`                        | Executes unit and smoke tests with Vitest across all workspaces          |
+| `npm run build`                   | Builds production artifacts for contracts, API, and web                  |
+| `npm run db:migrate`              | Applies pending database migrations (`node-pg-migrate up`)               |
+| `npm run db:migrate:status`       | Inspects pending migrations (`node-pg-migrate up --dry-run`)             |
+| `npm run db:migrate:down`         | Rolls back the most recent migration (`node-pg-migrate down 1`)          |
+| `npm run db:migrate:create`       | Creates a new SQL migration file                                         |
+| `npm run db:bootstrap-admin`      | Safely creates or verifies initial administrator account                 |
+| `npm run db:reset-admin-password` | Safely resets password for an existing administrator account             |
 
 ---
 
@@ -154,6 +163,9 @@ All quality commands can be executed from the root workspace:
 - [Authentication & Authorization Specification](file:///docs/security/authentication-and-authorization.md)
 - [Master Data API Specification](file:///docs/api/master-data.md)
 - [Production Management API Specification](file:///docs/api/production-management.md)
+- [Quality Inspections API Specification](file:///docs/api/quality-inspections.md)
+- [Quality Inspection Workflow](file:///docs/inspections/inspection-workflow.md)
+- [Quality Inspection Data Rules](file:///docs/inspections/inspection-data-rules.md)
 - [Database Schema Design & KPI Definitions](file:///docs/database/schema-design.md)
 - [Entity Relationship Diagram (ERD)](file:///docs/database/erd.mmd)
 - [Data Dictionary](file:///docs/database/data-dictionary.md)
@@ -163,3 +175,4 @@ All quality commands can be executed from the root workspace:
 - [Phase 3 Acceptance Checklist](file:///docs/phase-3/acceptance-checklist.md)
 - [Phase 4 Acceptance Checklist](file:///docs/phase-4/acceptance-checklist.md)
 - [Phase 5 Acceptance Checklist](file:///docs/phase-5/acceptance-checklist.md)
+- [Phase 6 Acceptance Checklist](file:///docs/phase-6/acceptance-checklist.md)

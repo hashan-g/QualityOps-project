@@ -469,6 +469,56 @@ describe('Database Schema & Migration Constraints', () => {
           'chk_inspection_units_sum',
         );
 
+        // Test C2: Quality inspection completed reconciliation constraint
+        // status = 'COMPLETED', sample_size = 10, passed(7) + failed(2) = 9 != 10 -> MUST FAIL (code 23514)
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO quality_inspections (
+                inspection_number, batch_id, inspector_id, stage, status, result, sample_size, passed_units, failed_units
+              ) VALUES ('INS-TEST-FAIL-02', $1, $2, 'FINAL', 'COMPLETED', 'FAIL', 10, 7, 2);`,
+              [batchId, userId],
+            ),
+          'chk_inspection_completed_reconciled',
+        );
+
+        // Test C3: Quality inspection completed result required constraint
+        // status = 'COMPLETED', result = NULL -> MUST FAIL (code 23514)
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO quality_inspections (
+                inspection_number, batch_id, inspector_id, stage, status, result, sample_size, passed_units, failed_units
+              ) VALUES ('INS-TEST-FAIL-03', $1, $2, 'FINAL', 'COMPLETED', NULL, 10, 10, 0);`,
+              [batchId, userId],
+            ),
+          'chk_inspection_completed_result',
+        );
+
+        // Test C4: Quality inspection unique batch stage attempt constraint
+        // Valid insert first
+        await client.query(
+          `INSERT INTO quality_inspections (
+            inspection_number, batch_id, inspector_id, stage, attempt_number, status, result, sample_size, passed_units, failed_units
+          ) VALUES ('INS-TEST-UNIQ-01', $1, $2, 'FINAL', 1, 'COMPLETED', 'PASS', 10, 10, 0);`,
+          [batchId, userId],
+        );
+        // Duplicate (batch_id, stage, attempt_number) -> MUST FAIL (code 23505)
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO quality_inspections (
+                inspection_number, batch_id, inspector_id, stage, attempt_number, status, result, sample_size, passed_units, failed_units
+              ) VALUES ('INS-TEST-UNIQ-02', $1, $2, 'FINAL', 1, 'COMPLETED', 'PASS', 10, 10, 0);`,
+              [batchId, userId],
+            ),
+          'uq_inspection_batch_stage_attempt',
+          '23505',
+        );
+
         // Test D: CAPA closed verification constraint
         // status = 'CLOSED' without verified_by / verified_at -> MUST FAIL (code 23514)
         await assertConstraintViolation(

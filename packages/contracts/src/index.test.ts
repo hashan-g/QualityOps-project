@@ -23,6 +23,14 @@ import {
   CreateDowntimeRequestSchema,
   CloseDowntimeRequestSchema,
   DowntimeCategorySchema,
+  InspectionStageSchema,
+  InspectionStatusSchema,
+  InspectionResultSchema,
+  QualityInspectionSchema,
+  CreateInspectionRequestSchema,
+  UpdateInspectionRequestSchema,
+  InspectionListQuerySchema,
+  InspectionListResponseSchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -501,6 +509,224 @@ describe('Contracts — Phase 4 Master Data Management Schemas', () => {
       expect(DowntimeCategorySchema.safeParse('PLANNED').success).toBe(true);
       expect(DowntimeCategorySchema.safeParse('UNPLANNED').success).toBe(true);
       expect(DowntimeCategorySchema.safeParse('OTHER').success).toBe(false);
+    });
+  });
+
+  describe('Phase 6: Quality Inspection Schemas', () => {
+    const validBatchId = '11111111-1111-1111-1111-111111111111';
+
+    it('validates inspection stage, status, and result enums', () => {
+      const stages = ['IN_PROCESS', 'FINAL', 'RECEIVING', 'FIRST_ARTICLE'];
+      for (const stage of stages) {
+        expect(InspectionStageSchema.safeParse(stage).success).toBe(true);
+      }
+      expect(InspectionStageSchema.safeParse('UNKNOWN_STAGE').success).toBe(false);
+
+      const statuses = ['IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+      for (const status of statuses) {
+        expect(InspectionStatusSchema.safeParse(status).success).toBe(true);
+      }
+      expect(InspectionStatusSchema.safeParse('PENDING').success).toBe(false);
+
+      const results = ['PASS', 'FAIL', 'CONDITIONAL'];
+      for (const res of results) {
+        expect(InspectionResultSchema.safeParse(res).success).toBe(true);
+      }
+      expect(InspectionResultSchema.safeParse('REJECTED').success).toBe(false);
+    });
+
+    it('accepts valid CreateInspectionRequest payload with reconciled sample', () => {
+      const valid = {
+        batchId: validBatchId,
+        stage: 'FINAL',
+        sampleSize: 10,
+        passedUnits: 8,
+        failedUnits: 2,
+        status: 'COMPLETED' as const,
+        result: 'FAIL' as const,
+        notes: 'Two surface scratches observed',
+      };
+      const res = CreateInspectionRequestSchema.safeParse(valid);
+      expect(res.success).toBe(true);
+    });
+
+    it('accepts valid PASS inspection when failedUnits is 0', () => {
+      const validPass = {
+        batchId: validBatchId,
+        stage: 'IN_PROCESS',
+        sampleSize: 5,
+        passedUnits: 5,
+        failedUnits: 0,
+        status: 'COMPLETED' as const,
+        result: 'PASS' as const,
+      };
+      expect(CreateInspectionRequestSchema.safeParse(validPass).success).toBe(true);
+    });
+
+    it('rejects sampleSize <= 0', () => {
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: 0,
+          passedUnits: 0,
+          failedUnits: 0,
+        }).success,
+      ).toBe(false);
+
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: -5,
+          passedUnits: 0,
+          failedUnits: 0,
+        }).success,
+      ).toBe(false);
+    });
+
+    it('rejects negative passed or failed counts', () => {
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: 10,
+          passedUnits: -1,
+          failedUnits: 11,
+        }).success,
+      ).toBe(false);
+
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: 10,
+          passedUnits: 10,
+          failedUnits: -2,
+        }).success,
+      ).toBe(false);
+    });
+
+    it('rejects when passed + failed units exceed sample size', () => {
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: 10,
+          passedUnits: 8,
+          failedUnits: 5, // 8 + 5 = 13 > 10
+        }).success,
+      ).toBe(false);
+    });
+
+    it('rejects COMPLETED status when sample is not fully reconciled', () => {
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: 10,
+          passedUnits: 6,
+          failedUnits: 2, // 6 + 2 = 8 != 10
+          status: 'COMPLETED',
+        }).success,
+      ).toBe(false);
+    });
+
+    it('allows IN_PROGRESS status when sample is partially classified', () => {
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: 10,
+          passedUnits: 4,
+          failedUnits: 1, // 5 out of 10 evaluated
+          status: 'IN_PROGRESS',
+        }).success,
+      ).toBe(true);
+    });
+
+    it('rejects contradictory PASS result when failedUnits > 0', () => {
+      expect(
+        CreateInspectionRequestSchema.safeParse({
+          batchId: validBatchId,
+          stage: 'FINAL',
+          sampleSize: 10,
+          passedUnits: 7,
+          failedUnits: 3,
+          status: 'COMPLETED',
+          result: 'PASS', // Contradiction: 3 failed units cannot be PASS
+        }).success,
+      ).toBe(false);
+    });
+
+    it('validates UpdateInspectionRequestSchema with boundary rules', () => {
+      expect(
+        UpdateInspectionRequestSchema.safeParse({
+          sampleSize: 10,
+          passedUnits: 9,
+          failedUnits: 1,
+          status: 'COMPLETED',
+          result: 'FAIL',
+          reasonForCorrection: 'Recalculated sample metrics after re-verification',
+        }).success,
+      ).toBe(true);
+
+      // Rejects contradictory result
+      expect(
+        UpdateInspectionRequestSchema.safeParse({
+          sampleSize: 10,
+          passedUnits: 8,
+          failedUnits: 2,
+          result: 'PASS',
+        }).success,
+      ).toBe(false);
+    });
+
+    it('validates QualityInspectionSchema, InspectionListQuerySchema, and InspectionListResponseSchema', () => {
+      const validInspection = {
+        id: '11111111-1111-1111-1111-111111111111',
+        inspectionNumber: 'INSP-20261025-0001',
+        batchId: validBatchId,
+        inspectorId: '22222222-2222-2222-2222-222222222222',
+        stage: 'FINAL',
+        attemptNumber: 1,
+        status: 'COMPLETED',
+        result: 'PASS',
+        sampleSize: 10,
+        passedUnits: 10,
+        failedUnits: 0,
+        inspectedAt: new Date().toISOString(),
+        notes: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        batchNumber: 'BATCH-2026-001',
+        productCode: 'PRD-01',
+        productName: 'Gearbox',
+        inspectorUsername: 'inspector1',
+        inspectorFullName: 'Inspector One',
+      };
+
+      const parsedInspection = QualityInspectionSchema.safeParse(validInspection);
+      expect(parsedInspection.success).toBe(true);
+
+      const parsedQuery = InspectionListQuerySchema.safeParse({
+        page: 1,
+        limit: 20,
+        stage: 'FINAL',
+        status: 'COMPLETED',
+        result: 'PASS',
+        search: 'INSP-2026',
+      });
+      expect(parsedQuery.success).toBe(true);
+
+      const parsedResponse = InspectionListResponseSchema.safeParse({
+        items: [validInspection],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
+      expect(parsedResponse.success).toBe(true);
     });
   });
 });
