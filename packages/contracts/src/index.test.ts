@@ -31,6 +31,14 @@ import {
   UpdateInspectionRequestSchema,
   InspectionListQuerySchema,
   InspectionListResponseSchema,
+  DefectRecordSchema,
+  CreateDefectRecordRequestSchema,
+  UpdateDefectRecordRequestSchema,
+  DefectRecordListQuerySchema,
+  DefectRecordListResponseSchema,
+  DefectAnalyticsFilterSchema,
+  DefectAnalyticsResponseSchema,
+  DefectParetoItemSchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -727,6 +735,202 @@ describe('Contracts — Phase 4 Master Data Management Schemas', () => {
         totalPages: 1,
       });
       expect(parsedResponse.success).toBe(true);
+    });
+  });
+
+  describe('Contracts — Phase 7 Defect Management & Analytics Schemas', () => {
+    const validInspectionId = '55555555-5555-5555-5555-555555555555';
+    const validDefectTypeId = '66666666-6666-6666-6666-666666666666';
+
+    it('validates a correct CreateDefectRecordRequestSchema payload', () => {
+      const valid = {
+        inspectionId: validInspectionId,
+        defectTypeId: validDefectTypeId,
+        occurrenceCount: 3,
+        affectedUnitCount: 2,
+        notes: 'Two units exhibited scratch markings',
+      };
+      const res = CreateDefectRecordRequestSchema.safeParse(valid);
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.data.occurrenceCount).toBe(3);
+        expect(res.data.affectedUnitCount).toBe(2);
+      }
+    });
+
+    it('rejects CreateDefectRecordRequestSchema when affectedUnitCount > occurrenceCount', () => {
+      const invalid = {
+        inspectionId: validInspectionId,
+        defectTypeId: validDefectTypeId,
+        occurrenceCount: 2,
+        affectedUnitCount: 3, // 3 > 2 -> Must fail!
+      };
+      const res = CreateDefectRecordRequestSchema.safeParse(invalid);
+      expect(res.success).toBe(false);
+      if (!res.success) {
+        expect(res.error.issues[0]?.message).toContain(
+          'Affected unit count cannot exceed occurrence count',
+        );
+      }
+    });
+
+    it('rejects zero and negative counts in CreateDefectRecordRequestSchema', () => {
+      expect(
+        CreateDefectRecordRequestSchema.safeParse({
+          inspectionId: validInspectionId,
+          defectTypeId: validDefectTypeId,
+          occurrenceCount: 0,
+          affectedUnitCount: 0,
+        }).success,
+      ).toBe(false);
+
+      expect(
+        CreateDefectRecordRequestSchema.safeParse({
+          inspectionId: validInspectionId,
+          defectTypeId: validDefectTypeId,
+          occurrenceCount: -1,
+          affectedUnitCount: 1,
+        }).success,
+      ).toBe(false);
+    });
+
+    it('validates UpdateDefectRecordRequestSchema with required reasonForCorrection', () => {
+      const valid = {
+        occurrenceCount: 5,
+        affectedUnitCount: 4,
+        reasonForCorrection: 'Recounted defect occurrences on sample unit #2',
+      };
+      expect(UpdateDefectRecordRequestSchema.safeParse(valid).success).toBe(true);
+
+      // Rejects empty or missing reasonForCorrection
+      expect(
+        UpdateDefectRecordRequestSchema.safeParse({
+          occurrenceCount: 5,
+          reasonForCorrection: '',
+        }).success,
+      ).toBe(false);
+
+      // Rejects affectedUnitCount > occurrenceCount
+      expect(
+        UpdateDefectRecordRequestSchema.safeParse({
+          occurrenceCount: 2,
+          affectedUnitCount: 4,
+          reasonForCorrection: 'Adjustment',
+        }).success,
+      ).toBe(false);
+    });
+
+    it('validates DefectRecordSchema, Query, and List Response schemas', () => {
+      const mockRecord = {
+        id: '77777777-7777-7777-7777-777777777777',
+        inspectionId: validInspectionId,
+        defectTypeId: validDefectTypeId,
+        occurrenceCount: 4,
+        affectedUnitCount: 3,
+        notes: 'Pitted surface finish',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        defectTypeCode: 'DEF-001',
+        defectTypeName: 'Surface Pitting',
+        defectTypeCategory: 'SURFACE',
+        defectTypeSeverity: 'MAJOR' as const,
+        inspectionNumber: 'INSP-20261026-0001',
+        inspectionStage: 'FINAL',
+        batchNumber: 'BATCH-2026-001',
+        productCode: 'PRD-01',
+        productName: 'Precision Gearbox',
+      };
+
+      expect(DefectRecordSchema.safeParse(mockRecord).success).toBe(true);
+
+      const queryRes = DefectRecordListQuerySchema.safeParse({
+        page: 1,
+        limit: 20,
+        severity: 'MAJOR',
+        search: 'Surface',
+      });
+      expect(queryRes.success).toBe(true);
+
+      const listRes = DefectRecordListResponseSchema.safeParse({
+        items: [mockRecord],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
+      expect(listRes.success).toBe(true);
+    });
+
+    it('validates DefectAnalyticsFilterSchema and DefectAnalyticsResponseSchema', () => {
+      const filterRes = DefectAnalyticsFilterSchema.safeParse({
+        severity: 'CRITICAL',
+        trendInterval: 'WEEK',
+      });
+      expect(filterRes.success).toBe(true);
+
+      const paretoItem = {
+        defectTypeId: validDefectTypeId,
+        code: 'DEF-001',
+        name: 'Surface Scratch',
+        category: 'SURFACE',
+        severity: 'MINOR' as const,
+        measure: 'affectedUnitCount' as const,
+        value: 10,
+        percentage: 50,
+        cumulativePercentage: 50,
+      };
+      expect(DefectParetoItemSchema.safeParse(paretoItem).success).toBe(true);
+
+      const analyticsRes = DefectAnalyticsResponseSchema.safeParse({
+        overview: {
+          totalFindings: 2,
+          totalOccurrences: 8,
+          totalAffectedUnitsAcrossFindings: 5,
+        },
+        byType: [
+          {
+            defectTypeId: validDefectTypeId,
+            code: 'DEF-001',
+            name: 'Surface Scratch',
+            category: 'SURFACE',
+            severity: 'MINOR',
+            findingCount: 1,
+            occurrenceCount: 4,
+            affectedUnitCount: 3,
+          },
+        ],
+        bySeverity: [
+          {
+            severity: 'MINOR',
+            findingCount: 1,
+            occurrenceCount: 4,
+            affectedUnitCount: 3,
+          },
+        ],
+        byProduct: [
+          {
+            id: '11111111-1111-1111-1111-111111111111',
+            code: 'PRD-01',
+            name: 'Gearbox',
+            findingCount: 1,
+            occurrenceCount: 4,
+            affectedUnitCount: 3,
+          },
+        ],
+        byProductionLine: [],
+        byMachine: [],
+        byShift: [],
+        trend: [
+          {
+            period: '2026-10-26',
+            findingCount: 1,
+            occurrenceCount: 4,
+            affectedUnitCount: 3,
+          },
+        ],
+        pareto: [paretoItem],
+      });
+      expect(analyticsRes.success).toBe(true);
     });
   });
 });

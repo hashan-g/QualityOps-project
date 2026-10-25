@@ -5,16 +5,30 @@ import { MasterDataView } from './components/MasterDataView.js';
 import { ProductionBatchesView } from './components/ProductionBatchesView.js';
 import { DowntimeView } from './components/DowntimeView.js';
 import { QualityInspectionsView } from './components/QualityInspectionsView.js';
+import { QualityDefectsView } from './components/QualityDefectsView.js';
 import { AuthProvider } from './context/AuthContext.js';
 
-describe('QualityOps Web — Phase 6 Quality Inspection Management Shell', () => {
-  it('renders the platform screen with title and phase 6 tag', () => {
+describe('QualityOps Web — Phase 7 Defect Management & Analytics Shell', () => {
+  it('renders the platform screen with title and phase 7 tag', () => {
     const html = renderToString(<App />);
 
     expect(html).toContain('QualityOps Platform');
-    expect(html).toContain('Phase 6: Quality Inspection Management');
+    expect(html).toContain('Phase 7: Defect Management &amp; Analytics');
     expect(html).toContain('PostgreSQL 18');
     expect(html).toContain('Manufacturing Quality &amp; Process Analytics Platform');
+  });
+
+  it('renders QualityDefectsView structure with analytics, Pareto, and table', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <QualityDefectsView />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('Defect Management &amp; Descriptive Analytics');
+    expect(html).toContain('Defect Accounting Semantics:');
+    expect(html).toContain('Descriptive Analytics &amp; Pareto Distribution');
+    expect(html).toContain('Defect Findings Repository');
   });
 
   it('renders QualityInspectionsView structure with table, filters, and read-only banner', () => {

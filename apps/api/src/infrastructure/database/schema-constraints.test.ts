@@ -499,12 +499,16 @@ describe('Database Schema & Migration Constraints', () => {
 
         // Test C4: Quality inspection unique batch stage attempt constraint
         // Valid insert first
-        await client.query(
+        const validInspRes = await client.query<{ id: string }>(
           `INSERT INTO quality_inspections (
             inspection_number, batch_id, inspector_id, stage, attempt_number, status, result, sample_size, passed_units, failed_units
-          ) VALUES ('INS-TEST-UNIQ-01', $1, $2, 'FINAL', 1, 'COMPLETED', 'PASS', 10, 10, 0);`,
+          ) VALUES ('INS-TEST-UNIQ-01', $1, $2, 'FINAL', 1, 'COMPLETED', 'PASS', 10, 10, 0)
+          RETURNING id;`,
           [batchId, userId],
         );
+        const validInspId = validInspRes.rows[0]?.id;
+        expect(validInspId).toBeDefined();
+
         // Duplicate (batch_id, stage, attempt_number) -> MUST FAIL (code 23505)
         await assertConstraintViolation(
           client,
@@ -516,6 +520,51 @@ describe('Database Schema & Migration Constraints', () => {
               [batchId, userId],
             ),
           'uq_inspection_batch_stage_attempt',
+          '23505',
+        );
+
+        // Insert valid defect type for defect records test
+        const defectTypeRes = await client.query<{ id: string }>(
+          `INSERT INTO defect_types (code, name, category, severity)
+          VALUES ('DEF-TEST-01', 'Scratch', 'SURFACE', 'MINOR')
+          RETURNING id;`,
+        );
+        const defectTypeId = defectTypeRes.rows[0]?.id;
+        expect(defectTypeId).toBeDefined();
+
+        // Test C5: Defect record affected count <= occurrence count constraint (chk_defect_affected_le_occurrence)
+        // occurrence_count = 2, affected_unit_count = 3 > 2 -> MUST FAIL (code 23514)
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO defect_records (
+                inspection_id, defect_type_id, occurrence_count, affected_unit_count
+              ) VALUES ($1, $2, 2, 3);`,
+              [validInspId, defectTypeId],
+            ),
+          'chk_defect_affected_le_occurrence',
+        );
+
+        // Test C6: Defect record unique inspection + defect type constraint (uq_defect_record_inspection_type)
+        // Valid insert first
+        await client.query(
+          `INSERT INTO defect_records (
+            inspection_id, defect_type_id, occurrence_count, affected_unit_count
+          ) VALUES ($1, $2, 3, 2);`,
+          [validInspId, defectTypeId],
+        );
+        // Duplicate (inspection_id, defect_type_id) -> MUST FAIL (code 23505)
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO defect_records (
+                inspection_id, defect_type_id, occurrence_count, affected_unit_count
+              ) VALUES ($1, $2, 4, 2);`,
+              [validInspId, defectTypeId],
+            ),
+          'uq_defect_record_inspection_type',
           '23505',
         );
 

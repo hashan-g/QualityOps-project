@@ -789,3 +789,194 @@ export const InspectionListResponseSchema = z.object({
   totalPages: z.number().nonnegative(),
 });
 export type InspectionListResponse = z.infer<typeof InspectionListResponseSchema>;
+
+// ==========================================
+// Phase 7: Defect Management & Analytics Contracts
+// ==========================================
+
+export const DefectRecordSchema = z.object({
+  id: z.string().uuid(),
+  inspectionId: z.string().uuid(),
+  defectTypeId: z.string().uuid(),
+  occurrenceCount: z.number().int().positive(),
+  affectedUnitCount: z.number().int().positive(),
+  notes: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  // Joined context fields
+  defectTypeCode: z.string().optional(),
+  defectTypeName: z.string().optional(),
+  defectTypeCategory: z.string().optional(),
+  defectTypeSeverity: DefectSeveritySchema.optional(),
+  inspectionNumber: z.string().optional(),
+  inspectionStage: z.string().optional(),
+  batchId: z.string().uuid().optional(),
+  batchNumber: z.string().optional(),
+  productId: z.string().uuid().optional(),
+  productCode: z.string().optional(),
+  productName: z.string().optional(),
+  productionLineId: z.string().uuid().optional(),
+  productionLineCode: z.string().optional(),
+  productionLineName: z.string().optional(),
+  machineId: z.string().uuid().nullable().optional(),
+  machineCode: z.string().nullable().optional(),
+  machineName: z.string().nullable().optional(),
+  shiftId: z.string().uuid().optional(),
+  shiftCode: z.string().optional(),
+  shiftName: z.string().optional(),
+});
+export type DefectRecord = z.infer<typeof DefectRecordSchema>;
+
+export const CreateDefectRecordRequestSchema = z
+  .object({
+    inspectionId: z.string().uuid('Valid inspection ID is required'),
+    defectTypeId: z.string().uuid('Valid defect type ID is required'),
+    occurrenceCount: z.number().int().positive('Occurrence count must be at least 1'),
+    affectedUnitCount: z.number().int().positive('Affected unit count must be at least 1'),
+    notes: z.string().max(2000).optional(),
+  })
+  .refine((data) => data.affectedUnitCount <= data.occurrenceCount, {
+    message: 'Affected unit count cannot exceed occurrence count',
+    path: ['affectedUnitCount'],
+  });
+export type CreateDefectRecordRequest = z.infer<typeof CreateDefectRecordRequestSchema>;
+
+export const UpdateDefectRecordRequestSchema = z
+  .object({
+    occurrenceCount: z.number().int().positive('Occurrence count must be at least 1').optional(),
+    affectedUnitCount: z
+      .number()
+      .int()
+      .positive('Affected unit count must be at least 1')
+      .optional(),
+    notes: z.string().max(2000).optional(),
+    reasonForCorrection: z
+      .string()
+      .min(1, 'Reason for correction is required for the audit trail')
+      .max(500),
+  })
+  .refine(
+    (data) => {
+      if (data.occurrenceCount !== undefined && data.affectedUnitCount !== undefined) {
+        return data.affectedUnitCount <= data.occurrenceCount;
+      }
+      return true;
+    },
+    {
+      message: 'Affected unit count cannot exceed occurrence count',
+      path: ['affectedUnitCount'],
+    },
+  );
+export type UpdateDefectRecordRequest = z.infer<typeof UpdateDefectRecordRequestSchema>;
+
+export const DefectRecordListQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().optional(),
+  inspectionId: z.string().uuid().optional(),
+  batchId: z.string().uuid().optional(),
+  defectTypeId: z.string().uuid().optional(),
+  severity: DefectSeveritySchema.optional(),
+  productId: z.string().uuid().optional(),
+  productionLineId: z.string().uuid().optional(),
+  machineId: z.string().uuid().optional(),
+  shiftId: z.string().uuid().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+});
+export type DefectRecordListQuery = z.infer<typeof DefectRecordListQuerySchema>;
+
+export const DefectRecordListResponseSchema = z.object({
+  items: z.array(DefectRecordSchema),
+  total: z.number().nonnegative(),
+  page: z.number().positive(),
+  limit: z.number().positive(),
+  totalPages: z.number().nonnegative(),
+});
+export type DefectRecordListResponse = z.infer<typeof DefectRecordListResponseSchema>;
+
+// Analytics Schemas
+export const DefectAnalyticsFilterSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  batchId: z.string().uuid().optional(),
+  productId: z.string().uuid().optional(),
+  productionLineId: z.string().uuid().optional(),
+  machineId: z.string().uuid().optional(),
+  shiftId: z.string().uuid().optional(),
+  defectTypeId: z.string().uuid().optional(),
+  severity: DefectSeveritySchema.optional(),
+  trendInterval: z.enum(['DAY', 'WEEK', 'MONTH']).default('DAY').optional(),
+});
+export type DefectAnalyticsFilter = z.infer<typeof DefectAnalyticsFilterSchema>;
+
+export const DefectAnalyticsOverviewSchema = z.object({
+  totalFindings: z.number().nonnegative(),
+  totalOccurrences: z.number().nonnegative(),
+  totalAffectedUnitsAcrossFindings: z.number().nonnegative(),
+});
+export type DefectAnalyticsOverview = z.infer<typeof DefectAnalyticsOverviewSchema>;
+
+export const DefectByTypeItemSchema = z.object({
+  defectTypeId: z.string().uuid(),
+  code: z.string(),
+  name: z.string(),
+  category: z.string(),
+  severity: DefectSeveritySchema,
+  findingCount: z.number().nonnegative(),
+  occurrenceCount: z.number().nonnegative(),
+  affectedUnitCount: z.number().nonnegative(),
+});
+export type DefectByTypeItem = z.infer<typeof DefectByTypeItemSchema>;
+
+export const DefectBySeverityItemSchema = z.object({
+  severity: DefectSeveritySchema,
+  findingCount: z.number().nonnegative(),
+  occurrenceCount: z.number().nonnegative(),
+  affectedUnitCount: z.number().nonnegative(),
+});
+export type DefectBySeverityItem = z.infer<typeof DefectBySeverityItemSchema>;
+
+export const DefectByEntityItemSchema = z.object({
+  id: z.string(),
+  code: z.string(),
+  name: z.string(),
+  findingCount: z.number().nonnegative(),
+  occurrenceCount: z.number().nonnegative(),
+  affectedUnitCount: z.number().nonnegative(),
+});
+export type DefectByEntityItem = z.infer<typeof DefectByEntityItemSchema>;
+
+export const DefectTrendItemSchema = z.object({
+  period: z.string(),
+  findingCount: z.number().nonnegative(),
+  occurrenceCount: z.number().nonnegative(),
+  affectedUnitCount: z.number().nonnegative(),
+});
+export type DefectTrendItem = z.infer<typeof DefectTrendItemSchema>;
+
+export const DefectParetoItemSchema = z.object({
+  defectTypeId: z.string().uuid(),
+  code: z.string(),
+  name: z.string(),
+  category: z.string(),
+  severity: DefectSeveritySchema,
+  measure: z.enum(['affectedUnitCount', 'occurrenceCount', 'findingCount']),
+  value: z.number().nonnegative(),
+  percentage: z.number().nonnegative(),
+  cumulativePercentage: z.number().nonnegative(),
+});
+export type DefectParetoItem = z.infer<typeof DefectParetoItemSchema>;
+
+export const DefectAnalyticsResponseSchema = z.object({
+  overview: DefectAnalyticsOverviewSchema,
+  byType: z.array(DefectByTypeItemSchema),
+  bySeverity: z.array(DefectBySeverityItemSchema),
+  byProduct: z.array(DefectByEntityItemSchema),
+  byProductionLine: z.array(DefectByEntityItemSchema),
+  byMachine: z.array(DefectByEntityItemSchema),
+  byShift: z.array(DefectByEntityItemSchema),
+  trend: z.array(DefectTrendItemSchema),
+  pareto: z.array(DefectParetoItemSchema),
+});
+export type DefectAnalyticsResponse = z.infer<typeof DefectAnalyticsResponseSchema>;

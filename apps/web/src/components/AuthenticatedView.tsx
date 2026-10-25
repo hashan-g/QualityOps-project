@@ -5,14 +5,15 @@ import { MasterDataView } from './MasterDataView';
 import { ProductionBatchesView } from './ProductionBatchesView';
 import { DowntimeView } from './DowntimeView';
 import { QualityInspectionsView } from './QualityInspectionsView';
+import { QualityDefectsView } from './QualityDefectsView';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN');
 
   const [activeSection, setActiveSection] = useState<
-    'inspections' | 'batches' | 'downtime' | 'master-data' | 'users'
-  >('inspections');
+    'defects' | 'inspections' | 'batches' | 'downtime' | 'master-data' | 'users'
+  >('defects');
 
   // Admin user list state
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -168,6 +169,22 @@ export const AuthenticatedView: React.FC = () => {
         }}
       >
         <button
+          onClick={() => setActiveSection('defects')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: activeSection === 'defects' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'defects' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'defects' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          Defect Management
+        </button>
+
+        <button
           onClick={() => setActiveSection('inspections')}
           style={{
             padding: '10px 18px',
@@ -250,7 +267,9 @@ export const AuthenticatedView: React.FC = () => {
         )}
       </nav>
 
-      {activeSection === 'inspections' ? (
+      {activeSection === 'defects' ? (
+        <QualityDefectsView />
+      ) : activeSection === 'inspections' ? (
         <QualityInspectionsView />
       ) : activeSection === 'batches' ? (
         <ProductionBatchesView />

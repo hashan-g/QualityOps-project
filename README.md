@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 6: Quality Inspection Management**  
+**Phase 7: Defect Management & Descriptive Analytics**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -11,8 +11,8 @@
 
 QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, and process analytics.
 
-> **Phase 6 Scope Guard Notice:**  
-> This phase establishes stage-gate sample-based quality inspections, sample metric reconciliation, automated result derivation, role-based access control, and immutable audit trails. **Detailed defect occurrence taxonomy/Pareto analytics, CAPA remediation workflows, and advanced analytics engines remain out-of-scope until subsequent phases.**
+> **Phase 7 Scope Guard Notice:**  
+> This phase establishes defect findings associated with quality inspections and standardized defect types, count boundary enforcement, non-destructive audit logging, and PostgreSQL-backed descriptive analytics (KPIs, breakdowns, trends, and Pareto distributions). **CAPA remediation workflows, predictive ML, notifications, and advanced statistical process control (SPC) charts remain out-of-scope until subsequent phases.**
 
 ---
 
@@ -20,9 +20,9 @@ QualityOps is an engineering platform designed for manufacturing quality trackin
 
 The repository is structured as an npm workspace monorepo:
 
-- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, quality inspections view with live sample validation and auto-derivation, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
-- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
-- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for all quality inspections, production batches, downtime records, query parameters, mutations, and API responses
+- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
+- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
+- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for defect findings, descriptive analytics, Pareto items, quality inspections, production batches, downtime records, query parameters, mutations, and API responses
 - **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); versioned SQL migrations under `database/migrations` via `node-pg-migrate`
 - **Quality Gates:** Strict TypeScript (`exactOptionalPropertyTypes`), Prettier, ESLint flat config, Vitest, Supertest, and GitHub Actions CI
 
@@ -131,6 +131,12 @@ npm run dev
   - `/api/v1/quality/inspections/:id` (Detail view with joined batch, product, and inspector context)
   - `PATCH /api/v1/quality/inspections/:id` (Audited supervisor/manager corrections)
   - _Note: DELETE is strictly forbidden; historical quality inspections are non-destructive and immutable._
+- **Defect Management & Analytics Endpoints (Create: ADMIN, QUALITY_MANAGER, INSPECTOR; Correct: ADMIN, QUALITY_MANAGER; Read: All Roles):**
+  - `/api/v1/quality/defects/analytics` (Descriptive analytics, dimension breakdowns, trend, and Pareto distribution)
+  - `/api/v1/quality/defects` (List, filter, and record defect findings against inspections)
+  - `/api/v1/quality/defects/:id` (Detail view with defect classification, inspection, and batch context)
+  - `PATCH /api/v1/quality/defects/:id` (Audited supervisor/manager corrections with mandatory reason)
+  - _Note: DELETE is strictly forbidden; historical defect records are non-destructive and immutable._
 
 ---
 
@@ -166,6 +172,8 @@ All quality commands can be executed from the root workspace:
 - [Quality Inspections API Specification](file:///docs/api/quality-inspections.md)
 - [Quality Inspection Workflow](file:///docs/inspections/inspection-workflow.md)
 - [Quality Inspection Data Rules](file:///docs/inspections/inspection-data-rules.md)
+- [Defect Management & Analytics API Specification](file:///docs/api/defect-management-analytics.md)
+- [Defect Data Rules & Accounting Semantics](file:///docs/quality/defect-data-rules.md)
 - [Database Schema Design & KPI Definitions](file:///docs/database/schema-design.md)
 - [Entity Relationship Diagram (ERD)](file:///docs/database/erd.mmd)
 - [Data Dictionary](file:///docs/database/data-dictionary.md)
@@ -176,3 +184,4 @@ All quality commands can be executed from the root workspace:
 - [Phase 4 Acceptance Checklist](file:///docs/phase-4/acceptance-checklist.md)
 - [Phase 5 Acceptance Checklist](file:///docs/phase-5/acceptance-checklist.md)
 - [Phase 6 Acceptance Checklist](file:///docs/phase-6/acceptance-checklist.md)
+- [Phase 7 Acceptance Checklist](file:///docs/phase-7/acceptance-checklist.md)

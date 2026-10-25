@@ -12,7 +12,8 @@ export interface RecordAuditParams {
     | 'DEFECT_TYPE'
     | 'PRODUCTION_BATCH'
     | 'DOWNTIME_RECORD'
-    | 'QUALITY_INSPECTION';
+    | 'QUALITY_INSPECTION'
+    | 'DEFECT_RECORD';
   entityId: string;
   requestId?: string | undefined;
   beforeState?: Record<string, unknown> | null | undefined;
