@@ -1,6 +1,5 @@
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
-import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config, loadedEnvFiles, sanitizeDatabaseUrl } from '../config.js';
 import { pool } from '../infrastructure/database/pool.js';
@@ -15,23 +14,87 @@ export interface BootstrapOptions {
 }
 
 /**
+ * Normalizes a file path or file URL pathname for deterministic cross-platform comparison.
+ * - Converts backslashes to forward slashes.
+ * - Strips leading slash before Windows drive letters (e.g. `/C:/` -> `C:/`).
+ * - Normalizes Windows drive letters to lowercase (e.g. `C:/` -> `c:/`).
+ * - On Windows (`platform === 'win32'`), normalizes the entire path to lowercase.
+ * - On POSIX systems, preserves path casing for non-Windows paths so case-sensitivity is maintained.
+ */
+export function normalizePathForComparison(
+  filePath: string,
+  platform: NodeJS.Platform = process.platform,
+): string {
+  // 1. Convert backslashes to forward slashes
+  let normalized = filePath.replace(/\\/g, '/');
+
+  // 2. Strip leading slash before a Windows drive letter (e.g. "/h:/" or "/C:/" -> "h:/" or "C:/")
+  if (/^\/[a-zA-Z]:\//.test(normalized)) {
+    normalized = normalized.slice(1);
+  }
+
+  // 3. Normalize relative prefixes like "./"
+  if (normalized.startsWith('./')) {
+    normalized = normalized.slice(2);
+  }
+
+  // 4. Detect if this path has a Windows drive letter (e.g. "c:/" or "H:/")
+  const isWindowsDrivePath = /^[a-zA-Z]:\//.test(normalized);
+
+  if (isWindowsDrivePath) {
+    // Windows drive letters are always case-insensitive.
+    // Normalize drive letter to lowercase (e.g. "H:/" -> "h:/")
+    normalized = normalized.charAt(0).toLowerCase() + normalized.slice(1);
+  }
+
+  // 5. On Windows host OS, the file system is case-insensitive, so lowercase the entire path.
+  // On POSIX systems (Linux/macOS), preserve path casing for non-Windows paths.
+  if (platform === 'win32') {
+    return normalized.toLowerCase();
+  }
+
+  return normalized;
+}
+
+/**
+ * Extracts a file path string from either a file:// URL or a standard filesystem path.
+ */
+export function extractFilePath(urlOrPath: string): string {
+  if (urlOrPath.startsWith('file://')) {
+    try {
+      const parsed = new URL(urlOrPath);
+      return decodeURIComponent(parsed.pathname);
+    } catch {
+      try {
+        return fileURLToPath(urlOrPath);
+      } catch {
+        return urlOrPath;
+      }
+    }
+  }
+  return urlOrPath;
+}
+
+/**
  * Robust cross-platform check to determine if the script is the direct CLI entrypoint.
  * Resolves both URLs and file paths accurately on Windows and POSIX systems.
  */
-export function isDirectExecution(metaUrl: string, argvPath?: string): boolean {
+export function isDirectExecution(
+  metaUrl: string,
+  argvPath?: string,
+  platform: NodeJS.Platform = process.platform,
+): boolean {
   if (!argvPath) return false;
   try {
-    const currentFile = path.resolve(fileURLToPath(metaUrl));
-    const entryFile = path.resolve(argvPath);
+    const rawCurrent = extractFilePath(metaUrl);
+    const normalizedCurrent = normalizePathForComparison(rawCurrent, platform);
+    const normalizedArgv = normalizePathForComparison(argvPath, platform);
 
-    const normalize = (p: string) => (process.platform === 'win32' ? p.toLowerCase() : p);
-    if (normalize(currentFile) === normalize(entryFile)) {
+    if (normalizedCurrent === normalizedArgv) {
       return true;
     }
 
-    // Also match when argvPath was provided as a workspace or monorepo relative path
-    const normalizedCurrent = normalize(currentFile).replace(/\\/g, '/');
-    const normalizedArgv = normalize(argvPath).replace(/\\/g, '/');
+    // Match when argvPath is a workspace or relative path (e.g. apps/api/src/scripts/bootstrap-admin.ts)
     if (normalizedCurrent.endsWith('/' + normalizedArgv) || normalizedCurrent === normalizedArgv) {
       return true;
     }

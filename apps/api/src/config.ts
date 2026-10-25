@@ -9,12 +9,20 @@ import { z } from 'zod';
  * Loading deepest files first allows workspace-specific .env files (e.g. apps/api/.env)
  * to override monorepo root .env files, while ensuring root .env is discovered regardless
  * of which workspace or directory the process is launched from.
+ *
+ * @param customStartDirs Optional custom directory roots to search upward from (useful for isolated testing).
+ * @param stopDir Optional directory boundary above which upward searching will not continue.
  */
-export function resolveEnvFiles(): string[] {
+export function resolveEnvFiles(customStartDirs?: string[], stopDir?: string): string[] {
   const loadedFiles: string[] = [];
   const candidateFiles: string[] = [];
 
-  const startDirs = [process.cwd(), path.dirname(fileURLToPath(import.meta.url))];
+  const startDirs = customStartDirs ?? [
+    process.cwd(),
+    path.dirname(fileURLToPath(import.meta.url)),
+  ];
+
+  const resolvedStopDir = stopDir ? path.resolve(stopDir) : undefined;
 
   for (const startDir of startDirs) {
     let current = path.resolve(startDir);
@@ -22,6 +30,9 @@ export function resolveEnvFiles(): string[] {
       const envPath = path.join(current, '.env');
       if (fs.existsSync(envPath) && !candidateFiles.includes(envPath)) {
         candidateFiles.push(envPath);
+      }
+      if (resolvedStopDir && path.resolve(current) === resolvedStopDir) {
+        break;
       }
       current = path.dirname(current);
     }

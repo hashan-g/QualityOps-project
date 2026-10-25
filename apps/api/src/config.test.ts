@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { sanitizeDatabaseUrl, resolveEnvFiles, config, loadedEnvFiles } from './config.js';
 
 describe('Configuration & Environment Resolution Tests', () => {
@@ -33,16 +36,65 @@ describe('Configuration & Environment Resolution Tests', () => {
     });
   });
 
-  describe('resolveEnvFiles', () => {
-    it('discovers at least one .env file in parent directories', () => {
-      const discovered = resolveEnvFiles();
-      expect(Array.isArray(discovered)).toBe(true);
-      // In this repository, the root .env exists
-      expect(discovered.length).toBeGreaterThanOrEqual(1);
-      expect(discovered.some((file) => file.endsWith('.env'))).toBe(true);
+  describe('resolveEnvFiles (isolated directory fixtures)', () => {
+    let tempDir: string;
+
+    beforeEach(() => {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'qualityops-config-test-'));
     });
 
-    it('exports loadedEnvFiles as array of string paths', () => {
+    afterEach(() => {
+      if (tempDir && fs.existsSync(tempDir)) {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it('discovers .env files in parent directories and orders deepest first', () => {
+      const rootDir = path.join(tempDir, 'repo');
+      const apiDir = path.join(rootDir, 'apps', 'api');
+      const srcDir = path.join(apiDir, 'src');
+
+      fs.mkdirSync(srcDir, { recursive: true });
+
+      const rootEnv = path.join(rootDir, '.env');
+      const apiEnv = path.join(apiDir, '.env');
+
+      fs.writeFileSync(rootEnv, 'FIXTURE_PARENT_VAR=root_val\n');
+      fs.writeFileSync(apiEnv, 'FIXTURE_CHILD_VAR=api_val\n');
+
+      const discovered = resolveEnvFiles([srcDir], rootDir);
+
+      expect(discovered).toHaveLength(2);
+      // Deepest (apps/api/.env) must be first so it takes precedence over parent (.env)
+      expect(discovered[0]).toBe(apiEnv);
+      expect(discovered[1]).toBe(rootEnv);
+      expect(discovered.every((f) => f.endsWith('.env'))).toBe(true);
+    });
+
+    it('returns empty array when no .env files exist in directory tree', () => {
+      const emptyDir = path.join(tempDir, 'empty', 'nested');
+      fs.mkdirSync(emptyDir, { recursive: true });
+
+      const discovered = resolveEnvFiles([emptyDir], tempDir);
+      expect(discovered).toEqual([]);
+    });
+
+    it('discovers single .env file when only one exists in ancestry', () => {
+      const rootDir = path.join(tempDir, 'single');
+      const nestedDir = path.join(rootDir, 'level1', 'level2');
+      fs.mkdirSync(nestedDir, { recursive: true });
+
+      const rootEnv = path.join(rootDir, '.env');
+      fs.writeFileSync(rootEnv, 'FIXTURE_SINGLE_VAR=val\n');
+
+      const discovered = resolveEnvFiles([nestedDir], rootDir);
+      expect(discovered).toHaveLength(1);
+      expect(discovered[0]).toBe(rootEnv);
+    });
+  });
+
+  describe('loadedEnvFiles export', () => {
+    it('exports loadedEnvFiles as array of string paths ending with .env', () => {
       expect(Array.isArray(loadedEnvFiles)).toBe(true);
       for (const filePath of loadedEnvFiles) {
         expect(typeof filePath).toBe('string');
