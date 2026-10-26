@@ -12,6 +12,8 @@ import { masterDataRouter } from './routes/master-data/index.js';
 import { productionRouter } from './routes/production/index.js';
 import { qualityRouter } from './routes/quality/index.js';
 import { analyticsRouter } from './routes/analytics/index.js';
+import { reportsRouter } from './routes/reports/reports.router.js';
+import { alertsRouter } from './routes/alerts/alerts.router.js';
 
 export function createApp(): Express {
   const app = express();
@@ -42,6 +44,10 @@ export function createApp(): Express {
 
   // Advanced Analytics & Statistical Process Monitoring routes (Phase 9)
   app.use('/api/v1/analytics', analyticsRouter);
+
+  // Reporting, Exports & Operational Alerts routes (Phase 10)
+  app.use('/api/v1/reports', reportsRouter);
+  app.use('/api/v1/alerts', alertsRouter);
 
   // Health and readiness endpoints
   app.use('/api/v1/health', healthRouter);

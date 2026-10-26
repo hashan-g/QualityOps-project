@@ -1289,3 +1289,389 @@ export const SpcPChartResponseSchema = z.object({
   warnings: z.array(z.string()),
 });
 export type SpcPChartResponse = z.infer<typeof SpcPChartResponseSchema>;
+
+// ============================================================================
+// Phase 10: Reports, Exports & Operational Alerts Contracts
+// ============================================================================
+
+export const ReportTypeSchema = z.enum([
+  'production-performance',
+  'inspection-summary',
+  'defect-analysis',
+  'capa-status',
+  'spc-summary',
+]);
+export type ReportType = z.infer<typeof ReportTypeSchema>;
+
+export const ExportFormatSchema = z.enum(['CSV', 'XLSX', 'PDF']);
+export type ExportFormat = z.infer<typeof ExportFormatSchema>;
+
+const MAX_REPORT_WINDOW_DAYS = 366;
+
+export const BaseReportFilterSchema = z
+  .object({
+    from: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: 'Parameter "from" must be a valid ISO 8601 date string',
+    }),
+    to: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: 'Parameter "to" must be a valid ISO 8601 date string',
+    }),
+  })
+  .refine(
+    (data) => {
+      const fromDate = new Date(data.from);
+      const toDate = new Date(data.to);
+      return fromDate.getTime() <= toDate.getTime();
+    },
+    {
+      message: 'Parameter "from" must not be chronologically later than "to"',
+      path: ['from'],
+    },
+  )
+  .refine(
+    (data) => {
+      const fromDate = new Date(data.from);
+      const toDate = new Date(data.to);
+      const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays <= MAX_REPORT_WINDOW_DAYS;
+    },
+    {
+      message: `Date range cannot exceed ${MAX_REPORT_WINDOW_DAYS} days`,
+      path: ['to'],
+    },
+  );
+export type BaseReportFilter = z.infer<typeof BaseReportFilterSchema>;
+
+// 1. Production Performance Report
+export const ProductionPerformanceFilterSchema = BaseReportFilterSchema.and(
+  z.object({
+    productId: z.string().uuid().optional(),
+    productionLineId: z.string().uuid().optional(),
+    status: BatchStatusSchema.optional(),
+  }),
+);
+export type ProductionPerformanceFilter = z.infer<typeof ProductionPerformanceFilterSchema>;
+
+export const ProductionPerformanceRowSchema = z.object({
+  batchId: z.string().uuid(),
+  batchNumber: z.string(),
+  productCode: z.string(),
+  productName: z.string(),
+  productionLineCode: z.string(),
+  productionLineName: z.string(),
+  status: BatchStatusSchema,
+  plannedQuantity: z.number().int(),
+  producedQuantity: z.number().int(),
+  acceptedQuantity: z.number().int(),
+  scrapQuantity: z.number().int(),
+  reworkPendingQuantity: z.number().int(),
+  startedAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+});
+export type ProductionPerformanceRow = z.infer<typeof ProductionPerformanceRowSchema>;
+
+export const ProductionPerformanceReportSchema = z.object({
+  reportType: z.literal('production-performance'),
+  generatedAt: z.string().datetime(),
+  filters: z.record(z.unknown()),
+  summary: z.object({
+    totalBatches: z.number().int().nonnegative(),
+    batchesByStatus: z.record(z.number().int().nonnegative()),
+    totalPlannedQuantity: z.number().int().nonnegative(),
+    totalProducedQuantity: z.number().int().nonnegative(),
+    totalAcceptedQuantity: z.number().int().nonnegative(),
+    totalScrapQuantity: z.number().int().nonnegative(),
+    totalReworkPendingQuantity: z.number().int().nonnegative(),
+    overallScrapRate: z.number().nonnegative(),
+    totalDowntimeEvents: z.number().int().nonnegative(),
+    totalDowntimeDurationSeconds: z.number().int().nonnegative(),
+  }),
+  rows: z.array(ProductionPerformanceRowSchema),
+});
+export type ProductionPerformanceReport = z.infer<typeof ProductionPerformanceReportSchema>;
+
+// 2. Quality Inspection Summary Report
+export const InspectionSummaryFilterSchema = BaseReportFilterSchema.and(
+  z.object({
+    productId: z.string().uuid().optional(),
+    productionLineId: z.string().uuid().optional(),
+    stage: InspectionStageSchema.optional(),
+    result: InspectionResultSchema.optional(),
+  }),
+);
+export type InspectionSummaryFilter = z.infer<typeof InspectionSummaryFilterSchema>;
+
+export const InspectionSummaryRowSchema = z.object({
+  inspectionId: z.string().uuid(),
+  inspectionNumber: z.string(),
+  batchNumber: z.string(),
+  productCode: z.string(),
+  productionLineName: z.string(),
+  inspectorName: z.string(),
+  stage: InspectionStageSchema,
+  status: InspectionStatusSchema,
+  result: InspectionResultSchema.nullable(),
+  sampleSize: z.number().int(),
+  passedUnits: z.number().int(),
+  failedUnits: z.number().int(),
+  failureProportion: z.number().nullable(),
+  inspectedAt: z.string().datetime(),
+});
+export type InspectionSummaryRow = z.infer<typeof InspectionSummaryRowSchema>;
+
+export const InspectionSummaryReportSchema = z.object({
+  reportType: z.literal('inspection-summary'),
+  generatedAt: z.string().datetime(),
+  filters: z.record(z.unknown()),
+  summary: z.object({
+    totalInspections: z.number().int().nonnegative(),
+    completedInspections: z.number().int().nonnegative(),
+    inProgressInspections: z.number().int().nonnegative(),
+    cancelledInspections: z.number().int().nonnegative(),
+    totalSampleUnits: z.number().int().nonnegative(),
+    totalPassedUnits: z.number().int().nonnegative(),
+    totalFailedUnits: z.number().int().nonnegative(),
+    pooledFailureProportion: z.number().nullable(),
+    stageBreakdown: z.record(z.number().int().nonnegative()),
+    resultBreakdown: z.record(z.number().int().nonnegative()),
+  }),
+  rows: z.array(InspectionSummaryRowSchema),
+});
+export type InspectionSummaryReport = z.infer<typeof InspectionSummaryReportSchema>;
+
+// 3. Defect Analysis Report
+export const DefectAnalysisFilterSchema = BaseReportFilterSchema.and(
+  z.object({
+    productId: z.string().uuid().optional(),
+    productionLineId: z.string().uuid().optional(),
+    defectTypeId: z.string().uuid().optional(),
+    severity: DefectSeveritySchema.optional(),
+  }),
+);
+export type DefectAnalysisFilter = z.infer<typeof DefectAnalysisFilterSchema>;
+
+export const DefectAnalysisRowSchema = z.object({
+  defectRecordId: z.string().uuid(),
+  inspectionNumber: z.string(),
+  batchNumber: z.string(),
+  defectTypeCode: z.string(),
+  defectTypeName: z.string(),
+  category: z.string(),
+  severity: DefectSeveritySchema,
+  occurrenceCount: z.number().int(),
+  affectedUnitCount: z.number().int(),
+  notes: z.string().nullable(),
+  inspectedAt: z.string().datetime(),
+});
+export type DefectAnalysisRow = z.infer<typeof DefectAnalysisRowSchema>;
+
+export const DefectAnalysisReportSchema = z.object({
+  reportType: z.literal('defect-analysis'),
+  generatedAt: z.string().datetime(),
+  filters: z.record(z.unknown()),
+  summary: z.object({
+    totalFindings: z.number().int().nonnegative(),
+    totalOccurrences: z.number().int().nonnegative(),
+    totalAffectedUnits: z.number().int().nonnegative(),
+    severityBreakdown: z.record(z.number().int().nonnegative()),
+    categoryBreakdown: z.record(z.number().int().nonnegative()),
+    topDefectsPareto: z.array(
+      z.object({
+        defectTypeCode: z.string(),
+        defectTypeName: z.string(),
+        severity: DefectSeveritySchema,
+        occurrences: z.number().int().nonnegative(),
+        affectedUnits: z.number().int().nonnegative(),
+        cumulativePercentage: z.number().nonnegative(),
+      }),
+    ),
+  }),
+  rows: z.array(DefectAnalysisRowSchema),
+});
+export type DefectAnalysisReport = z.infer<typeof DefectAnalysisReportSchema>;
+
+// 4. CAPA Status Report
+export const CapaStatusFilterSchema = BaseReportFilterSchema.and(
+  z.object({
+    status: CapaStatusSchema.optional(),
+    priority: CapaPrioritySchema.optional(),
+    source: CapaSourceSchema.optional(),
+  }),
+);
+export type CapaStatusFilter = z.infer<typeof CapaStatusFilterSchema>;
+
+export const CapaStatusRowSchema = z.object({
+  caseId: z.string().uuid(),
+  caseNumber: z.string(),
+  title: z.string(),
+  status: CapaStatusSchema,
+  priority: CapaPrioritySchema,
+  source: CapaSourceSchema,
+  dueDate: z.string().nullable(),
+  isOverdue: z.boolean(),
+  totalActions: z.number().int(),
+  completedActions: z.number().int(),
+  verifiedBy: z.string().nullable(),
+  verifiedAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type CapaStatusRow = z.infer<typeof CapaStatusRowSchema>;
+
+export const CapaStatusReportSchema = z.object({
+  reportType: z.literal('capa-status'),
+  generatedAt: z.string().datetime(),
+  filters: z.record(z.unknown()),
+  summary: z.object({
+    totalCases: z.number().int().nonnegative(),
+    statusBreakdown: z.record(z.number().int().nonnegative()),
+    priorityBreakdown: z.record(z.number().int().nonnegative()),
+    sourceBreakdown: z.record(z.number().int().nonnegative()),
+    overdueCasesCount: z.number().int().nonnegative(),
+    totalActions: z.number().int().nonnegative(),
+    completedActions: z.number().int().nonnegative(),
+    actionCompletionRate: z.number().nonnegative(),
+    verifiedCasesCount: z.number().int().nonnegative(),
+  }),
+  rows: z.array(CapaStatusRowSchema),
+});
+export type CapaStatusReport = z.infer<typeof CapaStatusReportSchema>;
+
+// 5. SPC Summary Report
+export const SpcSummaryReportFilterSchema = BaseReportFilterSchema.and(
+  z.object({
+    productId: z.string().uuid(),
+    productionLineId: z.string().uuid(),
+    shiftId: z.string().uuid().optional(),
+    inspectionStage: InspectionStageSchema.optional(),
+  }),
+);
+export type SpcSummaryReportFilter = z.infer<typeof SpcSummaryReportFilterSchema>;
+
+export const SpcSummaryReportSchema = z.object({
+  reportType: z.literal('spc-summary'),
+  generatedAt: z.string().datetime(),
+  filters: z.record(z.unknown()),
+  spcResponse: SpcPChartResponseSchema,
+});
+export type SpcSummaryReport = z.infer<typeof SpcSummaryReportSchema>;
+
+// Scheduled Report Contracts
+export const ScheduleCadenceSchema = z.enum(['DAILY', 'WEEKLY', 'MONTHLY']);
+export type ScheduleCadence = z.infer<typeof ScheduleCadenceSchema>;
+
+export const CreateScheduledReportSchema = z.object({
+  name: z.string().min(1).max(150),
+  reportType: ReportTypeSchema,
+  filters: z.record(z.unknown()).default({}),
+  format: ExportFormatSchema.default('PDF'),
+  cadence: ScheduleCadenceSchema,
+  timezone: z.string().min(1).max(50).default('UTC'),
+  isEnabled: z.boolean().default(true),
+});
+export type CreateScheduledReport = z.infer<typeof CreateScheduledReportSchema>;
+
+export const UpdateScheduledReportSchema = z.object({
+  name: z.string().min(1).max(150).optional(),
+  filters: z.record(z.unknown()).optional(),
+  format: ExportFormatSchema.optional(),
+  cadence: ScheduleCadenceSchema.optional(),
+  timezone: z.string().min(1).max(50).optional(),
+  isEnabled: z.boolean().optional(),
+});
+export type UpdateScheduledReport = z.infer<typeof UpdateScheduledReportSchema>;
+
+export const ScheduledReportResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  reportType: ReportTypeSchema,
+  filters: z.record(z.unknown()),
+  format: ExportFormatSchema,
+  cadence: ScheduleCadenceSchema,
+  timezone: z.string(),
+  isEnabled: z.boolean(),
+  createdBy: z.string().uuid().nullable(),
+  nextRunAt: z.string().datetime(),
+  lastRunAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type ScheduledReportResponse = z.infer<typeof ScheduledReportResponseSchema>;
+
+export const ReportRunStatusSchema = z.enum(['QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED']);
+export type ReportRunStatus = z.infer<typeof ReportRunStatusSchema>;
+
+export const ReportRunResponseSchema = z.object({
+  id: z.string().uuid(),
+  scheduledReportId: z.string().uuid().nullable(),
+  reportType: ReportTypeSchema,
+  format: ExportFormatSchema,
+  filters: z.record(z.unknown()),
+  status: ReportRunStatusSchema,
+  artifactId: z.string().uuid().nullable(),
+  fileSizeBytes: z.number().int().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+  startedAt: z.string().datetime().nullable(),
+  completedAt: z.string().datetime().nullable(),
+  triggeredBy: z.string().uuid().nullable(),
+  createdAt: z.string().datetime(),
+});
+export type ReportRunResponse = z.infer<typeof ReportRunResponseSchema>;
+
+// Operational Alert Contracts
+export const AlertRuleTypeSchema = z.enum([
+  'HIGH_INSPECTION_FAILURE_RATE',
+  'OVERDUE_CAPA',
+  'SPC_OUT_OF_CONTROL',
+]);
+export type AlertRuleType = z.infer<typeof AlertRuleTypeSchema>;
+
+export const AlertSeveritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export type AlertSeverity = z.infer<typeof AlertSeveritySchema>;
+
+export const AlertStatusSchema = z.enum(['OPEN', 'ACKNOWLEDGED', 'RESOLVED']);
+export type AlertStatus = z.infer<typeof AlertStatusSchema>;
+
+export const OperationalAlertSchema = z.object({
+  id: z.string().uuid(),
+  ruleType: AlertRuleTypeSchema,
+  severity: AlertSeveritySchema,
+  status: AlertStatusSchema,
+  title: z.string(),
+  message: z.string(),
+  fingerprint: z.string(),
+  entityType: z.string(),
+  entityId: z.string().uuid(),
+  contextData: z.record(z.unknown()),
+  acknowledgedBy: z.string().uuid().nullable(),
+  acknowledgedAt: z.string().datetime().nullable(),
+  resolvedBy: z.string().uuid().nullable(),
+  resolvedAt: z.string().datetime().nullable(),
+  resolutionNotes: z.string().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type OperationalAlert = z.infer<typeof OperationalAlertSchema>;
+
+export const AlertListFilterSchema = z.object({
+  status: AlertStatusSchema.optional(),
+  ruleType: AlertRuleTypeSchema.optional(),
+  severity: AlertSeveritySchema.optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+export type AlertListFilter = z.infer<typeof AlertListFilterSchema>;
+
+export const ResolveAlertSchema = z.object({
+  resolutionNotes: z.string().min(1).max(1000),
+});
+export type ResolveAlert = z.infer<typeof ResolveAlertSchema>;
+
+export const AlertEvaluationResultSchema = z.object({
+  evaluatedRules: z.number().int().nonnegative(),
+  alertsGenerated: z.number().int().nonnegative(),
+  alertsSkipped: z.number().int().nonnegative(),
+  errors: z.array(z.string()),
+});
+export type AlertEvaluationResult = z.infer<typeof AlertEvaluationResultSchema>;

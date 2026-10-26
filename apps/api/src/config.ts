@@ -154,6 +154,27 @@ const EnvironmentSchema = z
         }
         return parsed;
       }),
+    REPORT_STORAGE_DIR: z.string().default('local-data/reports'),
+    ALERT_INSPECTION_FAILURE_THRESHOLD: z
+      .string()
+      .default('0.15')
+      .transform((val) => {
+        const parsed = parseFloat(val);
+        if (isNaN(parsed) || parsed <= 0 || parsed > 1) {
+          throw new Error('ALERT_INSPECTION_FAILURE_THRESHOLD must be a float between 0 and 1');
+        }
+        return parsed;
+      }),
+    ALERT_EVALUATION_LOOKBACK_DAYS: z
+      .string()
+      .default('30')
+      .transform((val) => {
+        const parsed = parseInt(val, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+          throw new Error('ALERT_EVALUATION_LOOKBACK_DAYS must be a positive integer');
+        }
+        return parsed;
+      }),
   })
   .refine(
     (data) => {

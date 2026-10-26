@@ -89,6 +89,12 @@ describe('Database Schema & Migration Constraints', () => {
   );
   const migration003Sql = fs.readFileSync(migration003Path, 'utf-8');
 
+  const migration005Path = path.resolve(
+    process.cwd(),
+    '../../database/migrations/005_reporting_and_alerts.sql',
+  );
+  const migration005Sql = fs.readFileSync(migration005Path, 'utf-8');
+
   describe('assertConstraintViolation Helper Integrity', () => {
     it('rolls back to savepoint and validates error code and constraint on violation', async () => {
       const executedQueries: string[] = [];
@@ -322,6 +328,20 @@ describe('Database Schema & Migration Constraints', () => {
       expect(downSection).toContain('DROP INDEX IF EXISTS idx_shifts_is_active');
       expect(downSection).toContain('ALTER TABLE shifts DROP COLUMN IF EXISTS is_active');
     });
+
+    it('migration 005 creates scheduled_reports, report_runs, operational_alerts and down migration cleanly drops them', () => {
+      expect(migration005Sql).toContain('CREATE TABLE scheduled_reports');
+      expect(migration005Sql).toContain('CREATE TABLE report_runs');
+      expect(migration005Sql).toContain('CREATE TABLE operational_alerts');
+      expect(migration005Sql).toContain(
+        'CREATE UNIQUE INDEX uq_operational_alerts_active_fingerprint',
+      );
+
+      const downSection = migration005Sql.split('-- Down Migration')[1] ?? '';
+      expect(downSection).toContain('DROP TABLE IF EXISTS operational_alerts');
+      expect(downSection).toContain('DROP TABLE IF EXISTS report_runs');
+      expect(downSection).toContain('DROP TABLE IF EXISTS scheduled_reports');
+    });
   });
 
   describe('Live Database Constraints (PostgreSQL Integration)', () => {
@@ -381,6 +401,9 @@ describe('Database Schema & Migration Constraints', () => {
           'capa_actions',
           'audit_logs',
           'refresh_sessions',
+          'scheduled_reports',
+          'report_runs',
+          'operational_alerts',
         ];
 
         for (const table of requiredTables) {
@@ -640,6 +663,55 @@ describe('Database Schema & Migration Constraints', () => {
               [userId],
             ),
           'chk_refresh_sessions_revoked_after_created',
+        );
+
+        // Test G: Scheduled reports invalid format constraint
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO scheduled_reports (
+                name, report_type, format, cadence, next_run_at
+              ) VALUES ('Test Invalid Report', 'production-performance', 'HTML', 'DAILY', NOW());`,
+            ),
+          'scheduled_reports_format_check',
+        );
+
+        // Test H: Operational alerts invalid rule_type constraint
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO operational_alerts (
+                rule_type, severity, status, title, message, fingerprint, entity_type, entity_id
+              ) VALUES ('INVALID_RULE_TYPE', 'HIGH', 'OPEN', 'Title', 'Msg', 'fp-1', 'ENTITY', gen_random_uuid());`,
+            ),
+          'operational_alerts_rule_type_check',
+        );
+
+        // Test I: Partial unique index uq_operational_alerts_active_fingerprint prevents duplicate OPEN alerts
+        const fpTest = `test_fp_${Date.now()}`;
+        const alertRes1 = await client.query<{ id: string }>(
+          `INSERT INTO operational_alerts (
+            rule_type, severity, status, title, message, fingerprint, entity_type, entity_id
+          ) VALUES ('HIGH_INSPECTION_FAILURE_RATE', 'HIGH', 'OPEN', 'Title 1', 'Msg 1', $1, 'QUALITY_INSPECTION', gen_random_uuid())
+          RETURNING id;`,
+          [fpTest],
+        );
+        expect(alertRes1.rows[0]?.id).toBeDefined();
+
+        // Second OPEN alert with identical fingerprint must violate unique constraint (23505)
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO operational_alerts (
+                rule_type, severity, status, title, message, fingerprint, entity_type, entity_id
+              ) VALUES ('HIGH_INSPECTION_FAILURE_RATE', 'HIGH', 'OPEN', 'Title 2', 'Msg 2', $1, 'QUALITY_INSPECTION', gen_random_uuid());`,
+              [fpTest],
+            ),
+          'uq_operational_alerts_active_fingerprint',
+          '23505',
         );
 
         // Clean up transaction

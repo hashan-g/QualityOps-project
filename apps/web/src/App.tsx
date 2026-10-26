@@ -37,7 +37,7 @@ const AppContent: React.FC = () => {
               borderRadius: '4px',
             }}
           >
-            Phase 9: Advanced Analytics &amp; SPC
+            Phase 10: Reporting, Exports &amp; Operational Alerts
           </span>
           <span
             style={{

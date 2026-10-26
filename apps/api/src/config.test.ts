@@ -110,6 +110,9 @@ describe('Configuration & Environment Resolution Tests', () => {
       expect(typeof config.DB_POOL_MAX).toBe('number');
       expect(typeof config.DATABASE_URL).toBe('string');
       expect(config.DATABASE_URL).toContain('postgresql://');
+      expect(typeof config.REPORT_STORAGE_DIR).toBe('string');
+      expect(typeof config.ALERT_INSPECTION_FAILURE_THRESHOLD).toBe('number');
+      expect(typeof config.ALERT_EVALUATION_LOOKBACK_DAYS).toBe('number');
     });
   });
 });

@@ -280,3 +280,69 @@ _Table Constraints:_
 | `after_state`  | JSONB        | Yes      | None                | None                              | JSON snapshot of entity after change.                      |
 | `ip_address`   | VARCHAR(45)  | Yes      | None                | None                              | Client IP address.                                         |
 | `created_at`   | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                              | Audit log instant (UTC).                                   |
+
+---
+
+## 5. Reporting & Operational Alerts (Phase 10 Baseline)
+
+### 5.1 `scheduled_reports`
+
+| Column Name   | Data Type    | Nullable | Default             | Constraints / Allowed Values                                                                           | Description                                                    |
+| ------------- | ------------ | -------- | ------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `id`          | UUID         | No       | `gen_random_uuid()` | PRIMARY KEY                                                                                            | Unique scheduled report identifier.                            |
+| `name`        | VARCHAR(100) | No       | None                | None                                                                                                   | Human-readable schedule title.                                 |
+| `report_type` | VARCHAR(50)  | No       | None                | `IN ('production-performance', 'inspection-summary', 'defect-analysis', 'capa-status', 'spc-summary')` | Domain report catalogue identifier.                            |
+| `format`      | VARCHAR(10)  | No       | None                | `IN ('CSV', 'XLSX', 'PDF')`                                                                            | Target export document format.                                 |
+| `filters`     | JSONB        | No       | `'{}'::jsonb`       | None                                                                                                   | Parameterized report filter criteria (products, lines, dates). |
+| `cadence`     | VARCHAR(20)  | No       | None                | `IN ('DAILY', 'WEEKLY', 'MONTHLY')`                                                                    | Recurrence schedule frequency.                                 |
+| `timezone`    | VARCHAR(50)  | No       | `'UTC'`             | None                                                                                                   | Recurrence timezone calculation base.                          |
+| `is_enabled`  | BOOLEAN      | No       | `true`              | None                                                                                                   | Active execution flag.                                         |
+| `created_by`  | UUID         | Yes      | None                | FK `users(id)` ON DELETE SET NULL                                                                      | Author of the schedule.                                        |
+| `next_run_at` | TIMESTAMPTZ  | No       | None                | Index                                                                                                  | Instant when worker script may next claim this schedule.       |
+| `last_run_at` | TIMESTAMPTZ  | Yes      | None                | None                                                                                                   | Instant when the schedule was last triggered.                  |
+| `created_at`  | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                                                   | Record creation instant (UTC).                                 |
+| `updated_at`  | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                                                   | Last update instant (UTC).                                     |
+
+### 5.2 `report_runs`
+
+| Column Name           | Data Type   | Nullable | Default             | Constraints / Allowed Values                                                                           | Description                                                  |
+| --------------------- | ----------- | -------- | ------------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `id`                  | UUID        | No       | `gen_random_uuid()` | PRIMARY KEY                                                                                            | Unique report execution run identifier.                      |
+| `scheduled_report_id` | UUID        | Yes      | None                | FK `scheduled_reports(id)` ON DELETE SET NULL                                                          | Associated recurring schedule (NULL for ad-hoc worker runs). |
+| `report_type`         | VARCHAR(50) | No       | None                | `IN ('production-performance', 'inspection-summary', 'defect-analysis', 'capa-status', 'spc-summary')` | Domain report catalogue identifier.                          |
+| `format`              | VARCHAR(10) | No       | None                | `IN ('CSV', 'XLSX', 'PDF')`                                                                            | Generated export document format.                            |
+| `filters`             | JSONB       | No       | `'{}'::jsonb`       | None                                                                                                   | Exact filter parameters used during report execution.        |
+| `status`              | VARCHAR(20) | No       | `'QUEUED'`          | `IN ('QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED')`                                                      | Lifecycle status of the generation run.                      |
+| `artifact_id`         | UUID        | Yes      | None                | None                                                                                                   | Opaque UUID identifier of stored artifact file.              |
+| `file_size_bytes`     | BIGINT      | Yes      | None                | None                                                                                                   | Size of exported artifact in bytes.                          |
+| `error_message`       | TEXT        | Yes      | None                | None                                                                                                   | Error diagnostic if status transitioned to FAILED.           |
+| `started_at`          | TIMESTAMPTZ | Yes      | None                | None                                                                                                   | Timestamp when worker process claimed and began execution.   |
+| `completed_at`        | TIMESTAMPTZ | Yes      | None                | None                                                                                                   | Timestamp when artifact generation succeeded or failed.      |
+| `triggered_by`        | UUID        | Yes      | None                | FK `users(id)` ON DELETE SET NULL                                                                      | User actor if triggered manually via API/CLI.                |
+| `created_at`          | TIMESTAMPTZ | No       | `CURRENT_TIMESTAMP` | None                                                                                                   | Record creation instant (UTC).                               |
+
+### 5.3 `operational_alerts`
+
+| Column Name        | Data Type    | Nullable | Default             | Constraints / Allowed Values                                                | Description                                                      |
+| ------------------ | ------------ | -------- | ------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `id`               | UUID         | No       | `gen_random_uuid()` | PRIMARY KEY                                                                 | Unique operational alert identifier.                             |
+| `rule_type`        | VARCHAR(50)  | No       | None                | `IN ('HIGH_INSPECTION_FAILURE_RATE', 'OVERDUE_CAPA', 'SPC_OUT_OF_CONTROL')` | Operational rule that triggered this alert.                      |
+| `severity`         | VARCHAR(20)  | No       | None                | `IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')`                                  | Risk severity level.                                             |
+| `status`           | VARCHAR(20)  | No       | `'OPEN'`            | `IN ('OPEN', 'ACKNOWLEDGED', 'RESOLVED')`                                   | Alert remediation lifecycle state.                               |
+| `title`            | VARCHAR(255) | No       | None                | None                                                                        | Summary headline of the anomaly.                                 |
+| `message`          | TEXT         | No       | None                | None                                                                        | Detailed description including exact metrics and thresholds.     |
+| `fingerprint`      | VARCHAR(255) | No       | None                | Partial Unique Index (`WHERE status IN ('OPEN', 'ACKNOWLEDGED')`)           | Deterministic deduplication hash.                                |
+| `entity_type`      | VARCHAR(50)  | No       | None                | None                                                                        | Associated target entity type (`INSPECTION`, `CAPA_CASE`, etc.). |
+| `entity_id`        | UUID         | No       | None                | None                                                                        | Associated target entity UUID.                                   |
+| `context_data`     | JSONB        | No       | `'{}'::jsonb`       | None                                                                        | Snapshot of underlying values (rates, limits, dates).            |
+| `acknowledged_by`  | UUID         | Yes      | None                | FK `users(id)` ON DELETE SET NULL                                           | Operator or manager who acknowledged the anomaly.                |
+| `acknowledged_at`  | TIMESTAMPTZ  | Yes      | None                | None                                                                        | Timestamp of acknowledgment (UTC).                               |
+| `resolved_by`      | UUID         | Yes      | None                | FK `users(id)` ON DELETE SET NULL                                           | Operator or manager who resolved the alert.                      |
+| `resolved_at`      | TIMESTAMPTZ  | Yes      | None                | None                                                                        | Timestamp of resolution (UTC).                                   |
+| `resolution_notes` | TEXT         | Yes      | None                | None                                                                        | Mandatory documented notes detailing the remediation actions.    |
+| `created_at`       | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                        | Record creation instant (UTC).                                   |
+| `updated_at`       | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                        | Last update instant (UTC).                                       |
+
+_Table Constraints & Indexes:_
+
+- `uq_operational_alerts_active_fingerprint`: `CREATE UNIQUE INDEX uq_operational_alerts_active_fingerprint ON operational_alerts (fingerprint) WHERE status IN ('OPEN', 'ACKNOWLEDGED')`

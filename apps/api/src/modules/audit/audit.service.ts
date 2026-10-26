@@ -11,7 +11,12 @@ export interface RecordAuditParams {
     | 'DELETE'
     | 'CLOSE'
     | 'CORRECTION'
-    | 'VERIFY';
+    | 'VERIFY'
+    | 'GENERATE'
+    | 'DOWNLOAD'
+    | 'RUN'
+    | 'ACKNOWLEDGE'
+    | 'RESOLVE';
   entityType:
     | 'PRODUCT'
     | 'PRODUCTION_LINE'
@@ -23,7 +28,10 @@ export interface RecordAuditParams {
     | 'QUALITY_INSPECTION'
     | 'DEFECT_RECORD'
     | 'CAPA_CASE'
-    | 'CAPA_ACTION';
+    | 'CAPA_ACTION'
+    | 'SCHEDULED_REPORT'
+    | 'REPORT_RUN'
+    | 'OPERATIONAL_ALERT';
   entityId: string;
   requestId?: string | undefined;
   beforeState?: Record<string, unknown> | null | undefined;

@@ -8,14 +8,25 @@ import { QualityInspectionsView } from './QualityInspectionsView';
 import { QualityDefectsView } from './QualityDefectsView';
 import { CapaManagementView } from './CapaManagementView';
 import { SpcMonitoringView } from './SpcMonitoringView';
+import { ReportsView } from './ReportsView';
+import { AlertsView } from './AlertsView';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN');
 
   const [activeSection, setActiveSection] = useState<
-    'spc' | 'capa' | 'defects' | 'inspections' | 'batches' | 'downtime' | 'master-data' | 'users'
-  >('spc');
+    | 'reports'
+    | 'alerts'
+    | 'spc'
+    | 'capa'
+    | 'defects'
+    | 'inspections'
+    | 'batches'
+    | 'downtime'
+    | 'master-data'
+    | 'users'
+  >('reports');
 
   // Admin user list state
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -166,10 +177,43 @@ export const AuthenticatedView: React.FC = () => {
         aria-label="Application Sections"
         style={{
           display: 'flex',
+          flexWrap: 'wrap',
           gap: '12px',
           marginBottom: '20px',
         }}
       >
+        <button
+          onClick={() => setActiveSection('reports')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: activeSection === 'reports' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'reports' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'reports' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          Reports &amp; Exports
+        </button>
+
+        <button
+          onClick={() => setActiveSection('alerts')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: activeSection === 'alerts' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'alerts' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'alerts' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          Operational Alerts
+        </button>
+
         <button
           onClick={() => setActiveSection('spc')}
           style={{
@@ -301,7 +345,11 @@ export const AuthenticatedView: React.FC = () => {
         )}
       </nav>
 
-      {activeSection === 'spc' ? (
+      {activeSection === 'reports' ? (
+        <ReportsView />
+      ) : activeSection === 'alerts' ? (
+        <AlertsView />
+      ) : activeSection === 'spc' ? (
         <SpcMonitoringView />
       ) : activeSection === 'capa' ? (
         <CapaManagementView />

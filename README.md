@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 9: Advanced Analytics & Statistical Process Monitoring**  
+**Phase 10: Reporting, Exports & Operational Alerts**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -9,10 +9,10 @@
 
 ## 1. Product Purpose
 
-QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, process analytics, closed-loop corrective action, and statistical process monitoring (SPC).
+QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, process analytics, closed-loop corrective action, statistical process monitoring (SPC), standardized reporting, secure exports, and operational alert surveillance.
 
-> **Phase 9 Scope Guard Notice:**  
-> This phase establishes defensible Statistical Process Control (SPC) attribute monitoring using p-charts derived from completed inspection subgroups, with variable control limits calculated via a dedicated Python microservice. **Automated machine control loops, ML predictive forecasting, and automated supplier alerting remain out-of-scope until subsequent phases.**
+> **Phase 10 Scope Guard Notice:**  
+> This phase establishes standardized reporting catalogues (Production Performance, Inspection Summary, Defect Analysis, CAPA Status, SPC Summary), safe data exports (CSV with formula-injection neutralization, styled XLSX, vector PDF), scheduled recurring reports with transactional atomic execution (`FOR UPDATE SKIP LOCKED`), and operational exception alerts with partial-index deduplication. **Automated email transmission is documented as deferred pending a configured provider; no fake email deliveries are simulated.**
 
 ---
 
@@ -20,10 +20,10 @@ QualityOps is an engineering platform designed for manufacturing quality trackin
 
 The repository is structured as an npm workspace monorepo with an auxiliary Python analytics microservice:
 
-- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, SPC Monitoring view with variable stepped limits, KPI ribbon, interactive SVG chart, accessible signal markers, filter controls, and robust non-ready state management, CAPA management view with KPI cards, multi-filters, detail drawers, action completion, independent verification, and closure modals, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
-- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + SPC Analytics module with timeout handling and 503 fallback, CAPA Management, Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
+- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, Reports & Safe Exports view with on-screen preview, CSV/XLSX/PDF triggers, and schedule management, Operational Alerts view with severity triage, KPI summary, evaluation trigger, and mandatory resolution modal, SPC Monitoring view with variable stepped limits, CAPA management view, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view, downtime tracking, and master-data management shell)
+- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Reporting Engine (CSV RFC 4180 / ExcelJS / PDFKit), Scheduled Report Runner, Operational Alerts Evaluator with idempotent partial unique constraints, SPC Analytics module with timeout handling and 503 fallback, CAPA Management, Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
 - **Analytics Microservice (`services/analytics`):** Python 3.12+ + FastAPI + Pydantic v2 + Uvicorn (Stateless, isolated calculations, zero direct database access, variable p-chart control limits, strict 20-subgroup guardrail, degenerate baseline detection, unrounded 3-sigma signal detection)
-- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for SPC p-charts, CAPA cases, actions, verification, closure, defect findings, descriptive analytics, Pareto items, quality inspections, production batches, downtime records, query parameters, mutations, and API responses
+- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for Report queries, summaries, rows, export options, Scheduled Reports, Report Runs, Operational Alerts, evaluation results, SPC p-charts, CAPA cases, actions, defect findings, and master data
 - **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); versioned SQL migrations under `database/migrations` via `node-pg-migrate`
 - **Quality Gates:** Strict TypeScript (`exactOptionalPropertyTypes`), Prettier, ESLint flat config, Vitest, Pytest, Supertest, and GitHub Actions CI
 
@@ -155,6 +155,21 @@ npm run dev
 - **Statistical Process Monitoring (SPC) Endpoints (Read: All Canonical Roles):**
   - `GET /api/v1/analytics/quality/spc/p-chart` (Attribute p-chart monitoring for variable subgroup sizes, pooled $\bar{p}$, 20-subgroup threshold, degenerate baseline detection, and unrounded 3-sigma signal detection)
   - `POST http://localhost:8000/calculate/p-chart` (Python microservice stateless calculation engine)
+- **Reporting & Export Endpoints (Read & Export: All Canonical Roles; Schedule Manage: ADMIN & QUALITY_MANAGER):**
+  - `GET /api/v1/reports` (Catalogue of reports, filters, supported formats, and metrics)
+  - `GET /api/v1/reports/:reportType` (On-screen aggregated report dataset: `production-performance`, `inspection-summary`, `defect-analysis`, `capa-status`, `spc-summary`)
+  - `GET /api/v1/reports/:reportType/export?format=csv|xlsx|pdf` (Secure streaming/file exports with formula-injection neutralization, styled sheets, and vector PDFs)
+  - `GET /api/v1/reports/schedules` (List configured recurring report schedules)
+  - `POST /api/v1/reports/schedules` (Configure new recurring report schedule)
+  - `PATCH /api/v1/reports/schedules/:id` (Update cadence, format, filters, or enable/disable schedule)
+  - `GET /api/v1/reports/schedules/:id/runs` (Audit and execution history for a schedule)
+  - `GET /api/v1/reports/artifacts/:artifactId` (Download generated export artifact by opaque UUID with path traversal prevention)
+- **Operational Alerts Endpoints (View: All Canonical Roles; Evaluate: ADMIN, QUALITY_MANAGER; Triage/Resolve: ADMIN, QUALITY_MANAGER, OPERATOR):**
+  - `GET /api/v1/alerts` (List alerts with status, severity, ruleType, date filters, and pagination)
+  - `GET /api/v1/alerts/:id` (Alert detail view with underlying entity, metric values, and resolution log)
+  - `POST /api/v1/alerts/evaluate` (Manual trigger for alert rules evaluation across inspections, CAPAs, and SPC signals)
+  - `POST /api/v1/alerts/:id/acknowledge` (Transition alert from OPEN to ACKNOWLEDGED with actor audit)
+  - `POST /api/v1/alerts/:id/resolve` (Transition alert to RESOLVED with mandatory documented notes)
 
 ---
 
@@ -179,6 +194,8 @@ All quality commands can be executed from the root workspace:
 | `npm run db:migrate:create`       | Creates a new SQL migration file                                         |
 | `npm run db:bootstrap-admin`      | Safely creates or verifies initial administrator account                 |
 | `npm run db:reset-admin-password` | Safely resets password for an existing administrator account             |
+| `npm run reports:run-scheduled`   | Executes due recurring scheduled reports with atomic row locking         |
+| `npm run alerts:evaluate`         | Evaluates operational alert rules and records deduplicated anomalies     |
 
 ---
 
@@ -203,6 +220,9 @@ All quality commands can be executed from the root workspace:
 - [Statistical Process Monitoring & p-Chart Architecture](file:///docs/analytics/statistical-process-monitoring.md)
 - [QualityOps Metric Definitions](file:///docs/analytics/metric-definitions.md)
 - [Phase 9 SPC Analytics API Specification](file:///docs/api/phase-9-analytics-contract.md)
+- [Phase 10 Report & Export Workflow](file:///docs/reports/report-export-workflow.md)
+- [Phase 10 Operational Alert Rules](file:///docs/alerts/operational-alert-rules.md)
+- [Phase 10 Reporting & Alerts API Contract](file:///docs/api/phase-10-reporting-alerts-contract.md)
 - [Phase 1 Acceptance Checklist](file:///docs/phase-1/acceptance-checklist.md)
 - [Phase 2 Acceptance Checklist](file:///docs/phase-2/acceptance-checklist.md)
 - [Phase 3 Acceptance Checklist](file:///docs/phase-3/acceptance-checklist.md)
@@ -212,3 +232,4 @@ All quality commands can be executed from the root workspace:
 - [Phase 7 Acceptance Checklist](file:///docs/phase-7/acceptance-checklist.md)
 - [Phase 8 Acceptance Checklist](file:///docs/phase-8/acceptance-checklist.md)
 - [Phase 9 Acceptance Checklist](file:///docs/phase-9/acceptance-checklist.md)
+- [Phase 10 Acceptance Checklist](file:///docs/phase-10/acceptance-checklist.md)

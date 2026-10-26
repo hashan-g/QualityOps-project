@@ -8,14 +8,16 @@ import { QualityInspectionsView } from './components/QualityInspectionsView.js';
 import { QualityDefectsView } from './components/QualityDefectsView.js';
 import { CapaManagementView } from './components/CapaManagementView.js';
 import { SpcMonitoringView } from './components/SpcMonitoringView.js';
+import { ReportsView } from './components/ReportsView.js';
+import { AlertsView } from './components/AlertsView.js';
 import { AuthProvider } from './context/AuthContext.js';
 
-describe('QualityOps Web — Phase 9 Advanced Analytics & SPC Shell', () => {
-  it('renders the platform screen with title and phase 9 tag', () => {
+describe('QualityOps Web — Phase 10 Reporting, Exports & Operational Alerts Shell', () => {
+  it('renders the platform screen with title and phase 10 tag', () => {
     const html = renderToString(<App />);
 
     expect(html).toContain('QualityOps Platform');
-    expect(html).toContain('Phase 9: Advanced Analytics &amp; SPC');
+    expect(html).toContain('Phase 10: Reporting, Exports &amp; Operational Alerts');
     expect(html).toContain('PostgreSQL 18');
     expect(html).toContain('Manufacturing Quality &amp; Process Analytics Platform');
   });
@@ -121,5 +123,40 @@ describe('QualityOps Web — Phase 9 Advanced Analytics & SPC Shell', () => {
     expect(html).toContain('Capture and track equipment stoppages');
     expect(html).toContain('Read-Only Mode');
     expect(html).toContain('Search reason...');
+  });
+
+  it('renders ReportsView structure with catalogue tabs, export options, and schedules banner', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <ReportsView />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('Manufacturing Reports &amp; Safe Exports');
+    expect(html).toContain('Production Performance');
+    expect(html).toContain('Quality Inspection Summary');
+    expect(html).toContain('Defect Analysis &amp; Pareto');
+    expect(html).toContain('CAPA Status &amp; Tracker');
+    expect(html).toContain('SPC p-Chart Summary');
+    expect(html).toContain('Export CSV');
+    expect(html).toContain('Export XLSX');
+    expect(html).toContain('Export PDF');
+  });
+
+  it('renders AlertsView structure with severity filters, KPI summary, and evaluation trigger', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <AlertsView />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('Operational Alerts &amp; Exception Monitoring');
+    expect(html).toContain('Active Exceptions');
+    expect(html).toContain('Unacknowledged');
+    expect(html).toContain('Critical &amp; High');
+    expect(html).toContain('Resolved (Archive)');
+    expect(html).toContain('All Statuses');
+    expect(html).toContain('All Severities');
+    expect(html).toContain('All Rule Types');
   });
 });

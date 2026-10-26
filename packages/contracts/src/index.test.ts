@@ -63,6 +63,25 @@ import {
   SpcSummarySchema,
   SpcPChartPointSchema,
   SpcPChartResponseSchema,
+  ReportTypeSchema,
+  ExportFormatSchema,
+  BaseReportFilterSchema,
+  ProductionPerformanceFilterSchema,
+  InspectionSummaryFilterSchema,
+  DefectAnalysisFilterSchema,
+  CapaStatusFilterSchema,
+  SpcSummaryReportFilterSchema,
+  CreateScheduledReportSchema,
+  UpdateScheduledReportSchema,
+  ScheduledReportResponseSchema,
+  ReportRunResponseSchema,
+  AlertRuleTypeSchema,
+  AlertSeveritySchema,
+  AlertStatusSchema,
+  OperationalAlertSchema,
+  AlertListFilterSchema,
+  ResolveAlertSchema,
+  AlertEvaluationResultSchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -1277,6 +1296,243 @@ describe('Contracts — Phase 4 Master Data Management Schemas', () => {
 
         const summaryParsed = SpcSummarySchema.safeParse(sampleResponse.summary);
         expect(summaryParsed.success).toBe(true);
+      });
+    });
+  });
+
+  describe('Contracts — Phase 10 Reporting, Exports & Operational Alerts Schemas', () => {
+    describe('Report Filters & Base Validation', () => {
+      it('validates BaseReportFilterSchema chronological order and max 366-day window', () => {
+        // Valid 30-day window
+        const valid = {
+          from: '2026-01-01T00:00:00.000Z',
+          to: '2026-01-31T00:00:00.000Z',
+        };
+        expect(BaseReportFilterSchema.safeParse(valid).success).toBe(true);
+
+        // Invalid: from > to
+        const inverted = {
+          from: '2026-02-01T00:00:00.000Z',
+          to: '2026-01-01T00:00:00.000Z',
+        };
+        expect(BaseReportFilterSchema.safeParse(inverted).success).toBe(false);
+
+        expect(ReportTypeSchema.safeParse('production-performance').success).toBe(true);
+        expect(ReportTypeSchema.safeParse('invalid-report').success).toBe(false);
+        expect(ExportFormatSchema.safeParse('CSV').success).toBe(true);
+        expect(ExportFormatSchema.safeParse('XML').success).toBe(false);
+
+        // Invalid: exceeds 366 days
+        const tooLong = {
+          from: '2025-01-01T00:00:00.000Z',
+          to: '2026-02-01T00:00:00.000Z',
+        };
+        expect(BaseReportFilterSchema.safeParse(tooLong).success).toBe(false);
+
+        // Invalid date format
+        expect(
+          BaseReportFilterSchema.safeParse({ from: 'not-a-date', to: '2026-01-01' }).success,
+        ).toBe(false);
+      });
+
+      it('validates report-specific filter schemas', () => {
+        const base = {
+          from: '2026-01-01T00:00:00.000Z',
+          to: '2026-01-31T00:00:00.000Z',
+        };
+
+        // ProductionPerformanceFilterSchema
+        expect(
+          ProductionPerformanceFilterSchema.safeParse({
+            ...base,
+            productId: '11111111-1111-1111-1111-111111111111',
+            status: 'COMPLETED',
+          }).success,
+        ).toBe(true);
+
+        // InspectionSummaryFilterSchema
+        expect(
+          InspectionSummaryFilterSchema.safeParse({
+            ...base,
+            stage: 'FINAL',
+            result: 'PASS',
+          }).success,
+        ).toBe(true);
+
+        // DefectAnalysisFilterSchema
+        expect(
+          DefectAnalysisFilterSchema.safeParse({
+            ...base,
+            severity: 'CRITICAL',
+          }).success,
+        ).toBe(true);
+
+        // CapaStatusFilterSchema
+        expect(
+          CapaStatusFilterSchema.safeParse({
+            ...base,
+            priority: 'HIGH',
+            status: 'UNDER_REVIEW',
+          }).success,
+        ).toBe(true);
+
+        // SpcSummaryReportFilterSchema requires productId and productionLineId
+        expect(
+          SpcSummaryReportFilterSchema.safeParse({
+            ...base,
+            productId: '11111111-1111-1111-1111-111111111111',
+            productionLineId: '22222222-2222-2222-2222-222222222222',
+          }).success,
+        ).toBe(true);
+
+        expect(
+          SpcSummaryReportFilterSchema.safeParse({
+            ...base,
+          }).success,
+        ).toBe(false);
+      });
+    });
+
+    describe('Scheduled Report Contracts', () => {
+      it('validates CreateScheduledReportSchema and UpdateScheduledReportSchema', () => {
+        const validCreate = {
+          name: 'Weekly Quality Summary',
+          reportType: 'inspection-summary',
+          filters: { stage: 'FINAL' },
+          format: 'PDF',
+          cadence: 'WEEKLY',
+          timezone: 'America/New_York',
+          isEnabled: true,
+        };
+        expect(CreateScheduledReportSchema.safeParse(validCreate).success).toBe(true);
+
+        // Invalid cadence
+        expect(
+          CreateScheduledReportSchema.safeParse({
+            ...validCreate,
+            cadence: 'BIWEEKLY',
+          }).success,
+        ).toBe(false);
+
+        // Valid update
+        expect(
+          UpdateScheduledReportSchema.safeParse({
+            isEnabled: false,
+            cadence: 'MONTHLY',
+          }).success,
+        ).toBe(true);
+      });
+
+      it('validates ScheduledReportResponseSchema and ReportRunResponseSchema', () => {
+        const scheduleResponse = {
+          id: '11111111-1111-1111-1111-111111111111',
+          name: 'Daily Production Summary',
+          reportType: 'production-performance',
+          filters: {},
+          format: 'CSV',
+          cadence: 'DAILY',
+          timezone: 'UTC',
+          isEnabled: true,
+          createdBy: '22222222-2222-2222-2222-222222222222',
+          nextRunAt: new Date().toISOString(),
+          lastRunAt: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        expect(ScheduledReportResponseSchema.safeParse(scheduleResponse).success).toBe(true);
+
+        const runResponse = {
+          id: '33333333-3333-3333-3333-333333333333',
+          scheduledReportId: scheduleResponse.id,
+          reportType: 'production-performance',
+          format: 'CSV',
+          filters: {},
+          status: 'SUCCEEDED',
+          artifactId: '44444444-4444-4444-4444-444444444444',
+          fileSizeBytes: 1024,
+          errorMessage: null,
+          startedAt: new Date().toISOString(),
+          completedAt: new Date().toISOString(),
+          triggeredBy: null,
+          createdAt: new Date().toISOString(),
+        };
+        expect(ReportRunResponseSchema.safeParse(runResponse).success).toBe(true);
+      });
+    });
+
+    describe('Operational Alert Contracts', () => {
+      it('validates AlertRuleType, AlertSeverity, and AlertStatus enums', () => {
+        expect(AlertRuleTypeSchema.safeParse('HIGH_INSPECTION_FAILURE_RATE').success).toBe(true);
+        expect(AlertRuleTypeSchema.safeParse('OVERDUE_CAPA').success).toBe(true);
+        expect(AlertRuleTypeSchema.safeParse('SPC_OUT_OF_CONTROL').success).toBe(true);
+        expect(AlertRuleTypeSchema.safeParse('INVALID_RULE').success).toBe(false);
+
+        expect(AlertSeveritySchema.safeParse('CRITICAL').success).toBe(true);
+        expect(AlertSeveritySchema.safeParse('LOW').success).toBe(true);
+        expect(AlertSeveritySchema.safeParse('URGENT').success).toBe(false);
+
+        expect(AlertStatusSchema.safeParse('OPEN').success).toBe(true);
+        expect(AlertStatusSchema.safeParse('ACKNOWLEDGED').success).toBe(true);
+        expect(AlertStatusSchema.safeParse('RESOLVED').success).toBe(true);
+        expect(AlertStatusSchema.safeParse('CLOSED').success).toBe(false);
+      });
+
+      it('validates OperationalAlertSchema and ResolveAlertSchema', () => {
+        const alert = {
+          id: '11111111-1111-1111-1111-111111111111',
+          ruleType: 'HIGH_INSPECTION_FAILURE_RATE',
+          severity: 'HIGH',
+          status: 'OPEN',
+          title: 'High Inspection Failure Rate on Line 1',
+          message: 'Inspection INSP-001 had 25.0% failure rate exceeding threshold 15.0%',
+          fingerprint: 'high_failure:insp-001',
+          entityType: 'QUALITY_INSPECTION',
+          entityId: '22222222-2222-2222-2222-222222222222',
+          contextData: { sampleSize: 100, failedUnits: 25, failureRate: 0.25 },
+          acknowledgedBy: null,
+          acknowledgedAt: null,
+          resolvedBy: null,
+          resolvedAt: null,
+          resolutionNotes: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        expect(OperationalAlertSchema.safeParse(alert).success).toBe(true);
+
+        // Resolve validation requires notes
+        expect(
+          ResolveAlertSchema.safeParse({
+            resolutionNotes: 'Root cause investigated and line re-calibrated.',
+          }).success,
+        ).toBe(true);
+        expect(ResolveAlertSchema.safeParse({ resolutionNotes: '' }).success).toBe(false);
+      });
+
+      it('validates AlertListFilterSchema defaults and constraints', () => {
+        const parsed = AlertListFilterSchema.safeParse({});
+        expect(parsed.success).toBe(true);
+        if (parsed.success) {
+          expect(parsed.data.limit).toBe(50);
+          expect(parsed.data.offset).toBe(0);
+        }
+
+        const filtered = AlertListFilterSchema.safeParse({
+          status: 'OPEN',
+          ruleType: 'OVERDUE_CAPA',
+          limit: 25,
+          offset: 10,
+        });
+        expect(filtered.success).toBe(true);
+      });
+
+      it('validates AlertEvaluationResultSchema structure', () => {
+        const result = {
+          evaluatedRules: 3,
+          alertsGenerated: 2,
+          alertsSkipped: 5,
+          errors: [],
+        };
+        expect(AlertEvaluationResultSchema.safeParse(result).success).toBe(true);
       });
     });
   });
