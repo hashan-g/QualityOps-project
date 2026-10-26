@@ -39,6 +39,23 @@ import {
   DefectAnalyticsFilterSchema,
   DefectAnalyticsResponseSchema,
   DefectParetoItemSchema,
+  CapaSourceSchema,
+  CapaStatusSchema,
+  CapaPrioritySchema,
+  CapaActionTypeSchema,
+  CapaActionStatusSchema,
+  CapaActionSchema,
+  CapaCaseSchema,
+  CreateCapaCaseRequestSchema,
+  UpdateCapaCaseRequestSchema,
+  VerifyCapaCaseRequestSchema,
+  CloseCapaCaseRequestSchema,
+  CreateCapaActionRequestSchema,
+  UpdateCapaActionRequestSchema,
+  CompleteCapaActionRequestSchema,
+  CapaCaseListQuerySchema,
+  CapaCaseListResponseSchema,
+  CapaCaseDetailResponseSchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -931,6 +948,219 @@ describe('Contracts — Phase 4 Master Data Management Schemas', () => {
         pareto: [paretoItem],
       });
       expect(analyticsRes.success).toBe(true);
+    });
+  });
+
+  describe('Phase 8 — CAPA Management Contracts', () => {
+    it('validates a valid CreateCapaCaseRequest with defaults', () => {
+      const res = CreateCapaCaseRequestSchema.safeParse({
+        title: 'Porosity in Engine Block Casting',
+        description:
+          'Multiple casting defects found during final machining exceeding acceptable porosity limits.',
+        source: 'INSPECTION_FAILURE',
+        defectRecordId: '33333333-3333-3333-3333-333333333333',
+        dueDate: '2026-11-15',
+      });
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.data.priority).toBe('MEDIUM');
+      }
+    });
+
+    it('rejects invalid CreateCapaCaseRequest inputs', () => {
+      // Short title
+      const shortTitle = CreateCapaCaseRequestSchema.safeParse({
+        title: 'AB',
+        description: 'Valid description here',
+        source: 'INTERNAL_AUDIT',
+      });
+      expect(shortTitle.success).toBe(false);
+
+      // Invalid source
+      const badSource = CreateCapaCaseRequestSchema.safeParse({
+        title: 'Valid Title Here',
+        description: 'Valid description here',
+        source: 'NOT_A_REAL_SOURCE',
+      });
+      expect(badSource.success).toBe(false);
+
+      // Invalid date format
+      const badDate = CreateCapaCaseRequestSchema.safeParse({
+        title: 'Valid Title Here',
+        description: 'Valid description here',
+        source: 'CUSTOMER_COMPLAINT',
+        dueDate: '15/11/2026',
+      });
+      expect(badDate.success).toBe(false);
+    });
+
+    it('validates UpdateCapaCaseRequest and rejects short changeReason', () => {
+      const validUpdate = UpdateCapaCaseRequestSchema.safeParse({
+        priority: 'HIGH',
+        status: 'IN_PROGRESS',
+        changeReason: 'Escalated priority due to repeat defect occurrence in lot #4',
+      });
+      expect(validUpdate.success).toBe(true);
+
+      const invalidUpdate = UpdateCapaCaseRequestSchema.safeParse({
+        priority: 'CRITICAL',
+        changeReason: 'bad',
+      });
+      expect(invalidUpdate.success).toBe(false);
+    });
+
+    it('validates VerifyCapaCaseRequestSchema outcomes and notes', () => {
+      const validPass = VerifyCapaCaseRequestSchema.safeParse({
+        result: 'PASS',
+        notes: 'Tooling replacement inspected, verified 0 porosity across 5 sample batches.',
+      });
+      expect(validPass.success).toBe(true);
+
+      const invalidResult = VerifyCapaCaseRequestSchema.safeParse({
+        result: 'MAYBE',
+        notes: 'Valid notes text here',
+      });
+      expect(invalidResult.success).toBe(false);
+
+      const shortNotes = VerifyCapaCaseRequestSchema.safeParse({
+        result: 'FAIL',
+        notes: 'No',
+      });
+      expect(shortNotes.success).toBe(false);
+    });
+
+    it('validates CreateCapaActionRequestSchema and CompleteCapaActionRequestSchema', () => {
+      const actionRes = CreateCapaActionRequestSchema.safeParse({
+        actionType: 'IMMEDIATE_CONTAINMENT',
+        description: 'Quarantine existing WIP inventory on line 2 for ultrasonic inspection.',
+        dueDate: '2026-10-30',
+      });
+      expect(actionRes.success).toBe(true);
+
+      const completeRes = CompleteCapaActionRequestSchema.safeParse({
+        completionNotes: 'Quarantine completed. 150 units isolated; 3 rejected units tagged.',
+      });
+      expect(completeRes.success).toBe(true);
+
+      const shortComplete = CompleteCapaActionRequestSchema.safeParse({
+        completionNotes: 'Done',
+      });
+      expect(shortComplete.success).toBe(false);
+    });
+
+    it('validates CapaCaseListQuerySchema transformations', () => {
+      const query = CapaCaseListQuerySchema.safeParse({
+        page: '2',
+        limit: '15',
+        overdue: 'true',
+        priority: 'HIGH',
+        status: 'UNDER_REVIEW',
+      });
+      expect(query.success).toBe(true);
+      if (query.success) {
+        expect(query.data.page).toBe(2);
+        expect(query.data.limit).toBe(15);
+        expect(query.data.overdue).toBe(true);
+        expect(query.data.priority).toBe('HIGH');
+        expect(query.data.status).toBe('UNDER_REVIEW');
+      }
+    });
+
+    it('validates complete CapaCaseSchema serialization', () => {
+      const capaCase = CapaCaseSchema.safeParse({
+        id: '44444444-4444-4444-4444-444444444444',
+        caseNumber: 'CAPA-2026-0001',
+        title: 'Porosity in Engine Block Casting',
+        description: 'Detailed problem statement here.',
+        source: 'INSPECTION_FAILURE',
+        priority: 'HIGH',
+        status: 'CLOSED',
+        batchId: '11111111-1111-1111-1111-111111111111',
+        batchNumber: 'BATCH-2026-001',
+        defectRecordId: '22222222-2222-2222-2222-222222222222',
+        defectCode: 'DEF-POR-01',
+        defectName: 'Surface Porosity',
+        defectSeverity: 'CRITICAL',
+        inspectionId: '33333333-3333-3333-3333-333333333333',
+        inspectionNumber: 'INSP-2026-0001',
+        assignedTo: '55555555-5555-5555-5555-555555555555',
+        assignedToName: 'John Doe',
+        assignedToUsername: 'johndoe',
+        createdBy: '66666666-6666-6666-6666-666666666666',
+        createdByName: 'Jane Smith',
+        dueDate: '2026-11-01',
+        rootCause: 'Improper mold degassing procedure observed during morning shift.',
+        verifiedBy: '77777777-7777-7777-7777-777777777777',
+        verifiedByName: 'Quality Manager',
+        verifiedAt: '2026-10-25T14:30:00.000Z',
+        verificationNotes: 'Verification audit confirmed 0 defects across 3 consecutive batches.',
+        actionCount: 2,
+        completedActionCount: 2,
+        isOverdue: false,
+        createdAt: '2026-10-20T08:00:00.000Z',
+        updatedAt: '2026-10-25T14:30:00.000Z',
+      });
+      expect(capaCase.success).toBe(true);
+    });
+
+    it('validates Phase 8 enum and detail response schemas', () => {
+      expect(CapaSourceSchema.safeParse('INSPECTION_FAILURE').success).toBe(true);
+      expect(CapaStatusSchema.safeParse('OPEN').success).toBe(true);
+      expect(CapaPrioritySchema.safeParse('HIGH').success).toBe(true);
+      expect(CapaActionTypeSchema.safeParse('CORRECTIVE').success).toBe(true);
+      expect(CapaActionStatusSchema.safeParse('PENDING').success).toBe(true);
+
+      const action = CapaActionSchema.safeParse({
+        id: '12345678-1234-1234-1234-123456789012',
+        capaCaseId: '44444444-4444-4444-4444-444444444444',
+        actionType: 'CORRECTIVE',
+        description: 'Implement automated degassing purge sequence',
+        status: 'PENDING',
+        assignedTo: null,
+        assignedToName: null,
+        dueDate: '2026-11-10',
+        completedAt: null,
+        completionNotes: null,
+        createdAt: '2026-10-26T00:00:00.000Z',
+        updatedAt: '2026-10-26T00:00:00.000Z',
+      });
+      expect(action.success).toBe(true);
+
+      expect(
+        CloseCapaCaseRequestSchema.safeParse({ closureNotes: 'Verified resolved' }).success,
+      ).toBe(true);
+      expect(UpdateCapaActionRequestSchema.safeParse({ status: 'IN_PROGRESS' }).success).toBe(true);
+
+      const listRes = CapaCaseListResponseSchema.safeParse({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      });
+      expect(listRes.success).toBe(true);
+
+      const caseData = CapaCaseSchema.parse({
+        id: '44444444-4444-4444-4444-444444444444',
+        caseNumber: 'CAPA-2026-0001',
+        title: 'Porosity in Engine Block Casting',
+        description: 'Detailed problem statement here.',
+        source: 'INSPECTION_FAILURE',
+        priority: 'HIGH',
+        status: 'OPEN',
+        createdBy: '66666666-6666-6666-6666-666666666666',
+        actionCount: 0,
+        completedActionCount: 0,
+        isOverdue: false,
+        createdAt: '2026-10-20T08:00:00.000Z',
+        updatedAt: '2026-10-25T14:30:00.000Z',
+      });
+
+      const detailRes = CapaCaseDetailResponseSchema.safeParse({
+        case: caseData,
+        actions: [],
+      });
+      expect(detailRes.success).toBe(true);
     });
   });
 });

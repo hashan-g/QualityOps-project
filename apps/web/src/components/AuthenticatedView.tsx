@@ -6,14 +6,15 @@ import { ProductionBatchesView } from './ProductionBatchesView';
 import { DowntimeView } from './DowntimeView';
 import { QualityInspectionsView } from './QualityInspectionsView';
 import { QualityDefectsView } from './QualityDefectsView';
+import { CapaManagementView } from './CapaManagementView';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN');
 
   const [activeSection, setActiveSection] = useState<
-    'defects' | 'inspections' | 'batches' | 'downtime' | 'master-data' | 'users'
-  >('defects');
+    'capa' | 'defects' | 'inspections' | 'batches' | 'downtime' | 'master-data' | 'users'
+  >('capa');
 
   // Admin user list state
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -169,6 +170,22 @@ export const AuthenticatedView: React.FC = () => {
         }}
       >
         <button
+          onClick={() => setActiveSection('capa')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: activeSection === 'capa' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'capa' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'capa' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          CAPA Management
+        </button>
+
+        <button
           onClick={() => setActiveSection('defects')}
           style={{
             padding: '10px 18px',
@@ -267,7 +284,9 @@ export const AuthenticatedView: React.FC = () => {
         )}
       </nav>
 
-      {activeSection === 'defects' ? (
+      {activeSection === 'capa' ? (
+        <CapaManagementView />
+      ) : activeSection === 'defects' ? (
         <QualityDefectsView />
       ) : activeSection === 'inspections' ? (
         <QualityInspectionsView />

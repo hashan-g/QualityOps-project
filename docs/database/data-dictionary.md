@@ -220,28 +220,31 @@ _Table Constraints:_
 
 ### 4.1 `capa_cases`
 
-| Column Name        | Data Type    | Nullable | Default             | Constraints / Allowed Values                                                                                 | Description                                    |
-| ------------------ | ------------ | -------- | ------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
-| `id`               | UUID         | No       | `gen_random_uuid()` | PRIMARY KEY                                                                                                  | Unique CAPA case identifier.                   |
-| `case_number`      | VARCHAR(100) | No       | None                | UNIQUE                                                                                                       | Formal case identifier (e.g. `CAPA-2026-001`). |
-| `title`            | VARCHAR(200) | No       | None                | None                                                                                                         | Brief problem statement title.                 |
-| `description`      | TEXT         | No       | None                | None                                                                                                         | Full nonconformance problem description.       |
-| `source`           | VARCHAR(50)  | No       | None                | `IN ('INSPECTION_FAILURE', 'INTERNAL_AUDIT', 'CUSTOMER_COMPLAINT', 'RECURRING_DEFECT', 'PROCESS_DEVIATION')` | Trigger origin of CAPA case.                   |
-| `batch_id`         | UUID         | Yes      | None                | FK `production_batches(id)` ON DELETE SET NULL                                                               | Related production batch.                      |
-| `defect_record_id` | UUID         | Yes      | None                | FK `defect_records(id)` ON DELETE SET NULL                                                                   | Specific originating defect record.            |
-| `status`           | VARCHAR(30)  | No       | `'OPEN'`            | `IN ('OPEN', 'IN_PROGRESS', 'UNDER_REVIEW', 'CLOSED', 'CANCELLED')`                                          | Workflow state.                                |
-| `assigned_to`      | UUID         | Yes      | None                | FK `users(id)` ON DELETE SET NULL                                                                            | Responsible quality engineer / owner.          |
-| `created_by`       | UUID         | No       | None                | FK `users(id)` ON DELETE RESTRICT                                                                            | Initiating user.                               |
-| `due_date`         | DATE         | Yes      | None                | None                                                                                                         | Target resolution date.                        |
-| `root_cause`       | TEXT         | Yes      | None                | None                                                                                                         | 5-Why or Ishikawa root cause analysis.         |
-| `verified_by`      | UUID         | Yes      | None                | FK `users(id)` ON DELETE RESTRICT                                                                            | QA authority verifying corrective action.      |
-| `verified_at`      | TIMESTAMPTZ  | Yes      | None                | None                                                                                                         | Verification timestamp (UTC).                  |
-| `created_at`       | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                                                         | Record creation instant (UTC).                 |
-| `updated_at`       | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                                                         | Last update instant (UTC).                     |
+| Column Name          | Data Type    | Nullable | Default             | Constraints / Allowed Values                                                                                 | Description                                    |
+| -------------------- | ------------ | -------- | ------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| `id`                 | UUID         | No       | `gen_random_uuid()` | PRIMARY KEY                                                                                                  | Unique CAPA case identifier.                   |
+| `case_number`        | VARCHAR(100) | No       | None                | UNIQUE                                                                                                       | Formal case identifier (e.g. `CAPA-2026-001`). |
+| `title`              | VARCHAR(200) | No       | None                | None                                                                                                         | Brief problem statement title.                 |
+| `description`        | TEXT         | No       | None                | None                                                                                                         | Full nonconformance problem description.       |
+| `source`             | VARCHAR(50)  | No       | None                | `IN ('INSPECTION_FAILURE', 'INTERNAL_AUDIT', 'CUSTOMER_COMPLAINT', 'RECURRING_DEFECT', 'PROCESS_DEVIATION')` | Trigger origin of CAPA case.                   |
+| `priority`           | VARCHAR(20)  | No       | `'MEDIUM'`          | `IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')`                                                                   | Case resolution priority & SLA tier.           |
+| `batch_id`           | UUID         | Yes      | None                | FK `production_batches(id)` ON DELETE SET NULL                                                               | Related production batch.                      |
+| `defect_record_id`   | UUID         | Yes      | None                | FK `defect_records(id)` ON DELETE SET NULL                                                                   | Specific originating defect record.            |
+| `status`             | VARCHAR(30)  | No       | `'OPEN'`            | `IN ('OPEN', 'IN_PROGRESS', 'UNDER_REVIEW', 'CLOSED', 'CANCELLED')`                                          | Workflow state.                                |
+| `assigned_to`        | UUID         | Yes      | None                | FK `users(id)` ON DELETE SET NULL                                                                            | Responsible quality engineer / owner.          |
+| `created_by`         | UUID         | No       | None                | FK `users(id)` ON DELETE RESTRICT                                                                            | Initiating user.                               |
+| `due_date`           | DATE         | Yes      | None                | None                                                                                                         | Target resolution date.                        |
+| `root_cause`         | TEXT         | Yes      | None                | None                                                                                                         | 5-Why or Ishikawa root cause analysis.         |
+| `verified_by`        | UUID         | Yes      | None                | FK `users(id)` ON DELETE RESTRICT                                                                            | QA authority verifying corrective action.      |
+| `verified_at`        | TIMESTAMPTZ  | Yes      | None                | None                                                                                                         | Verification timestamp (UTC).                  |
+| `verification_notes` | TEXT         | Yes      | None                | None                                                                                                         | Evidence and evaluation notes of verification. |
+| `created_at`         | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                                                         | Record creation instant (UTC).                 |
+| `updated_at`         | TIMESTAMPTZ  | No       | `CURRENT_TIMESTAMP` | None                                                                                                         | Last update instant (UTC).                     |
 
 _Table Constraints:_
 
 - `chk_capa_closed_verified`: `status <> 'CLOSED' OR (verified_by IS NOT NULL AND verified_at IS NOT NULL)`
+- `chk_capa_cases_priority`: `priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')`
 
 ### 4.2 `capa_actions`
 

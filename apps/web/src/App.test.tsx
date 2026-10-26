@@ -6,16 +6,34 @@ import { ProductionBatchesView } from './components/ProductionBatchesView.js';
 import { DowntimeView } from './components/DowntimeView.js';
 import { QualityInspectionsView } from './components/QualityInspectionsView.js';
 import { QualityDefectsView } from './components/QualityDefectsView.js';
+import { CapaManagementView } from './components/CapaManagementView.js';
 import { AuthProvider } from './context/AuthContext.js';
 
-describe('QualityOps Web — Phase 7 Defect Management & Analytics Shell', () => {
-  it('renders the platform screen with title and phase 7 tag', () => {
+describe('QualityOps Web — Phase 8 CAPA Management Shell', () => {
+  it('renders the platform screen with title and phase 8 tag', () => {
     const html = renderToString(<App />);
 
     expect(html).toContain('QualityOps Platform');
-    expect(html).toContain('Phase 7: Defect Management &amp; Analytics');
+    expect(html).toContain('Phase 8: CAPA Management');
     expect(html).toContain('PostgreSQL 18');
     expect(html).toContain('Manufacturing Quality &amp; Process Analytics Platform');
+  });
+
+  it('renders CapaManagementView structure with KPI cards, filters, and cases repository', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <CapaManagementView />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('Corrective and Preventive Action (CAPA) Management');
+    expect(html).toContain('Closed-loop nonconformance resolution:');
+    expect(html).toContain('Total Cases');
+    expect(html).toContain('Open / In Progress');
+    expect(html).toContain('Pending Verification');
+    expect(html).toContain('Closed (Resolved)');
+    expect(html).toContain('Overdue SLA');
+    expect(html).toContain('Search by case # or title...');
   });
 
   it('renders QualityDefectsView structure with analytics, Pareto, and table', () => {

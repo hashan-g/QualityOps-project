@@ -980,3 +980,209 @@ export const DefectAnalyticsResponseSchema = z.object({
   pareto: z.array(DefectParetoItemSchema),
 });
 export type DefectAnalyticsResponse = z.infer<typeof DefectAnalyticsResponseSchema>;
+
+// ============================================================================
+// CAPA Management Contracts (Phase 8)
+// ============================================================================
+
+export const CapaSourceSchema = z.enum([
+  'INSPECTION_FAILURE',
+  'INTERNAL_AUDIT',
+  'CUSTOMER_COMPLAINT',
+  'RECURRING_DEFECT',
+  'PROCESS_DEVIATION',
+]);
+export type CapaSource = z.infer<typeof CapaSourceSchema>;
+
+export const CapaStatusSchema = z.enum([
+  'OPEN',
+  'IN_PROGRESS',
+  'UNDER_REVIEW',
+  'CLOSED',
+  'CANCELLED',
+]);
+export type CapaStatus = z.infer<typeof CapaStatusSchema>;
+
+export const CapaPrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export type CapaPriority = z.infer<typeof CapaPrioritySchema>;
+
+export const CapaActionTypeSchema = z.enum(['CORRECTIVE', 'PREVENTIVE', 'IMMEDIATE_CONTAINMENT']);
+export type CapaActionType = z.infer<typeof CapaActionTypeSchema>;
+
+export const CapaActionStatusSchema = z.enum([
+  'PENDING',
+  'IN_PROGRESS',
+  'COMPLETED',
+  'VERIFIED',
+  'CANCELLED',
+]);
+export type CapaActionStatus = z.infer<typeof CapaActionStatusSchema>;
+
+export const CapaActionSchema = z.object({
+  id: z.string().uuid(),
+  capaCaseId: z.string().uuid(),
+  actionType: CapaActionTypeSchema,
+  description: z.string().min(1),
+  assignedTo: z.string().uuid().nullable().optional(),
+  assignedToName: z.string().nullable().optional(),
+  assignedToUsername: z.string().nullable().optional(),
+  status: CapaActionStatusSchema,
+  dueDate: z.string().nullable().optional(),
+  completedAt: z.string().datetime().nullable().optional(),
+  completionNotes: z.string().nullable().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type CapaAction = z.infer<typeof CapaActionSchema>;
+
+export const CapaCaseSchema = z.object({
+  id: z.string().uuid(),
+  caseNumber: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  source: CapaSourceSchema,
+  priority: CapaPrioritySchema,
+  status: CapaStatusSchema,
+  batchId: z.string().uuid().nullable().optional(),
+  batchNumber: z.string().nullable().optional(),
+  defectRecordId: z.string().uuid().nullable().optional(),
+  defectCode: z.string().nullable().optional(),
+  defectName: z.string().nullable().optional(),
+  defectSeverity: DefectSeveritySchema.nullable().optional(),
+  inspectionId: z.string().uuid().nullable().optional(),
+  inspectionNumber: z.string().nullable().optional(),
+  assignedTo: z.string().uuid().nullable().optional(),
+  assignedToName: z.string().nullable().optional(),
+  assignedToUsername: z.string().nullable().optional(),
+  createdBy: z.string().uuid(),
+  createdByName: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+  rootCause: z.string().nullable().optional(),
+  verifiedBy: z.string().uuid().nullable().optional(),
+  verifiedByName: z.string().nullable().optional(),
+  verifiedAt: z.string().datetime().nullable().optional(),
+  verificationNotes: z.string().nullable().optional(),
+  actionCount: z.number().int().nonnegative(),
+  completedActionCount: z.number().int().nonnegative(),
+  isOverdue: z.boolean(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type CapaCase = z.infer<typeof CapaCaseSchema>;
+
+export const CreateCapaCaseRequestSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters').max(200),
+  description: z.string().min(5, 'Description must be at least 5 characters'),
+  source: CapaSourceSchema,
+  priority: CapaPrioritySchema.default('MEDIUM'),
+  batchId: z.string().uuid().optional(),
+  defectRecordId: z.string().uuid().optional(),
+  assignedTo: z.string().uuid().optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format')
+    .optional(),
+  rootCause: z.string().max(4000).optional(),
+});
+export type CreateCapaCaseRequest = z.infer<typeof CreateCapaCaseRequestSchema>;
+
+export const UpdateCapaCaseRequestSchema = z.object({
+  title: z.string().min(3).max(200).optional(),
+  description: z.string().min(5).optional(),
+  source: CapaSourceSchema.optional(),
+  priority: CapaPrioritySchema.optional(),
+  assignedTo: z.string().uuid().nullable().optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format')
+    .nullable()
+    .optional(),
+  rootCause: z.string().max(4000).nullable().optional(),
+  status: CapaStatusSchema.optional(),
+  changeReason: z.string().min(5, 'Change reason must be at least 5 characters').optional(),
+});
+export type UpdateCapaCaseRequest = z.infer<typeof UpdateCapaCaseRequestSchema>;
+
+export const VerifyCapaCaseRequestSchema = z.object({
+  result: z.enum(['PASS', 'FAIL']),
+  notes: z.string().min(5, 'Verification notes must be at least 5 characters').max(2000),
+});
+export type VerifyCapaCaseRequest = z.infer<typeof VerifyCapaCaseRequestSchema>;
+
+export const CloseCapaCaseRequestSchema = z.object({
+  closureNotes: z.string().max(2000).optional(),
+});
+export type CloseCapaCaseRequest = z.infer<typeof CloseCapaCaseRequestSchema>;
+
+export const CreateCapaActionRequestSchema = z.object({
+  actionType: CapaActionTypeSchema,
+  description: z.string().min(5, 'Description must be at least 5 characters').max(2000),
+  assignedTo: z.string().uuid().optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format')
+    .optional(),
+});
+export type CreateCapaActionRequest = z.infer<typeof CreateCapaActionRequestSchema>;
+
+export const UpdateCapaActionRequestSchema = z.object({
+  description: z.string().min(5).max(2000).optional(),
+  assignedTo: z.string().uuid().nullable().optional(),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format')
+    .nullable()
+    .optional(),
+  status: CapaActionStatusSchema.optional(),
+});
+export type UpdateCapaActionRequest = z.infer<typeof UpdateCapaActionRequestSchema>;
+
+export const CompleteCapaActionRequestSchema = z.object({
+  completionNotes: z.string().min(5, 'Completion notes must be at least 5 characters').max(2000),
+});
+export type CompleteCapaActionRequest = z.infer<typeof CompleteCapaActionRequestSchema>;
+
+export const CapaCaseListQuerySchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 20)),
+  search: z.string().optional(),
+  status: CapaStatusSchema.optional(),
+  priority: CapaPrioritySchema.optional(),
+  source: CapaSourceSchema.optional(),
+  assignedTo: z.string().uuid().optional(),
+  batchId: z.string().uuid().optional(),
+  defectRecordId: z.string().uuid().optional(),
+  overdue: z
+    .string()
+    .optional()
+    .transform((val) => val === 'true'),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  sortBy: z
+    .enum(['created_at', 'due_date', 'case_number', 'priority', 'status'])
+    .default('created_at')
+    .optional(),
+  sortOrder: z.enum(['asc', 'desc']).default('desc').optional(),
+});
+export type CapaCaseListQuery = z.infer<typeof CapaCaseListQuerySchema>;
+
+export const CapaCaseListResponseSchema = z.object({
+  items: z.array(CapaCaseSchema),
+  total: z.number().nonnegative(),
+  page: z.number().positive(),
+  limit: z.number().positive(),
+  totalPages: z.number().nonnegative(),
+});
+export type CapaCaseListResponse = z.infer<typeof CapaCaseListResponseSchema>;
+
+export const CapaCaseDetailResponseSchema = z.object({
+  case: CapaCaseSchema,
+  actions: z.array(CapaActionSchema),
+});
+export type CapaCaseDetailResponse = z.infer<typeof CapaCaseDetailResponseSchema>;

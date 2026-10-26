@@ -3,7 +3,15 @@ import { pool } from '../../infrastructure/database/pool.js';
 
 export interface RecordAuditParams {
   actorId?: string | undefined;
-  action: 'CREATE' | 'UPDATE' | 'STATUS_CHANGE' | 'DEACTIVATE' | 'DELETE' | 'CLOSE' | 'CORRECTION';
+  action:
+    | 'CREATE'
+    | 'UPDATE'
+    | 'STATUS_CHANGE'
+    | 'DEACTIVATE'
+    | 'DELETE'
+    | 'CLOSE'
+    | 'CORRECTION'
+    | 'VERIFY';
   entityType:
     | 'PRODUCT'
     | 'PRODUCTION_LINE'
@@ -13,7 +21,9 @@ export interface RecordAuditParams {
     | 'PRODUCTION_BATCH'
     | 'DOWNTIME_RECORD'
     | 'QUALITY_INSPECTION'
-    | 'DEFECT_RECORD';
+    | 'DEFECT_RECORD'
+    | 'CAPA_CASE'
+    | 'CAPA_ACTION';
   entityId: string;
   requestId?: string | undefined;
   beforeState?: Record<string, unknown> | null | undefined;

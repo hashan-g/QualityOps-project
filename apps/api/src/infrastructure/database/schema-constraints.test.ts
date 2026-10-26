@@ -582,6 +582,29 @@ describe('Database Schema & Migration Constraints', () => {
           'chk_capa_closed_verified',
         );
 
+        // Test D2: CAPA action completed constraint
+        // status = 'COMPLETED' without completed_at -> MUST FAIL (code 23514)
+        const capaCaseRes = await client.query<{ id: string }>(
+          `INSERT INTO capa_cases (
+            case_number, title, description, source, status, created_by
+          ) VALUES ('CAPA-TEST-ACTION-01', 'Test Title', 'Test Desc', 'PROCESS_DEVIATION', 'OPEN', $1)
+          RETURNING id;`,
+          [userId],
+        );
+        const testCaseId = capaCaseRes.rows[0]!.id;
+
+        await assertConstraintViolation(
+          client,
+          () =>
+            client.query(
+              `INSERT INTO capa_actions (
+                capa_case_id, action_type, description, status, completed_at
+              ) VALUES ($1, 'CORRECTIVE', 'Action Desc', 'COMPLETED', NULL);`,
+              [testCaseId],
+            ),
+          'chk_capa_action_completed',
+        );
+
         // Test E: Downtime end after start constraint
         // ended_at <= started_at -> MUST FAIL (code 23514)
         await assertConstraintViolation(

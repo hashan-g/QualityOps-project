@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 7: Defect Management & Descriptive Analytics**  
+**Phase 8: CAPA Management & Closed-Loop Quality**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -9,10 +9,10 @@
 
 ## 1. Product Purpose
 
-QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, and process analytics.
+QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, process analytics, and closed-loop corrective action.
 
-> **Phase 7 Scope Guard Notice:**  
-> This phase establishes defect findings associated with quality inspections and standardized defect types, count boundary enforcement, non-destructive audit logging, and PostgreSQL-backed descriptive analytics (KPIs, breakdowns, trends, and Pareto distributions). **CAPA remediation workflows, predictive ML, notifications, and advanced statistical process control (SPC) charts remain out-of-scope until subsequent phases.**
+> **Phase 8 Scope Guard Notice:**  
+> This phase establishes closed-loop Corrective and Preventive Action (CAPA) management: linking defect findings/inspections to root-cause investigations, assigned actions, independent QA verification, and auditable closure. **Predictive ML, push notifications, and automated external supplier portals remain out-of-scope until subsequent phases.**
 
 ---
 
@@ -20,9 +20,9 @@ QualityOps is an engineering platform designed for manufacturing quality trackin
 
 The repository is structured as an npm workspace monorepo:
 
-- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
-- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
-- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for defect findings, descriptive analytics, Pareto items, quality inspections, production batches, downtime records, query parameters, mutations, and API responses
+- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, CAPA management view with KPI cards, multi-filters, detail drawers, action completion, independent verification, and closure modals, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
+- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + CAPA Management, Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
+- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for CAPA cases, actions, verification, closure, defect findings, descriptive analytics, Pareto items, quality inspections, production batches, downtime records, query parameters, mutations, and API responses
 - **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); versioned SQL migrations under `database/migrations` via `node-pg-migrate`
 - **Quality Gates:** Strict TypeScript (`exactOptionalPropertyTypes`), Prettier, ESLint flat config, Vitest, Supertest, and GitHub Actions CI
 
@@ -137,6 +137,17 @@ npm run dev
   - `/api/v1/quality/defects/:id` (Detail view with defect classification, inspection, and batch context)
   - `PATCH /api/v1/quality/defects/:id` (Audited supervisor/manager corrections with mandatory reason)
   - _Note: DELETE is strictly forbidden; historical defect records are non-destructive and immutable._
+- **CAPA Management Endpoints (Case Create/Update: ADMIN, QUALITY_MANAGER, SUPERVISOR; Action Completion: Assigned Owner or Manager; Verification & Closure: ADMIN, QUALITY_MANAGER; Read: All Roles):**
+  - `GET /api/v1/quality/capa` (List, filter, search, and paginate CAPA cases)
+  - `POST /api/v1/quality/capa` (Create new CAPA case linked to finding or batch)
+  - `GET /api/v1/quality/capa/:id` (Case detail with source context and nested actions)
+  - `PATCH /api/v1/quality/capa/:id` (Update root cause, priority, assignee, or lifecycle state)
+  - `POST /api/v1/quality/capa/:id/actions` (Add corrective, preventive, or containment action)
+  - `PATCH /api/v1/quality/capa/:id/actions/:actionId` (Update action plan or due date)
+  - `POST /api/v1/quality/capa/:id/actions/:actionId/complete` (Record completion notes and evidence; auto-advances parent case to UNDER_REVIEW when all actions complete)
+  - `POST /api/v1/quality/capa/:id/verify` (Formal QA verification with independent verifier rule)
+  - `POST /api/v1/quality/capa/:id/close` (Controlled closure requiring 100% action completion and passing verification)
+  - _Note: DELETE is strictly forbidden; historical CAPA records are non-destructive and permanent._
 
 ---
 
@@ -174,6 +185,8 @@ All quality commands can be executed from the root workspace:
 - [Quality Inspection Data Rules](file:///docs/inspections/inspection-data-rules.md)
 - [Defect Management & Analytics API Specification](file:///docs/api/defect-management-analytics.md)
 - [Defect Data Rules & Accounting Semantics](file:///docs/quality/defect-data-rules.md)
+- [CAPA Management API Specification](file:///docs/api/capa-management.md)
+- [CAPA Workflow & Verification Rules](file:///docs/capa/capa-workflow.md)
 - [Database Schema Design & KPI Definitions](file:///docs/database/schema-design.md)
 - [Entity Relationship Diagram (ERD)](file:///docs/database/erd.mmd)
 - [Data Dictionary](file:///docs/database/data-dictionary.md)
@@ -185,3 +198,4 @@ All quality commands can be executed from the root workspace:
 - [Phase 5 Acceptance Checklist](file:///docs/phase-5/acceptance-checklist.md)
 - [Phase 6 Acceptance Checklist](file:///docs/phase-6/acceptance-checklist.md)
 - [Phase 7 Acceptance Checklist](file:///docs/phase-7/acceptance-checklist.md)
+- [Phase 8 Acceptance Checklist](file:///docs/phase-8/acceptance-checklist.md)

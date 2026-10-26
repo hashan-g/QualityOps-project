@@ -37,7 +37,7 @@ const AppContent: React.FC = () => {
               borderRadius: '4px',
             }}
           >
-            Phase 7: Defect Management & Analytics
+            Phase 8: CAPA Management
           </span>
           <span
             style={{
