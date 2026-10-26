@@ -7,14 +7,15 @@ import { DowntimeView } from './DowntimeView';
 import { QualityInspectionsView } from './QualityInspectionsView';
 import { QualityDefectsView } from './QualityDefectsView';
 import { CapaManagementView } from './CapaManagementView';
+import { SpcMonitoringView } from './SpcMonitoringView';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN');
 
   const [activeSection, setActiveSection] = useState<
-    'capa' | 'defects' | 'inspections' | 'batches' | 'downtime' | 'master-data' | 'users'
-  >('capa');
+    'spc' | 'capa' | 'defects' | 'inspections' | 'batches' | 'downtime' | 'master-data' | 'users'
+  >('spc');
 
   // Admin user list state
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -170,6 +171,22 @@ export const AuthenticatedView: React.FC = () => {
         }}
       >
         <button
+          onClick={() => setActiveSection('spc')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '6px',
+            border: activeSection === 'spc' ? '2px solid #3182ce' : '1px solid #cbd5e0',
+            backgroundColor: activeSection === 'spc' ? '#ebf8ff' : '#ffffff',
+            color: activeSection === 'spc' ? '#2b6cb0' : '#4a5568',
+            fontWeight: 600,
+            fontSize: '14px',
+            cursor: 'pointer',
+          }}
+        >
+          SPC Monitoring
+        </button>
+
+        <button
           onClick={() => setActiveSection('capa')}
           style={{
             padding: '10px 18px',
@@ -284,7 +301,9 @@ export const AuthenticatedView: React.FC = () => {
         )}
       </nav>
 
-      {activeSection === 'capa' ? (
+      {activeSection === 'spc' ? (
+        <SpcMonitoringView />
+      ) : activeSection === 'capa' ? (
         <CapaManagementView />
       ) : activeSection === 'defects' ? (
         <QualityDefectsView />

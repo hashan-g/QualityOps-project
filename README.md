@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 8: CAPA Management & Closed-Loop Quality**  
+**Phase 9: Advanced Analytics & Statistical Process Monitoring**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -9,22 +9,23 @@
 
 ## 1. Product Purpose
 
-QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, process analytics, and closed-loop corrective action.
+QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, process analytics, closed-loop corrective action, and statistical process monitoring (SPC).
 
-> **Phase 8 Scope Guard Notice:**  
-> This phase establishes closed-loop Corrective and Preventive Action (CAPA) management: linking defect findings/inspections to root-cause investigations, assigned actions, independent QA verification, and auditable closure. **Predictive ML, push notifications, and automated external supplier portals remain out-of-scope until subsequent phases.**
+> **Phase 9 Scope Guard Notice:**  
+> This phase establishes defensible Statistical Process Control (SPC) attribute monitoring using p-charts derived from completed inspection subgroups, with variable control limits calculated via a dedicated Python microservice. **Automated machine control loops, ML predictive forecasting, and automated supplier alerting remain out-of-scope until subsequent phases.**
 
 ---
 
 ## 2. Architecture Baseline
 
-The repository is structured as an npm workspace monorepo:
+The repository is structured as an npm workspace monorepo with an auxiliary Python analytics microservice:
 
-- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, CAPA management view with KPI cards, multi-filters, detail drawers, action completion, independent verification, and closure modals, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
-- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + CAPA Management, Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
-- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for CAPA cases, actions, verification, closure, defect findings, descriptive analytics, Pareto items, quality inspections, production batches, downtime records, query parameters, mutations, and API responses
+- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, SPC Monitoring view with variable stepped limits, KPI ribbon, interactive SVG chart, accessible signal markers, filter controls, and robust non-ready state management, CAPA management view with KPI cards, multi-filters, detail drawers, action completion, independent verification, and closure modals, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view with live disposition feedback, downtime tracking, and master-data management shell)
+- **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + SPC Analytics module with timeout handling and 503 fallback, CAPA Management, Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
+- **Analytics Microservice (`services/analytics`):** Python 3.12+ + FastAPI + Pydantic v2 + Uvicorn (Stateless, isolated calculations, zero direct database access, variable p-chart control limits, strict 20-subgroup guardrail, degenerate baseline detection, unrounded 3-sigma signal detection)
+- **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for SPC p-charts, CAPA cases, actions, verification, closure, defect findings, descriptive analytics, Pareto items, quality inspections, production batches, downtime records, query parameters, mutations, and API responses
 - **Database (`database`):** PostgreSQL 18 via Docker Compose (`compose.yaml`); versioned SQL migrations under `database/migrations` via `node-pg-migrate`
-- **Quality Gates:** Strict TypeScript (`exactOptionalPropertyTypes`), Prettier, ESLint flat config, Vitest, Supertest, and GitHub Actions CI
+- **Quality Gates:** Strict TypeScript (`exactOptionalPropertyTypes`), Prettier, ESLint flat config, Vitest, Pytest, Supertest, and GitHub Actions CI
 
 ---
 
@@ -32,6 +33,7 @@ The repository is structured as an npm workspace monorepo:
 
 - **Node.js:** `v24.x` LTS (enforced via `.nvmrc`)
 - **npm:** `v11.x` (bundled with Node 24)
+- **Python:** `v3.12+` with `pip` (for `services/analytics`)
 - **Docker & Docker Compose:** Docker Desktop with Compose support (for PostgreSQL 18)
 
 ---
@@ -91,7 +93,7 @@ npm run db:reset-admin-password
 
 ### Step 5: Run Development Services
 
-Start both Web and API concurrently:
+Start Web, API, and Analytics microservice concurrently:
 
 ```bash
 npm run dev
@@ -99,9 +101,11 @@ npm run dev
 
 - **Web App:** Available at [http://localhost:5173](http://localhost:5173)
 - **API Server:** Available at [http://localhost:4000](http://localhost:4000)
+- **Analytics Microservice:** Available at [http://localhost:8000](http://localhost:8000)
 - **API Health Probes:**
   - `GET http://localhost:4000/api/v1/health` (Liveness)
   - `GET http://localhost:4000/api/v1/health/ready` (Readiness)
+  - `GET http://localhost:8000/health` (Analytics service liveness)
 - **Authentication Endpoints:**
   - `POST http://localhost:4000/api/v1/auth/login` (Login)
   - `POST http://localhost:4000/api/v1/auth/refresh` (Session rotation)
@@ -148,6 +152,9 @@ npm run dev
   - `POST /api/v1/quality/capa/:id/verify` (Formal QA verification with independent verifier rule)
   - `POST /api/v1/quality/capa/:id/close` (Controlled closure requiring 100% action completion and passing verification)
   - _Note: DELETE is strictly forbidden; historical CAPA records are non-destructive and permanent._
+- **Statistical Process Monitoring (SPC) Endpoints (Read: All Canonical Roles):**
+  - `GET /api/v1/analytics/quality/spc/p-chart` (Attribute p-chart monitoring for variable subgroup sizes, pooled $\bar{p}$, 20-subgroup threshold, degenerate baseline detection, and unrounded 3-sigma signal detection)
+  - `POST http://localhost:8000/calculate/p-chart` (Python microservice stateless calculation engine)
 
 ---
 
@@ -157,12 +164,14 @@ All quality commands can be executed from the root workspace:
 
 | Command                           | Purpose                                                                  |
 | --------------------------------- | ------------------------------------------------------------------------ |
-| `npm run dev`                     | Starts API (`apps/api`) and Web (`apps/web`) concurrently                |
+| `npm run dev`                     | Starts API, Web, and Analytics microservice concurrently                 |
+| `npm run dev:analytics`           | Starts Python FastAPI analytics service with Uvicorn reload              |
 | `npm run lint`                    | Runs ESLint check across all packages and workspaces                     |
 | `npm run format:check`            | Checks code formatting with Prettier                                     |
 | `npm run format`                  | Formats all files with Prettier                                          |
 | `npm run typecheck`               | Runs strict TypeScript compiler check (`tsc --noEmit`) across workspaces |
-| `npm test`                        | Executes unit and smoke tests with Vitest across all workspaces          |
+| `npm test`                        | Executes Python pytest and TypeScript Vitest tests across workspaces     |
+| `npm run test:analytics`          | Runs Python pytest test suite in `services/analytics`                    |
 | `npm run build`                   | Builds production artifacts for contracts, API, and web                  |
 | `npm run db:migrate`              | Applies pending database migrations (`node-pg-migrate up`)               |
 | `npm run db:migrate:status`       | Inspects pending migrations (`node-pg-migrate up --dry-run`)             |
@@ -191,6 +200,9 @@ All quality commands can be executed from the root workspace:
 - [Entity Relationship Diagram (ERD)](file:///docs/database/erd.mmd)
 - [Data Dictionary](file:///docs/database/data-dictionary.md)
 - [Database Migrations Guide](file:///docs/database/migrations.md)
+- [Statistical Process Monitoring & p-Chart Architecture](file:///docs/analytics/statistical-process-monitoring.md)
+- [QualityOps Metric Definitions](file:///docs/analytics/metric-definitions.md)
+- [Phase 9 SPC Analytics API Specification](file:///docs/api/phase-9-analytics-contract.md)
 - [Phase 1 Acceptance Checklist](file:///docs/phase-1/acceptance-checklist.md)
 - [Phase 2 Acceptance Checklist](file:///docs/phase-2/acceptance-checklist.md)
 - [Phase 3 Acceptance Checklist](file:///docs/phase-3/acceptance-checklist.md)
@@ -199,3 +211,4 @@ All quality commands can be executed from the root workspace:
 - [Phase 6 Acceptance Checklist](file:///docs/phase-6/acceptance-checklist.md)
 - [Phase 7 Acceptance Checklist](file:///docs/phase-7/acceptance-checklist.md)
 - [Phase 8 Acceptance Checklist](file:///docs/phase-8/acceptance-checklist.md)
+- [Phase 9 Acceptance Checklist](file:///docs/phase-9/acceptance-checklist.md)

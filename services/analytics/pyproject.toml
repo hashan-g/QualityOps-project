@@ -1,0 +1,15 @@
+[project]
+name = "qualityops-analytics"
+version = "0.1.0"
+description = "Stateless statistical process control analytics service for QualityOps"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "pydantic>=2.8.0",
+    "uvicorn>=0.30.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -7,16 +7,34 @@ import { DowntimeView } from './components/DowntimeView.js';
 import { QualityInspectionsView } from './components/QualityInspectionsView.js';
 import { QualityDefectsView } from './components/QualityDefectsView.js';
 import { CapaManagementView } from './components/CapaManagementView.js';
+import { SpcMonitoringView } from './components/SpcMonitoringView.js';
 import { AuthProvider } from './context/AuthContext.js';
 
-describe('QualityOps Web — Phase 8 CAPA Management Shell', () => {
-  it('renders the platform screen with title and phase 8 tag', () => {
+describe('QualityOps Web — Phase 9 Advanced Analytics & SPC Shell', () => {
+  it('renders the platform screen with title and phase 9 tag', () => {
     const html = renderToString(<App />);
 
     expect(html).toContain('QualityOps Platform');
-    expect(html).toContain('Phase 8: CAPA Management');
+    expect(html).toContain('Phase 9: Advanced Analytics &amp; SPC');
     expect(html).toContain('PostgreSQL 18');
     expect(html).toContain('Manufacturing Quality &amp; Process Analytics Platform');
+  });
+
+  it('renders SpcMonitoringView structure with filters, guardrail banner, and controls', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <SpcMonitoringView />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('Statistical Process Monitoring — p-Chart Control Limits');
+    expect(html).toContain('Statistical Control Invariant:');
+    expect(html).toContain('Product *');
+    expect(html).toContain('Production Line *');
+    expect(html).toContain('From Date *');
+    expect(html).toContain('To Date *');
+    expect(html).toContain('-- Select Product --');
+    expect(html).toContain('-- Select Line --');
   });
 
   it('renders CapaManagementView structure with KPI cards, filters, and cases repository', () => {

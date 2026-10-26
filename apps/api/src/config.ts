@@ -143,6 +143,17 @@ const EnvironmentSchema = z
         return parsed;
       }),
     COOKIE_SECRET: z.string().default('dev-qualityops-cookie-secret-32-chars-minimum'),
+    ANALYTICS_SERVICE_URL: z.string().default('http://127.0.0.1:8000'),
+    ANALYTICS_SERVICE_TIMEOUT_MS: z
+      .string()
+      .default('5000')
+      .transform((val) => {
+        const parsed = parseInt(val, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+          throw new Error('ANALYTICS_SERVICE_TIMEOUT_MS must be a positive integer');
+        }
+        return parsed;
+      }),
   })
   .refine(
     (data) => {

@@ -56,6 +56,13 @@ import {
   CapaCaseListQuerySchema,
   CapaCaseListResponseSchema,
   CapaCaseDetailResponseSchema,
+  SpcStatusSchema,
+  SpcSignalReasonSchema,
+  SpcPChartFilterSchema,
+  SpcBaselineSchema,
+  SpcSummarySchema,
+  SpcPChartPointSchema,
+  SpcPChartResponseSchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -1161,6 +1168,116 @@ describe('Contracts — Phase 4 Master Data Management Schemas', () => {
         actions: [],
       });
       expect(detailRes.success).toBe(true);
+    });
+
+    describe('Phase 9 — Statistical Process Monitoring (SPC) Schemas', () => {
+      it('validates SpcStatusSchema and SpcSignalReasonSchema values', () => {
+        expect(SpcStatusSchema.safeParse('READY').success).toBe(true);
+        expect(SpcStatusSchema.safeParse('INSUFFICIENT_DATA').success).toBe(true);
+        expect(SpcStatusSchema.safeParse('DEGENERATE_BASELINE').success).toBe(true);
+        expect(SpcStatusSchema.safeParse('UNKNOWN').success).toBe(false);
+
+        expect(SpcSignalReasonSchema.safeParse('ABOVE_UCL').success).toBe(true);
+        expect(SpcSignalReasonSchema.safeParse('BELOW_LCL').success).toBe(true);
+        expect(SpcSignalReasonSchema.safeParse(null).success).toBe(true);
+        expect(SpcSignalReasonSchema.safeParse('INVALID').success).toBe(false);
+      });
+
+      it('validates SpcPChartFilterSchema with valid bounds', () => {
+        const valid = SpcPChartFilterSchema.safeParse({
+          productId: '11111111-1111-1111-1111-111111111111',
+          productionLineId: '22222222-2222-2222-2222-222222222222',
+          from: '2026-01-01T00:00:00.000Z',
+          to: '2026-03-31T23:59:59.000Z',
+          shiftId: '33333333-3333-3333-3333-333333333333',
+          inspectionStage: 'FINAL',
+        });
+        expect(valid.success).toBe(true);
+      });
+
+      it('rejects SpcPChartFilterSchema when from is after to', () => {
+        const reversed = SpcPChartFilterSchema.safeParse({
+          productId: '11111111-1111-1111-1111-111111111111',
+          productionLineId: '22222222-2222-2222-2222-222222222222',
+          from: '2026-06-01T00:00:00.000Z',
+          to: '2026-01-01T00:00:00.000Z',
+        });
+        expect(reversed.success).toBe(false);
+        if (!reversed.success) {
+          expect(reversed.error.issues[0]?.message).toContain('must not be after');
+        }
+      });
+
+      it('rejects SpcPChartFilterSchema when window exceeds 366 days', () => {
+        const tooLong = SpcPChartFilterSchema.safeParse({
+          productId: '11111111-1111-1111-1111-111111111111',
+          productionLineId: '22222222-2222-2222-2222-222222222222',
+          from: '2024-01-01T00:00:00.000Z',
+          to: '2026-01-01T00:00:00.000Z',
+        });
+        expect(tooLong.success).toBe(false);
+        if (!tooLong.success) {
+          expect(tooLong.error.issues[0]?.message).toContain('cannot exceed 366 days');
+        }
+      });
+
+      it('validates complete SpcPChartResponseSchema payload', () => {
+        const sampleResponse = {
+          status: 'READY',
+          filters: {
+            productId: '11111111-1111-1111-1111-111111111111',
+            productCode: 'PRD-01',
+            productName: 'Transmission Gear',
+            productionLineId: '22222222-2222-2222-2222-222222222222',
+            productionLineName: 'Line 1',
+            from: '2026-01-01T00:00:00.000Z',
+            to: '2026-03-31T00:00:00.000Z',
+          },
+          baseline: {
+            subgroupCount: 20,
+            minimumRequired: 20,
+            totalSampleSize: 1000,
+            totalFailedUnits: 40,
+            pBar: 0.04,
+          },
+          summary: {
+            signalCount: 1,
+            upperSignalCount: 1,
+            lowerSignalCount: 0,
+            interpretation: '1 subgroup outside control limits.',
+          },
+          points: [
+            {
+              inspectionId: '44444444-4444-4444-4444-444444444444',
+              inspectionNumber: 'INSP-2026-0001',
+              batchId: '55555555-5555-5555-5555-555555555555',
+              batchNumber: 'BATCH-001',
+              timestamp: '2026-01-02T08:00:00.000Z',
+              sampleSize: 50,
+              failedUnits: 6,
+              observedProportion: 0.12,
+              centerLine: 0.04,
+              upperControlLimit: 0.123,
+              lowerControlLimit: 0.0,
+              signal: false,
+              signalReason: null,
+            },
+          ],
+          warnings: [],
+        };
+
+        const parsed = SpcPChartResponseSchema.safeParse(sampleResponse);
+        expect(parsed.success).toBe(true);
+
+        const pointParsed = SpcPChartPointSchema.safeParse(sampleResponse.points[0]);
+        expect(pointParsed.success).toBe(true);
+
+        const baselineParsed = SpcBaselineSchema.safeParse(sampleResponse.baseline);
+        expect(baselineParsed.success).toBe(true);
+
+        const summaryParsed = SpcSummarySchema.safeParse(sampleResponse.summary);
+        expect(summaryParsed.success).toBe(true);
+      });
     });
   });
 });

@@ -11,6 +11,7 @@ import { usersRouter } from './routes/users.router.js';
 import { masterDataRouter } from './routes/master-data/index.js';
 import { productionRouter } from './routes/production/index.js';
 import { qualityRouter } from './routes/quality/index.js';
+import { analyticsRouter } from './routes/analytics/index.js';
 
 export function createApp(): Express {
   const app = express();
@@ -38,6 +39,9 @@ export function createApp(): Express {
 
   // Quality Inspection Management routes (Phase 6)
   app.use('/api/v1/quality', qualityRouter);
+
+  // Advanced Analytics & Statistical Process Monitoring routes (Phase 9)
+  app.use('/api/v1/analytics', analyticsRouter);
 
   // Health and readiness endpoints
   app.use('/api/v1/health', healthRouter);

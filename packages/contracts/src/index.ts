@@ -1186,3 +1186,106 @@ export const CapaCaseDetailResponseSchema = z.object({
   actions: z.array(CapaActionSchema),
 });
 export type CapaCaseDetailResponse = z.infer<typeof CapaCaseDetailResponseSchema>;
+
+// ==========================================
+// Phase 9: Statistical Process Monitoring (SPC) Schemas
+// ==========================================
+
+export const SpcStatusSchema = z.enum(['READY', 'INSUFFICIENT_DATA', 'DEGENERATE_BASELINE']);
+export type SpcStatus = z.infer<typeof SpcStatusSchema>;
+
+export const SpcSignalReasonSchema = z.enum(['ABOVE_UCL', 'BELOW_LCL']).nullable();
+export type SpcSignalReason = z.infer<typeof SpcSignalReasonSchema>;
+
+export const SpcPChartFilterSchema = z
+  .object({
+    productId: z.string().uuid(),
+    productionLineId: z.string().uuid(),
+    from: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: 'Parameter "from" must be a valid date or ISO timestamp',
+    }),
+    to: z.string().refine((val) => !isNaN(Date.parse(val)), {
+      message: 'Parameter "to" must be a valid date or ISO timestamp',
+    }),
+    shiftId: z.string().uuid().optional(),
+    inspectionStage: InspectionStageSchema.optional(),
+  })
+  .refine(
+    (data) => {
+      const fromDate = new Date(data.from);
+      const toDate = new Date(data.to);
+      return fromDate <= toDate;
+    },
+    {
+      message: 'Parameter "from" must not be after parameter "to"',
+      path: ['from'],
+    },
+  )
+  .refine(
+    (data) => {
+      const fromDate = new Date(data.from);
+      const toDate = new Date(data.to);
+      const diffDays = (toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24);
+      return diffDays <= 366; // Bounded to maximum 1 year
+    },
+    {
+      message: 'Requested analysis window cannot exceed 366 days',
+      path: ['to'],
+    },
+  );
+export type SpcPChartFilter = z.infer<typeof SpcPChartFilterSchema>;
+
+export const SpcBaselineSchema = z.object({
+  subgroupCount: z.number().int().nonnegative(),
+  minimumRequired: z.number().int().positive(),
+  totalSampleSize: z.number().int().nonnegative(),
+  totalFailedUnits: z.number().int().nonnegative(),
+  pBar: z.number().nullable(),
+});
+export type SpcBaseline = z.infer<typeof SpcBaselineSchema>;
+
+export const SpcSummarySchema = z.object({
+  signalCount: z.number().int().nonnegative(),
+  upperSignalCount: z.number().int().nonnegative(),
+  lowerSignalCount: z.number().int().nonnegative(),
+  interpretation: z.string(),
+});
+export type SpcSummary = z.infer<typeof SpcSummarySchema>;
+
+export const SpcPChartPointSchema = z.object({
+  inspectionId: z.string().uuid(),
+  inspectionNumber: z.string(),
+  batchId: z.string().uuid(),
+  batchNumber: z.string().nullable().optional(),
+  timestamp: z.string().datetime(),
+  sampleSize: z.number().int().positive(),
+  failedUnits: z.number().int().nonnegative(),
+  observedProportion: z.number(),
+  centerLine: z.number().nullable(),
+  upperControlLimit: z.number().nullable(),
+  lowerControlLimit: z.number().nullable(),
+  signal: z.boolean(),
+  signalReason: SpcSignalReasonSchema,
+});
+export type SpcPChartPoint = z.infer<typeof SpcPChartPointSchema>;
+
+export const SpcPChartResponseSchema = z.object({
+  status: SpcStatusSchema,
+  filters: z.object({
+    productId: z.string().uuid(),
+    productCode: z.string().optional(),
+    productName: z.string().optional(),
+    productionLineId: z.string().uuid(),
+    productionLineName: z.string().optional(),
+    shiftId: z.string().uuid().nullable().optional(),
+    shiftName: z.string().nullable().optional(),
+    inspectionStage: InspectionStageSchema.nullable().optional(),
+    from: z.string(),
+    to: z.string(),
+  }),
+  baseline: SpcBaselineSchema,
+  summary: SpcSummarySchema,
+  points: z.array(SpcPChartPointSchema),
+  warnings: z.array(z.string()),
+});
+export type SpcPChartResponse = z.infer<typeof SpcPChartResponseSchema>;

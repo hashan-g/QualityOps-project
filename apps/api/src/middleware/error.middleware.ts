@@ -60,6 +60,13 @@ export class ConflictError extends AppError {
   }
 }
 
+export class ServiceUnavailableError extends AppError {
+  constructor(message = 'Service temporarily unavailable', details?: unknown) {
+    super(message, 503, 'SERVICE_UNAVAILABLE', details);
+    this.name = 'ServiceUnavailableError';
+  }
+}
+
 export function notFoundHandler(req: Request, res: Response): void {
   const response: ApiErrorResponse = {
     error: {
