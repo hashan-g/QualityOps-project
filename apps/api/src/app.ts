@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { config } from './config.js';
 import { requestIdMiddleware } from './middleware/request-id.middleware.js';
+import { securityHeadersMiddleware } from './middleware/security-headers.middleware.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 import { healthRouter } from './routes/health.router.js';
 import { authRouter } from './routes/auth.router.js';
@@ -18,16 +19,22 @@ import { alertsRouter } from './routes/alerts/alerts.router.js';
 export function createApp(): Express {
   const app = express();
 
-  // Basic middleware
+  // Disable fingerprinting header
+  app.disable('x-powered-by');
+
+  // Baseline request correlation and security headers
+  app.use(requestIdMiddleware);
+  app.use(securityHeadersMiddleware);
+
+  // CORS and body parsing with bounded limits
   app.use(
     cors({
       origin: config.CORS_ORIGIN,
       credentials: true,
     }),
   );
+  app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser(config.COOKIE_SECRET));
-  app.use(express.json());
-  app.use(requestIdMiddleware);
 
   // Authentication & RBAC routes (Phase 3)
   app.use('/api/v1/auth', authRouter);

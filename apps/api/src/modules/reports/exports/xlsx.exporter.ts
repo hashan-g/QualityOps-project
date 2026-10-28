@@ -14,6 +14,22 @@ export interface GenerateXlsxOptions {
 }
 
 /**
+ * Dangerous leading characters that trigger formula execution in spreadsheet software
+ * (CSV/XLSX injection prevention).
+ */
+const FORMULA_TRIGGERS = ['=', '+', '-', '@', '\t', '\r'];
+
+export function sanitizeXlsxValue(value: unknown): unknown {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  const str = String(value);
+  if (FORMULA_TRIGGERS.some((char) => str.startsWith(char))) {
+    return `'${str}`;
+  }
+  return str;
+}
+
+/**
  * Generates an XLSX workbook Buffer with typed cells, styled headers, and safe values.
  * Never evaluates untrusted formulas.
  */
@@ -30,14 +46,14 @@ export async function generateXlsx(options: GenerateXlsxOptions): Promise<Buffer
     titleRow.font = { bold: true, color: { argb: 'FF1A365D' } };
 
     for (const [label, val] of Object.entries(options.summary)) {
-      const summaryRow = worksheet.addRow([label, val]);
+      const summaryRow = worksheet.addRow([sanitizeXlsxValue(label), sanitizeXlsxValue(val)]);
       summaryRow.getCell(1).font = { bold: true };
     }
     worksheet.addRow([]); // Blank spacer row
   }
 
   // 2. Add columns and header
-  const headerValues = options.columns.map((c) => c.header);
+  const headerValues = options.columns.map((c) => sanitizeXlsxValue(c.header));
   const headerRow = worksheet.addRow(headerValues);
 
   headerRow.eachCell((cell) => {
@@ -56,13 +72,11 @@ export async function generateXlsx(options: GenerateXlsxOptions): Promise<Buffer
     worksheetCol.width = col.width ?? Math.max(col.header.length + 4, 15);
   });
 
-  // 3. Add data rows with strict typing
+  // 3. Add data rows with strict typing and formula sanitization
   for (const rowData of options.rows) {
     const rowValues = options.columns.map((col) => {
       const val = rowData[col.key];
-      if (val === null || val === undefined) return '';
-      if (typeof val === 'number' || typeof val === 'boolean') return val;
-      return String(val);
+      return sanitizeXlsxValue(val);
     });
 
     const dataRow = worksheet.addRow(rowValues);

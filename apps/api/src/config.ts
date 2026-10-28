@@ -70,7 +70,7 @@ export function sanitizeDatabaseUrl(connString: string): string {
   }
 }
 
-const EnvironmentSchema = z
+export const EnvironmentSchema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     API_PORT: z
@@ -185,6 +185,12 @@ const EnvironmentSchema = z
         ) {
           return false;
         }
+        if (
+          data.COOKIE_SECRET === 'dev-qualityops-cookie-secret-32-chars-minimum' ||
+          data.COOKIE_SECRET.length < 32
+        ) {
+          return false;
+        }
         if (data.DATABASE_URL.includes('replace_with_a_local_only_password')) {
           return false;
         }
@@ -192,7 +198,8 @@ const EnvironmentSchema = z
       return true;
     },
     {
-      message: 'In production, JWT_ACCESS_SECRET must be set and at least 32 characters long',
+      message:
+        'In production, JWT_ACCESS_SECRET and COOKIE_SECRET must be set and at least 32 characters long, and DATABASE_URL must not contain default placeholder credentials',
       path: ['JWT_ACCESS_SECRET'],
     },
   );

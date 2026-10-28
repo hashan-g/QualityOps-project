@@ -10,13 +10,20 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Optional CORS for development
+# Strict internal CORS policy: restricted origins, no wildcard credentials
+allowed_origins_env = os.getenv(
+    "ALLOWED_ORIGINS", "http://127.0.0.1:4000,http://localhost:4000"
+)
+allowed_origins = [
+    origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "x-request-id"],
 )
 
 MAX_SUBGROUPS_LIMIT = int(os.getenv("MAX_SUBGROUPS_LIMIT", "5000"))

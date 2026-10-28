@@ -21,8 +21,20 @@ const server = app.listen(config.API_PORT, () => {
   console.log(`[QualityOps API] Health readiness available at GET /api/v1/health/ready`);
 });
 
+let isShuttingDown = false;
+
 async function shutdown(signal: string): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
   console.log(`[QualityOps API] ${signal} received, shutting down gracefully...`);
+
+  // Force process exit if graceful teardown exceeds 10 seconds
+  const forceTimeout = setTimeout(() => {
+    console.error('[QualityOps API] Graceful shutdown timed out after 10s, forcing exit.');
+    process.exit(1);
+  }, 10_000);
+  forceTimeout.unref();
+
   server.close(async () => {
     try {
       await closePool();
@@ -31,6 +43,7 @@ async function shutdown(signal: string): Promise<void> {
       console.error('[QualityOps API] Error closing database pool:', err);
     } finally {
       console.log('[QualityOps API] Process terminated.');
+      process.exit(0);
     }
   });
 }
@@ -41,4 +54,13 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   void shutdown('SIGINT');
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[QualityOps API] Unhandled Rejection:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('[QualityOps API] Uncaught Exception:', error);
+  void shutdown('uncaughtException');
 });

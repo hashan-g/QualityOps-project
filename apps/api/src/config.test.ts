@@ -2,7 +2,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { sanitizeDatabaseUrl, resolveEnvFiles, config, loadedEnvFiles } from './config.js';
+import {
+  sanitizeDatabaseUrl,
+  resolveEnvFiles,
+  config,
+  loadedEnvFiles,
+  EnvironmentSchema,
+} from './config.js';
 
 describe('Configuration & Environment Resolution Tests', () => {
   describe('sanitizeDatabaseUrl', () => {
@@ -113,6 +119,74 @@ describe('Configuration & Environment Resolution Tests', () => {
       expect(typeof config.REPORT_STORAGE_DIR).toBe('string');
       expect(typeof config.ALERT_INSPECTION_FAILURE_THRESHOLD).toBe('number');
       expect(typeof config.ALERT_EVALUATION_LOOKBACK_DAYS).toBe('number');
+    });
+  });
+
+  describe('EnvironmentSchema production hardening', () => {
+    const validProdEnv = {
+      NODE_ENV: 'production',
+      JWT_ACCESS_SECRET: 'a'.repeat(32),
+      COOKIE_SECRET: 'b'.repeat(32),
+      DATABASE_URL:
+        'postgresql://prod_user:RealSecurePassword123@prod-db.internal:5432/qualityops_prod',
+    };
+
+    it('accepts valid production secrets exceeding 32 characters with non-placeholder database', () => {
+      const parsed = EnvironmentSchema.safeParse(validProdEnv);
+      expect(parsed.success).toBe(true);
+    });
+
+    it('rejects default dev JWT_ACCESS_SECRET in production mode', () => {
+      const parsed = EnvironmentSchema.safeParse({
+        ...validProdEnv,
+        JWT_ACCESS_SECRET: 'dev-qualityops-jwt-access-secret-32-chars-minimum',
+      });
+      expect(parsed.success).toBe(false);
+    });
+
+    it('rejects short JWT_ACCESS_SECRET (< 32 chars) in production mode', () => {
+      const parsed = EnvironmentSchema.safeParse({
+        ...validProdEnv,
+        JWT_ACCESS_SECRET: 'short-secret-under-32-chars',
+      });
+      expect(parsed.success).toBe(false);
+    });
+
+    it('rejects default dev COOKIE_SECRET in production mode', () => {
+      const parsed = EnvironmentSchema.safeParse({
+        ...validProdEnv,
+        COOKIE_SECRET: 'dev-qualityops-cookie-secret-32-chars-minimum',
+      });
+      expect(parsed.success).toBe(false);
+    });
+
+    it('rejects short COOKIE_SECRET (< 32 chars) in production mode', () => {
+      const parsed = EnvironmentSchema.safeParse({
+        ...validProdEnv,
+        COOKIE_SECRET: 'short-cookie-secret',
+      });
+      expect(parsed.success).toBe(false);
+    });
+
+    it('rejects placeholder database password in production mode', () => {
+      const parsed = EnvironmentSchema.safeParse({
+        ...validProdEnv,
+        DATABASE_URL:
+          'postgresql://qualityops_dev:replace_with_a_local_only_password@127.0.0.1:5432/qualityops',
+      });
+      expect(parsed.success).toBe(false);
+    });
+
+    it('allows default dev secrets in development and test environments', () => {
+      const parsedDev = EnvironmentSchema.safeParse({
+        NODE_ENV: 'development',
+      });
+      expect(parsedDev.success).toBe(true);
+
+      const parsedTest = EnvironmentSchema.safeParse({
+        NODE_ENV: 'test',
+      });
+      expect(parsedTest.success).toBe(true);
     });
   });
 });

@@ -29,8 +29,9 @@ export class ArtifactStorageService {
     const filename = `${artifactId}.${ext}`;
     const resolvedPath = path.resolve(this.baseDir, filename);
 
-    // Defense-in-depth: Ensure the resolved path begins with the base directory
-    if (!resolvedPath.startsWith(this.baseDir)) {
+    // Defense-in-depth: Ensure the resolved path resides strictly within the base directory
+    const relative = path.relative(this.baseDir, resolvedPath);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new BadRequestError('Path traversal detected');
     }
 

@@ -1,5 +1,6 @@
 import type { PoolClient } from 'pg';
 import { pool } from '../../infrastructure/database/pool.js';
+import { redactSensitiveData } from '../../infrastructure/security/redact.service.js';
 
 export interface RecordAuditParams {
   actorId?: string | undefined;
@@ -59,8 +60,8 @@ export class AuditService {
       params.entityType,
       params.entityId,
       params.requestId ?? null,
-      params.beforeState ? JSON.stringify(params.beforeState) : null,
-      params.afterState ? JSON.stringify(params.afterState) : null,
+      params.beforeState ? JSON.stringify(redactSensitiveData(params.beforeState)) : null,
+      params.afterState ? JSON.stringify(redactSensitiveData(params.afterState)) : null,
       params.ipAddress ?? null,
     ];
 

@@ -24,7 +24,7 @@ function getCookieOptions() {
  */
 function validateOrigin(req: Request): void {
   const origin = req.headers.origin;
-  if (origin && origin !== config.CORS_ORIGIN) {
+  if (!origin || origin !== config.CORS_ORIGIN) {
     throw new ForbiddenError('Invalid request origin');
   }
 }

@@ -79,14 +79,42 @@ export function notFoundHandler(req: Request, res: Response): void {
 }
 
 export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction): void {
+  // Check for body-parser malformed JSON SyntaxError
+  if (
+    err instanceof SyntaxError &&
+    'status' in err &&
+    (err as { status: unknown }).status === 400 &&
+    'body' in err
+  ) {
+    res.status(400).json({
+      error: {
+        code: 'BAD_REQUEST',
+        message: 'Malformed JSON payload in request body',
+        requestId: req.id,
+      },
+    });
+    return;
+  }
+
   const statusCode = err instanceof AppError ? err.statusCode : 500;
   const code = err instanceof AppError ? err.code : 'INTERNAL_SERVER_ERROR';
 
-  // In production, mask non-AppError messages to avoid leaking implementation details
+  // In production, mask 500+ messages or non-AppError messages to avoid leaking implementation details
+  const isInternalServerError = statusCode >= 500;
+  const isProduction = process.env.NODE_ENV === 'production' || config.NODE_ENV === 'production';
   const message =
-    config.NODE_ENV === 'production' && !(err instanceof AppError)
+    isProduction && (isInternalServerError || !(err instanceof AppError))
       ? 'An unexpected error occurred'
       : err.message || 'Internal server error';
+
+  // Structured diagnostic logging for 500+ server errors
+  if (isInternalServerError && config.NODE_ENV !== 'test') {
+    const reqInfo = req.id ? `[Request: ${req.id}] ` : '';
+    console.error(
+      `[QualityOps API Error] ${reqInfo}${req.method} ${req.originalUrl} failed: ${err.message}`,
+      err.stack ? `\n${err.stack}` : '',
+    );
+  }
 
   const response: ApiErrorResponse = {
     error: {
