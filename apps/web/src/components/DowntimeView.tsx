@@ -253,19 +253,12 @@ export const DowntimeView: React.FC = () => {
 
   return (
     <section aria-labelledby="downtime-heading">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="qo-page-header">
         <div>
-          <h3 id="downtime-heading" style={{ margin: 0, fontSize: '20px', color: '#1a202c' }}>
+          <h3 id="downtime-heading" className="qo-page-title">
             Production Downtime Events
           </h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#718096' }}>
+          <p className="qo-page-subtitle">
             Capture and track equipment stoppages, line breakdowns, and planned maintenance
             intervals.
           </p>
@@ -294,21 +287,13 @@ export const DowntimeView: React.FC = () => {
 
       {/* Role Notice */}
       {!canOperate && (
-        <div
-          role="note"
-          style={{
-            padding: '8px 12px',
-            backgroundColor: '#fffaf0',
-            border: '1px solid #feebc8',
-            borderRadius: '6px',
-            marginBottom: '16px',
-            fontSize: '13px',
-            color: '#c05621',
-          }}
-        >
-          <strong>Read-Only Mode:</strong> Your role ({user?.roles.join(', ')}) permits viewing
-          downtime history. Recording or closing downtime events requires <code>ADMIN</code>,{' '}
-          <code>SUPERVISOR</code>, or <code>OPERATOR</code>.
+        <div role="note" className="qo-alert-banner warning">
+          <div className="qo-alert-banner-icon">&#9888;</div>
+          <div className="qo-alert-banner-content">
+            <strong>Read-Only Mode:</strong> Your role ({user?.roles.join(', ')}) permits viewing
+            downtime history. Recording or closing downtime events requires <code>ADMIN</code>,{' '}
+            <code>SUPERVISOR</code>, or <code>OPERATOR</code>.
+          </div>
         </div>
       )}
 
@@ -331,213 +316,211 @@ export const DowntimeView: React.FC = () => {
       )}
 
       {/* Filters Bar */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px',
-          alignItems: 'center',
-          backgroundColor: '#f7fafc',
-          border: '1px solid #edf2f7',
-          padding: '12px 16px',
-          borderRadius: '6px',
-          marginBottom: '16px',
-        }}
-      >
-        <div style={{ flex: '1', minWidth: '180px' }}>
-          <label htmlFor="downtime-search" style={{ display: 'none' }}>
-            Search Reason
-          </label>
-          <input
-            id="downtime-search"
-            type="search"
-            placeholder="Search reason..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              fontSize: '13px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '4px',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
+      <div className="qo-card" style={{ padding: '16px 20px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+          <div style={{ flex: '1', minWidth: '180px' }}>
+            <label htmlFor="downtime-search" style={{ display: 'none' }}>
+              Search Reason
+            </label>
+            <input
+              id="downtime-search"
+              type="search"
+              placeholder="Search reason..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                fontSize: '13px',
+                border: '1px solid #cbd5e0',
+                borderRadius: '4px',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
 
-        <div>
-          <label
-            htmlFor="downtime-cat-filter"
-            style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
-          >
-            Category:
-          </label>
-          <select
-            id="downtime-cat-filter"
-            value={categoryFilter}
-            onChange={(e) => {
-              setCategoryFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              padding: '6px 8px',
-              fontSize: '13px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '4px',
-            }}
-          >
-            <option value="ALL">All Categories</option>
-            <option value="UNPLANNED">UNPLANNED (Breakdowns)</option>
-            <option value="PLANNED">PLANNED (Maintenance)</option>
-          </select>
-        </div>
+          <div>
+            <label
+              htmlFor="downtime-cat-filter"
+              style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
+            >
+              Category:
+            </label>
+            <select
+              id="downtime-cat-filter"
+              value={categoryFilter}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '6px 8px',
+                fontSize: '13px',
+                border: '1px solid #cbd5e0',
+                borderRadius: '4px',
+              }}
+            >
+              <option value="ALL">All Categories</option>
+              <option value="UNPLANNED">UNPLANNED (Breakdowns)</option>
+              <option value="PLANNED">PLANNED (Maintenance)</option>
+            </select>
+          </div>
 
-        <div>
-          <label
-            htmlFor="downtime-line-filter"
-            style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
-          >
-            Line:
-          </label>
-          <select
-            id="downtime-line-filter"
-            value={lineFilter}
-            onChange={(e) => {
-              setLineFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              padding: '6px 8px',
-              fontSize: '13px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '4px',
-            }}
-          >
-            <option value="ALL">All Lines</option>
-            {lines.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.code}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label
+              htmlFor="downtime-line-filter"
+              style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
+            >
+              Line:
+            </label>
+            <select
+              id="downtime-line-filter"
+              value={lineFilter}
+              onChange={(e) => {
+                setLineFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '6px 8px',
+                fontSize: '13px',
+                border: '1px solid #cbd5e0',
+                borderRadius: '4px',
+              }}
+            >
+              <option value="ALL">All Lines</option>
+              {lines.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.code}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Table */}
-      <div style={{ overflowX: 'auto' }}>
-        {isLoading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading events...</p>}
-        {!isLoading && totalItems === 0 && (
-          <div
-            style={{
-              padding: '24px',
-              textAlign: 'center',
-              backgroundColor: '#f7fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              color: '#718096',
-            }}
-          >
-            No downtime events logged matching criteria.
-          </div>
-        )}
+      <div className="qo-card">
+        <div className="qo-table-responsive">
+          {isLoading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading events...</p>}
+          {!isLoading && totalItems === 0 && (
+            <div
+              style={{
+                padding: '24px',
+                textAlign: 'center',
+                backgroundColor: '#f7fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                color: '#718096',
+              }}
+            >
+              No downtime events logged matching criteria.
+            </div>
+          )}
 
-        {!isLoading && totalItems > 0 && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Reason</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Category</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                  Location / Machine
-                </th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Batch</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Started</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Duration</th>
-                <th
-                  style={{
-                    padding: '8px 12px',
-                    borderBottom: '2px solid #cbd5e0',
-                    textAlign: 'right',
-                  }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {downtimes.map((d) => (
-                <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 600 }}>
-                    <div>{d.reason}</div>
-                    {d.notes && (
-                      <div style={{ fontSize: '11px', color: '#718096', fontWeight: 400 }}>
-                        {d.notes}
-                      </div>
-                    )}
-                  </td>
-                  <td style={{ padding: '8px 12px' }}>
-                    <span
-                      style={{
-                        backgroundColor: d.category === 'UNPLANNED' ? '#fed7d7' : '#feebc8',
-                        color: d.category === 'UNPLANNED' ? '#742a2a' : '#7b341e',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {d.category}
-                    </span>
-                  </td>
-                  <td style={{ padding: '8px 12px' }}>
-                    <div>{d.productionLineCode}</div>
-                    <div style={{ fontSize: '11px', color: '#718096' }}>
-                      {d.machineCode ? d.machineCode : 'Whole Line'}
-                    </div>
-                  </td>
-                  <td style={{ padding: '8px 12px' }}>{d.batchNumber || '-'}</td>
-                  <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
-                    {new Date(d.startedAt).toLocaleString([], {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </td>
-                  <td style={{ padding: '8px 12px', fontWeight: 600 }}>
-                    {d.endedAt ? (
-                      formatDuration(d.durationSeconds)
-                    ) : (
-                      <span style={{ color: '#c53030' }}>Ongoing</span>
-                    )}
-                  </td>
-                  <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                    {!d.endedAt && canOperate && (
-                      <button
-                        onClick={() => handleOpenClose(d)}
+          {!isLoading && totalItems > 0 && (
+            <table className="qo-table">
+              <thead>
+                <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Reason</th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Category
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Location / Machine
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Batch</th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Started
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Duration
+                  </th>
+                  <th
+                    style={{
+                      padding: '8px 12px',
+                      borderBottom: '2px solid #cbd5e0',
+                      textAlign: 'right',
+                    }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {downtimes.map((d) => (
+                  <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>
+                      <div>{d.reason}</div>
+                      {d.notes && (
+                        <div style={{ fontSize: '11px', color: '#718096', fontWeight: 400 }}>
+                          {d.notes}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '8px 12px' }}>
+                      <span
                         style={{
-                          backgroundColor: '#38a169',
-                          color: '#ffffff',
-                          border: 'none',
+                          backgroundColor: d.category === 'UNPLANNED' ? '#fed7d7' : '#feebc8',
+                          color: d.category === 'UNPLANNED' ? '#742a2a' : '#7b341e',
+                          padding: '2px 6px',
                           borderRadius: '4px',
-                          padding: '4px 10px',
-                          fontSize: '12px',
+                          fontSize: '11px',
                           fontWeight: 600,
-                          cursor: 'pointer',
                         }}
                       >
-                        Close Event
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+                        {d.category}
+                      </span>
+                    </td>
+                    <td style={{ padding: '8px 12px' }}>
+                      <div>{d.productionLineCode}</div>
+                      <div style={{ fontSize: '11px', color: '#718096' }}>
+                        {d.machineCode ? d.machineCode : 'Whole Line'}
+                      </div>
+                    </td>
+                    <td style={{ padding: '8px 12px' }}>{d.batchNumber || '-'}</td>
+                    <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
+                      {new Date(d.startedAt).toLocaleString([], {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </td>
+                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>
+                      {d.endedAt ? (
+                        formatDuration(d.durationSeconds)
+                      ) : (
+                        <span style={{ color: '#c53030' }}>Ongoing</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                      {!d.endedAt && canOperate && (
+                        <button
+                          onClick={() => handleOpenClose(d)}
+                          style={{
+                            backgroundColor: '#38a169',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '4px 10px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Close Event
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {/* Pagination */}

@@ -157,17 +157,17 @@ export const SpcMonitoringView: React.FC = () => {
     if (!chartData || chartData.points.length === 0) return null;
 
     const points = chartData.points;
-    const width = 800;
-    const height = 340;
-    const padLeft = 60;
-    const padRight = 40;
-    const padTop = 30;
+    const width = 840;
+    const height = 350;
+    const padLeft = 65;
+    const padRight = 45;
+    const padTop = 32;
     const padBottom = 60;
 
     const chartW = width - padLeft - padRight;
     const chartH = height - padTop - padBottom;
 
-    // Determine Y-axis max: at least 0.1, or 1.15 * max(UCL, observed)
+    // Determine Y-axis max: at least 0.05, or 1.15 * max(UCL, observed)
     let maxY = 0.05;
     for (const pt of points) {
       if (pt.observedProportion > maxY) maxY = pt.observedProportion;
@@ -212,13 +212,13 @@ export const SpcMonitoringView: React.FC = () => {
       <div style={{ position: 'relative', width: '100%', overflowX: 'auto' }}>
         <svg
           viewBox={`0 0 ${width} ${height}`}
-          style={{ width: '100%', minWidth: '650px', height: 'auto', display: 'block' }}
+          style={{ width: '100%', minWidth: '680px', height: 'auto', display: 'block' }}
           role="img"
           aria-label="p-Chart Statistical Process Monitoring Graph"
         >
           <defs>
             <linearGradient id={`${chartPatternId}-grid`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#f7fafc" />
+              <stop offset="0%" stopColor="#f8fafc" />
               <stop offset="100%" stopColor="#ffffff" />
             </linearGradient>
           </defs>
@@ -231,6 +231,7 @@ export const SpcMonitoringView: React.FC = () => {
             height={chartH}
             fill={`url(#${chartPatternId}-grid)`}
             stroke="#e2e8f0"
+            rx="4"
           />
 
           {/* Horizontal grid lines & Y labels */}
@@ -243,16 +244,17 @@ export const SpcMonitoringView: React.FC = () => {
                   y1={yPos}
                   x2={padLeft + chartW}
                   y2={yPos}
-                  stroke="#edf2f7"
-                  strokeWidth="1"
+                  stroke="#f1f5f9"
+                  strokeWidth="1.5"
                 />
                 <text
-                  x={padLeft - 8}
+                  x={padLeft - 10}
                   y={yPos + 4}
                   textAnchor="end"
                   fontSize="11"
-                  fill="#718096"
+                  fill="#64748b"
                   fontFamily="system-ui, sans-serif"
+                  fontWeight="500"
                 >
                   {(val * 100).toFixed(1)}%
                 </text>
@@ -268,14 +270,14 @@ export const SpcMonitoringView: React.FC = () => {
                 y1={clY}
                 x2={padLeft + chartW}
                 y2={clY}
-                stroke="#38a169"
+                stroke="#15803d"
                 strokeWidth="2"
               />
               <text
                 x={padLeft + chartW + 6}
                 y={clY + 4}
                 fontSize="10"
-                fill="#276749"
+                fill="#14532d"
                 fontWeight="700"
                 fontFamily="system-ui, sans-serif"
               >
@@ -286,16 +288,16 @@ export const SpcMonitoringView: React.FC = () => {
 
           {/* Stepped Variable UCL (Red Dashed) */}
           {uclPath && (
-            <path d={uclPath} fill="none" stroke="#e53e3e" strokeWidth="2" strokeDasharray="5,4" />
+            <path d={uclPath} fill="none" stroke="#b91c1c" strokeWidth="2" strokeDasharray="5,4" />
           )}
 
           {/* Stepped Variable LCL (Red Dashed) */}
           {lclPath && (
-            <path d={lclPath} fill="none" stroke="#e53e3e" strokeWidth="2" strokeDasharray="5,4" />
+            <path d={lclPath} fill="none" stroke="#b91c1c" strokeWidth="2" strokeDasharray="5,4" />
           )}
 
           {/* Observed Proportion Connecting Line (Blue) */}
-          {observedPath && <path d={observedPath} fill="none" stroke="#3182ce" strokeWidth="2.5" />}
+          {observedPath && <path d={observedPath} fill="none" stroke="#1d4ed8" strokeWidth="2.5" />}
 
           {/* Data Points */}
           {points.map((pt, i) => {
@@ -312,19 +314,19 @@ export const SpcMonitoringView: React.FC = () => {
                   style={{ cursor: 'pointer' }}
                 >
                   <polygon
-                    points={`${cx},${cy - 8} ${cx + 8},${cy} ${cx},${cy + 8} ${cx - 8},${cy}`}
-                    fill="#e53e3e"
-                    stroke="#9b1c1c"
+                    points={`${cx},${cy - 9} ${cx + 9},${cy} ${cx},${cy + 9} ${cx - 9},${cy}`}
+                    fill="#b91c1c"
+                    stroke="#7f1d1d"
                     strokeWidth={isSelected ? '3' : '1.5'}
                   />
-                  <circle cx={cx} cy={cy} r="2" fill="#ffffff" />
+                  <circle cx={cx} cy={cy} r="2.5" fill="#ffffff" />
                   {/* Accessible visual marker label */}
                   <text
                     x={cx}
-                    y={cy - 12}
+                    y={cy - 13}
                     textAnchor="middle"
-                    fontSize="10"
-                    fill="#c53030"
+                    fontSize="11"
+                    fill="#b91c1c"
                     fontWeight="800"
                     fontFamily="system-ui, sans-serif"
                   >
@@ -340,8 +342,8 @@ export const SpcMonitoringView: React.FC = () => {
                 key={pt.inspectionId}
                 cx={cx}
                 cy={cy}
-                r={isSelected ? 6 : 4}
-                fill={isSelected ? '#2b6cb0' : '#4299e1'}
+                r={isSelected ? 6.5 : 4.5}
+                fill={isSelected ? '#1e40af' : '#2563eb'}
                 stroke="#ffffff"
                 strokeWidth="2"
                 onClick={() => setSelectedPoint(pt)}
@@ -365,14 +367,14 @@ export const SpcMonitoringView: React.FC = () => {
                   y1={padTop + chartH}
                   x2={cx}
                   y2={padTop + chartH + 5}
-                  stroke="#a0aec0"
+                  stroke="#94a3b8"
                 />
                 <text
                   x={cx}
                   y={padTop + chartH + 18}
                   textAnchor="middle"
                   fontSize="10"
-                  fill="#718096"
+                  fill="#64748b"
                   fontFamily="system-ui, sans-serif"
                 >
                   {label}
@@ -384,21 +386,21 @@ export const SpcMonitoringView: React.FC = () => {
           {/* Axis Labels */}
           <text
             x={padLeft}
-            y={padTop - 10}
+            y={padTop - 12}
             fontSize="11"
             fontWeight="600"
-            fill="#4a5568"
+            fill="#475569"
             fontFamily="system-ui, sans-serif"
           >
             Fraction Defective (p)
           </text>
           <text
             x={padLeft + chartW / 2}
-            y={height - 15}
+            y={height - 12}
             textAnchor="middle"
             fontSize="11"
             fontWeight="600"
-            fill="#4a5568"
+            fill="#475569"
             fontFamily="system-ui, sans-serif"
           >
             Completed Inspections (Chronological Subgroups)
@@ -409,12 +411,13 @@ export const SpcMonitoringView: React.FC = () => {
         <div
           style={{
             display: 'flex',
+            flexWrap: 'wrap',
             gap: '16px',
             justifyContent: 'center',
             alignItems: 'center',
             fontSize: '12px',
-            marginTop: '10px',
-            color: '#4a5568',
+            marginTop: '12px',
+            color: 'var(--qo-slate-600)',
           }}
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -423,17 +426,17 @@ export const SpcMonitoringView: React.FC = () => {
                 width: '12px',
                 height: '12px',
                 borderRadius: '50%',
-                backgroundColor: '#4299e1',
+                backgroundColor: '#2563eb',
               }}
             />
             Observed Proportion (p)
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '16px', height: '2px', backgroundColor: '#38a169' }} />
+            <span style={{ width: '16px', height: '2px', backgroundColor: '#15803d' }} />
             Center Line (CL = p&#772;)
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '16px', height: '2px', borderTop: '2px dashed #e53e3e' }} />
+            <span style={{ width: '16px', height: '2px', borderTop: '2px dashed #b91c1c' }} />
             Variable 3&sigma; Limits (UCL / LCL)
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -442,7 +445,7 @@ export const SpcMonitoringView: React.FC = () => {
                 width: '10px',
                 height: '10px',
                 transform: 'rotate(45deg)',
-                backgroundColor: '#e53e3e',
+                backgroundColor: '#b91c1c',
                 display: 'inline-block',
               }}
             />
@@ -456,224 +459,181 @@ export const SpcMonitoringView: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Platform Header */}
-      <div>
-        <h2 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#2d3748' }}>
-          Statistical Process Monitoring &mdash; p-Chart Control Limits
-        </h2>
-        <p style={{ margin: 0, fontSize: '14px', color: '#718096' }}>
-          Real-time statistical process monitoring evaluating completed inspection failure
-          proportions against sample-size weighted 3-sigma control limits.
-        </p>
+      <div className="qo-page-header">
+        <div>
+          <h2 className="qo-page-title">
+            Statistical Process Monitoring &mdash; p-Chart Control Limits
+          </h2>
+          <p className="qo-page-subtitle">
+            Real-time statistical process monitoring evaluating completed inspection failure
+            proportions against sample-size weighted 3-sigma control limits.
+          </p>
+        </div>
       </div>
 
       {/* Statistical Governance Guardrail Banner */}
-      <div
-        style={{
-          backgroundColor: '#ebf8ff',
-          border: '1px solid #bee3f8',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          fontSize: '13px',
-          color: '#2b6cb0',
-          lineHeight: 1.5,
-        }}
-      >
-        <strong>Statistical Control Invariant:</strong> A point outside control limits is a
-        statistical signal to investigate potential assignable causes&mdash;it is <em>not</em> proof
-        of a product specification violation or automatic permission to halt manufacturing. Control
-        limits describe empirical historical process stability, whereas specification limits
-        describe product engineering requirements.
+      <div className="qo-alert-banner info">
+        <div className="qo-alert-banner-icon">&#9432;</div>
+        <div className="qo-alert-banner-content">
+          <strong>Statistical Control Invariant:</strong> A point outside control limits is a
+          statistical signal to investigate potential assignable causes&mdash;it is <em>not</em>{' '}
+          proof of a product specification violation or automatic permission to halt manufacturing.
+          Control limits describe empirical historical process stability, whereas specification
+          limits describe product engineering requirements.
+        </div>
       </div>
 
       {/* Filter Selection Panel */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '12px',
-          padding: '16px',
-          backgroundColor: '#f7fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-        }}
-      >
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Product *
-          </label>
-          <select
-            value={productId}
-            onChange={(e) => setProductId(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '13px',
-            }}
-          >
-            <option value="">-- Select Product --</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code} - {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="qo-card" style={{ padding: '18px 20px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '14px',
+          }}
+        >
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--qo-navy-800)',
+                marginBottom: '6px',
+              }}
+            >
+              Product *
+            </label>
+            <select
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
+              className="qo-form-control"
+            >
+              <option value="">-- Select Product --</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.code} - {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Production Line *
-          </label>
-          <select
-            value={productionLineId}
-            onChange={(e) => setProductionLineId(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '13px',
-            }}
-          >
-            <option value="">-- Select Line --</option>
-            {lines.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--qo-navy-800)',
+                marginBottom: '6px',
+              }}
+            >
+              Production Line *
+            </label>
+            <select
+              value={productionLineId}
+              onChange={(e) => setProductionLineId(e.target.value)}
+              className="qo-form-control"
+            >
+              <option value="">-- Select Line --</option>
+              {lines.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            From Date *
-          </label>
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '7px 8px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '13px',
-            }}
-          />
-        </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--qo-navy-800)',
+                marginBottom: '6px',
+              }}
+            >
+              From Date *
+            </label>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="qo-form-control"
+            />
+          </div>
 
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            To Date *
-          </label>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '7px 8px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '13px',
-            }}
-          />
-        </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--qo-navy-800)',
+                marginBottom: '6px',
+              }}
+            >
+              To Date *
+            </label>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="qo-form-control"
+            />
+          </div>
 
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Shift (Optional)
-          </label>
-          <select
-            value={shiftId}
-            onChange={(e) => setShiftId(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '13px',
-            }}
-          >
-            <option value="">All Operating Shifts</option>
-            {shifts.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--qo-navy-800)',
+                marginBottom: '6px',
+              }}
+            >
+              Shift (Optional)
+            </label>
+            <select
+              value={shiftId}
+              onChange={(e) => setShiftId(e.target.value)}
+              className="qo-form-control"
+            >
+              <option value="">All Operating Shifts</option>
+              {shifts.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Inspection Stage (Optional)
-          </label>
-          <select
-            value={inspectionStage}
-            onChange={(e) => setInspectionStage(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '13px',
-            }}
-          >
-            <option value="">All Inspection Stages</option>
-            <option value="IN_PROCESS">In-Process</option>
-            <option value="FINAL">Final Inspection</option>
-            <option value="RECEIVING">Receiving / Incoming</option>
-            <option value="FIRST_ARTICLE">First Article</option>
-          </select>
+          <div>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'var(--qo-navy-800)',
+                marginBottom: '6px',
+              }}
+            >
+              Inspection Stage (Optional)
+            </label>
+            <select
+              value={inspectionStage}
+              onChange={(e) => setInspectionStage(e.target.value)}
+              className="qo-form-control"
+            >
+              <option value="">All Inspection Stages</option>
+              <option value="IN_PROCESS">In-Process</option>
+              <option value="FINAL">Final Inspection</option>
+              <option value="RECEIVING">Receiving / Incoming</option>
+              <option value="FIRST_ARTICLE">First Article</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -681,28 +641,27 @@ export const SpcMonitoringView: React.FC = () => {
       {errorMessage && (
         <div
           role="alert"
-          style={{
-            padding: '12px 16px',
-            borderRadius: '6px',
-            backgroundColor: isServiceUnavailable ? '#fffaf0' : '#fff5f5',
-            border: `1px solid ${isServiceUnavailable ? '#feebc8' : '#feb2b2'}`,
-            color: isServiceUnavailable ? '#c05621' : '#c53030',
-            fontSize: '14px',
-          }}
+          className={`qo-alert-banner ${isServiceUnavailable ? 'warning' : 'danger'}`}
         >
-          <strong>
-            {isServiceUnavailable
-              ? 'Analytics Service Unavailable (HTTP 503):'
-              : 'Validation Error:'}
-          </strong>{' '}
-          {errorMessage}
+          <div className="qo-alert-banner-icon">{isServiceUnavailable ? '&#9888;' : '&#9940;'}</div>
+          <div className="qo-alert-banner-content">
+            <strong>
+              {isServiceUnavailable
+                ? 'Analytics Service Unavailable (HTTP 503):'
+                : 'Validation Error:'}
+            </strong>{' '}
+            {errorMessage}
+          </div>
         </div>
       )}
 
       {/* Loading State */}
       {isLoading && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#718096', fontSize: '14px' }}>
-          Evaluating statistical subgroups and calculating 3&sigma; control limits...
+        <div className="qo-card" style={{ textAlign: 'center', padding: '48px 24px' }}>
+          <div className="qo-spinner" style={{ margin: '0 auto 12px auto' }} />
+          <div style={{ color: 'var(--qo-slate-600)', fontSize: '14px', fontWeight: 500 }}>
+            Evaluating statistical subgroups and calculating 3&sigma; control limits...
+          </div>
         </div>
       )}
 
@@ -713,23 +672,23 @@ export const SpcMonitoringView: React.FC = () => {
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: '12px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '14px',
             }}
           >
-            <div style={kpiCardStyle}>
-              <div style={kpiLabelStyle}>Process Status</div>
+            <div className="qo-kpi-card">
+              <div className="qo-kpi-title">Process Status</div>
               <div
                 style={{
                   fontSize: '14px',
                   fontWeight: 700,
-                  marginTop: '4px',
+                  marginTop: '6px',
                   color:
                     chartData.status === 'READY'
-                      ? '#276749'
+                      ? 'var(--qo-success)'
                       : chartData.status === 'INSUFFICIENT_DATA'
-                        ? '#c05621'
-                        : '#718096',
+                        ? 'var(--qo-warning)'
+                        : 'var(--qo-slate-500)',
                 }}
               >
                 {chartData.status === 'READY'
@@ -740,40 +699,47 @@ export const SpcMonitoringView: React.FC = () => {
               </div>
             </div>
 
-            <div style={kpiCardStyle}>
-              <div style={kpiLabelStyle}>Subgroups Ratio</div>
-              <div style={kpiValueStyle}>
+            <div className="qo-kpi-card">
+              <div className="qo-kpi-title">Subgroups Ratio</div>
+              <div className="qo-kpi-value">
                 {chartData.baseline.subgroupCount} / {chartData.baseline.minimumRequired}
                 <span
-                  style={{ fontSize: '11px', fontWeight: 400, color: '#718096', marginLeft: '4px' }}
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 400,
+                    color: 'var(--qo-slate-500)',
+                    marginLeft: '6px',
+                  }}
                 >
                   (min)
                 </span>
               </div>
             </div>
 
-            <div style={kpiCardStyle}>
-              <div style={kpiLabelStyle}>Pooled p&#772; (CL)</div>
-              <div style={{ ...kpiValueStyle, color: '#2b6cb0' }}>
+            <div className="qo-kpi-card">
+              <div className="qo-kpi-title">Pooled p&#772; (CL)</div>
+              <div className="qo-kpi-value" style={{ color: 'var(--qo-primary)' }}>
                 {chartData.baseline.pBar !== null
                   ? `${(chartData.baseline.pBar * 100).toFixed(2)}%`
                   : 'N/A'}
               </div>
             </div>
 
-            <div style={kpiCardStyle}>
-              <div style={kpiLabelStyle}>Units Inspected / Failed</div>
-              <div style={kpiValueStyle}>
-                {chartData.baseline.totalSampleSize} / {chartData.baseline.totalFailedUnits}
+            <div className="qo-kpi-card">
+              <div className="qo-kpi-title">Units Inspected / Failed</div>
+              <div className="qo-kpi-value">
+                {chartData.baseline.totalSampleSize.toLocaleString()} /{' '}
+                {chartData.baseline.totalFailedUnits.toLocaleString()}
               </div>
             </div>
 
-            <div style={kpiCardStyle}>
-              <div style={kpiLabelStyle}>Active Signals</div>
+            <div className="qo-kpi-card">
+              <div className="qo-kpi-title">Active Signals</div>
               <div
+                className="qo-kpi-value"
                 style={{
-                  ...kpiValueStyle,
-                  color: chartData.summary.signalCount > 0 ? '#e53e3e' : '#38a169',
+                  color:
+                    chartData.summary.signalCount > 0 ? 'var(--qo-danger)' : 'var(--qo-success)',
                 }}
               >
                 {chartData.summary.signalCount}
@@ -783,145 +749,230 @@ export const SpcMonitoringView: React.FC = () => {
 
           {/* Plain-Language Statistical Interpretation */}
           <div
-            style={{
-              padding: '12px 16px',
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '13px',
-              color: '#4a5568',
-            }}
+            className="qo-card"
+            style={{ padding: '14px 18px', backgroundColor: 'var(--qo-slate-50)' }}
           >
-            <strong>Interpretation:</strong> {chartData.summary.interpretation}
+            <div style={{ fontSize: '13px', color: 'var(--qo-navy-800)', lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--qo-navy-900)' }}>Interpretation:</strong>{' '}
+              {chartData.summary.interpretation}
+            </div>
           </div>
 
           {/* Warnings List if any */}
           {chartData.warnings.length > 0 && (
-            <div
-              style={{
-                backgroundColor: '#fffaf0',
-                border: '1px solid #feebc8',
-                borderRadius: '8px',
-                padding: '12px 16px',
-                fontSize: '13px',
-                color: '#c05621',
-              }}
-            >
-              <strong>Data Quality Warning:</strong>
-              <ul style={{ margin: '6px 0 0 0', paddingLeft: '20px' }}>
-                {chartData.warnings.map((w, idx) => (
-                  <li key={idx}>{w}</li>
-                ))}
-              </ul>
+            <div className="qo-alert-banner warning">
+              <div className="qo-alert-banner-icon">&#9888;</div>
+              <div className="qo-alert-banner-content">
+                <strong>Data Quality Warning:</strong>
+                <ul style={{ margin: '6px 0 0 0', paddingLeft: '20px' }}>
+                  {chartData.warnings.map((w, idx) => (
+                    <li key={idx}>{w}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           )}
 
           {/* P-Chart Graph Card */}
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              padding: '20px',
-            }}
-          >
-            <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', color: '#2d3748' }}>
-              Fraction Nonconforming Control Chart (p-Chart) &mdash; {chartData.filters.productCode}{' '}
-              ({chartData.filters.productionLineName})
-            </h4>
-
-            {chartData.status === 'INSUFFICIENT_DATA' ? (
-              <div
-                style={{
-                  padding: '48px 24px',
-                  textAlign: 'center',
-                  backgroundColor: '#f7fafc',
-                  border: '1px dashed #cbd5e0',
-                  borderRadius: '6px',
-                  color: '#718096',
-                }}
-              >
-                <p
+          <div className="qo-card">
+            <div className="qo-card-header">
+              <h4 className="qo-card-title">
+                Fraction Nonconforming Control Chart (p-Chart) &mdash;{' '}
+                {chartData.filters.productCode} ({chartData.filters.productionLineName})
+              </h4>
+            </div>
+            <div className="qo-card-body" style={{ padding: '20px' }}>
+              {chartData.status === 'INSUFFICIENT_DATA' ? (
+                <div
                   style={{
-                    margin: '0 0 8px 0',
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    color: '#4a5568',
+                    padding: '48px 24px',
+                    textAlign: 'center',
+                    backgroundColor: 'var(--qo-slate-50)',
+                    border: '1px dashed var(--qo-slate-300)',
+                    borderRadius: 'var(--qo-radius-lg)',
+                    color: 'var(--qo-slate-600)',
                   }}
                 >
-                  Insufficient Completed Inspection Subgroups
-                </p>
-                <p style={{ margin: 0, fontSize: '13px' }}>
-                  Observed {chartData.baseline.subgroupCount} completed inspection(s). A minimum of{' '}
-                  {chartData.baseline.minimumRequired} completed inspections is required to compute
-                  reliable 3-sigma control limits without fabricating unscientific baselines.
-                </p>
-              </div>
-            ) : chartData.status === 'DEGENERATE_BASELINE' ? (
-              <div
-                style={{
-                  padding: '48px 24px',
-                  textAlign: 'center',
-                  backgroundColor: '#fffaf0',
-                  border: '1px dashed #fbd38d',
-                  borderRadius: '6px',
-                  color: '#c05621',
-                }}
-              >
-                <p style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600 }}>
-                  Degenerate Process Baseline Detected
-                </p>
-                <p style={{ margin: 0, fontSize: '13px' }}>
-                  Pooled failure fraction is exactly{' '}
-                  {((chartData.baseline.pBar ?? 0) * 100).toFixed(2)}%. Standard error is zero;
-                  3-sigma control limits cannot be meaningfully drawn as a stable baseline.
-                </p>
-              </div>
-            ) : (
-              renderSvgChart()
-            )}
+                  <p
+                    style={{
+                      margin: '0 0 8px 0',
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: 'var(--qo-navy-800)',
+                    }}
+                  >
+                    Insufficient Completed Inspection Subgroups
+                  </p>
+                  <p style={{ margin: 0, fontSize: '13px' }}>
+                    Observed {chartData.baseline.subgroupCount} completed inspection(s). A minimum
+                    of {chartData.baseline.minimumRequired} completed inspections is required to
+                    compute reliable 3-sigma control limits without fabricating unscientific
+                    baselines.
+                  </p>
+                </div>
+              ) : chartData.status === 'DEGENERATE_BASELINE' ? (
+                <div
+                  style={{
+                    padding: '48px 24px',
+                    textAlign: 'center',
+                    backgroundColor: 'var(--qo-warning-bg)',
+                    border: '1px dashed var(--qo-warning-border)',
+                    borderRadius: 'var(--qo-radius-lg)',
+                    color: 'var(--qo-warning-text)',
+                  }}
+                >
+                  <p style={{ margin: '0 0 8px 0', fontSize: '15px', fontWeight: 600 }}>
+                    Degenerate Process Baseline Detected
+                  </p>
+                  <p style={{ margin: 0, fontSize: '13px' }}>
+                    Pooled failure fraction is exactly{' '}
+                    {((chartData.baseline.pBar ?? 0) * 100).toFixed(2)}%. Standard error is zero;
+                    3-sigma control limits cannot be meaningfully drawn as a stable baseline.
+                  </p>
+                </div>
+              ) : (
+                renderSvgChart()
+              )}
+            </div>
           </div>
 
-          {/* Subgroup Inspection Detail Table */}
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              overflow: 'hidden',
-            }}
-          >
+          {/* Selected Subgroup Inspector Panel */}
+          {selectedPoint && (
             <div
+              className="qo-card"
               style={{
-                padding: '14px 18px',
-                borderBottom: '1px solid #e2e8f0',
-                backgroundColor: '#f8fafc',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                borderLeft: `4px solid ${selectedPoint.signal ? 'var(--qo-danger)' : 'var(--qo-primary)'}`,
+                padding: '16px 20px',
               }}
             >
-              <h4 style={{ margin: 0, fontSize: '14px', color: '#2d3748' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      fontSize: '14px',
+                      color: 'var(--qo-navy-900)',
+                    }}
+                  >
+                    Selected Subgroup: {selectedPoint.inspectionNumber}
+                  </span>
+                  {selectedPoint.signal ? (
+                    <span className="qo-badge qo-badge-danger">
+                      ! OUT OF CONTROL ({selectedPoint.signalReason})
+                    </span>
+                  ) : (
+                    <span className="qo-badge qo-badge-success">&#10003; IN CONTROL</span>
+                  )}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--qo-slate-500)' }}>
+                  Timestamp: {new Date(selectedPoint.timestamp).toLocaleString()}
+                </div>
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                  gap: '12px',
+                  fontSize: '13px',
+                }}
+              >
+                <div>
+                  <span
+                    style={{ color: 'var(--qo-slate-500)', display: 'block', fontSize: '11px' }}
+                  >
+                    BATCH
+                  </span>
+                  <strong>{selectedPoint.batchNumber || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span
+                    style={{ color: 'var(--qo-slate-500)', display: 'block', fontSize: '11px' }}
+                  >
+                    SAMPLE (n)
+                  </span>
+                  <strong>{selectedPoint.sampleSize}</strong>
+                </div>
+                <div>
+                  <span
+                    style={{ color: 'var(--qo-slate-500)', display: 'block', fontSize: '11px' }}
+                  >
+                    FAILED (x)
+                  </span>
+                  <strong>{selectedPoint.failedUnits}</strong>
+                </div>
+                <div>
+                  <span
+                    style={{ color: 'var(--qo-slate-500)', display: 'block', fontSize: '11px' }}
+                  >
+                    OBSERVED FRACTION (p)
+                  </span>
+                  <strong
+                    style={{
+                      color: selectedPoint.signal ? 'var(--qo-danger)' : 'var(--qo-primary)',
+                    }}
+                  >
+                    {(selectedPoint.observedProportion * 100).toFixed(2)}%
+                  </strong>
+                </div>
+                <div>
+                  <span
+                    style={{ color: 'var(--qo-slate-500)', display: 'block', fontSize: '11px' }}
+                  >
+                    LOWER LIMIT (LCL)
+                  </span>
+                  <strong>
+                    {selectedPoint.lowerControlLimit !== null
+                      ? `${(selectedPoint.lowerControlLimit * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </strong>
+                </div>
+                <div>
+                  <span
+                    style={{ color: 'var(--qo-slate-500)', display: 'block', fontSize: '11px' }}
+                  >
+                    UPPER LIMIT (UCL)
+                  </span>
+                  <strong>
+                    {selectedPoint.upperControlLimit !== null
+                      ? `${(selectedPoint.upperControlLimit * 100).toFixed(2)}%`
+                      : 'N/A'}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Subgroup Inspection Detail Table */}
+          <div className="qo-card">
+            <div className="qo-card-header">
+              <h4 className="qo-card-title">
                 Completed Inspection Subgroups Repository ({chartData.points.length})
               </h4>
-              <span style={{ fontSize: '12px', color: '#718096' }}>
+              <span style={{ fontSize: '12px', color: 'var(--qo-slate-500)' }}>
                 Click any row to inspect subgroup details
               </span>
             </div>
 
-            <div style={{ overflowX: 'auto', maxHeight: '360px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-                <thead style={{ position: 'sticky', top: 0, backgroundColor: '#edf2f7' }}>
-                  <tr style={{ textAlign: 'left', color: '#4a5568' }}>
-                    <th style={thStyle}>Date (UTC)</th>
-                    <th style={thStyle}>Inspection #</th>
-                    <th style={thStyle}>Batch #</th>
-                    <th style={thStyle}>Sample (n)</th>
-                    <th style={thStyle}>Failed (x)</th>
-                    <th style={thStyle}>Observed %</th>
-                    <th style={thStyle}>LCL</th>
-                    <th style={thStyle}>UCL</th>
-                    <th style={thStyle}>Signal Status</th>
+            <div className="qo-table-responsive" style={{ maxHeight: '380px' }}>
+              <table className="qo-table">
+                <thead>
+                  <tr>
+                    <th>Date (UTC)</th>
+                    <th>Inspection #</th>
+                    <th>Batch #</th>
+                    <th>Sample (n)</th>
+                    <th>Failed (x)</th>
+                    <th>Observed %</th>
+                    <th>LCL</th>
+                    <th>UCL</th>
+                    <th>Signal Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -932,69 +983,47 @@ export const SpcMonitoringView: React.FC = () => {
                         key={pt.inspectionId}
                         onClick={() => setSelectedPoint(pt)}
                         style={{
-                          borderBottom: '1px solid #e2e8f0',
                           backgroundColor: isSelected
-                            ? '#ebf8ff'
+                            ? 'var(--qo-primary-subtle)'
                             : pt.signal
-                              ? '#fff5f5'
-                              : '#ffffff',
+                              ? 'var(--qo-danger-bg)'
+                              : undefined,
                           cursor: 'pointer',
                         }}
                       >
-                        <td style={tdStyle}>{new Date(pt.timestamp).toLocaleDateString()}</td>
-                        <td style={{ ...tdStyle, fontWeight: 600 }}>{pt.inspectionNumber}</td>
-                        <td style={tdStyle}>{pt.batchNumber || 'N/A'}</td>
-                        <td style={tdStyle}>{pt.sampleSize}</td>
-                        <td style={tdStyle}>{pt.failedUnits}</td>
+                        <td>{new Date(pt.timestamp).toLocaleDateString()}</td>
+                        <td style={{ fontWeight: 600 }}>{pt.inspectionNumber}</td>
+                        <td>{pt.batchNumber || 'N/A'}</td>
+                        <td>{pt.sampleSize}</td>
+                        <td>{pt.failedUnits}</td>
                         <td
                           style={{
-                            ...tdStyle,
                             fontWeight: 700,
-                            color: pt.signal ? '#e53e3e' : '#2b6cb0',
+                            color: pt.signal ? 'var(--qo-danger)' : 'var(--qo-primary)',
                           }}
                         >
                           {(pt.observedProportion * 100).toFixed(2)}%
                         </td>
-                        <td style={tdStyle}>
+                        <td>
                           {pt.lowerControlLimit !== null
                             ? `${(pt.lowerControlLimit * 100).toFixed(2)}%`
                             : 'N/A'}
                         </td>
-                        <td style={tdStyle}>
+                        <td>
                           {pt.upperControlLimit !== null
                             ? `${(pt.upperControlLimit * 100).toFixed(2)}%`
                             : 'N/A'}
                         </td>
-                        <td style={tdStyle}>
+                        <td>
                           {pt.signal ? (
-                            <span
-                              style={{
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontWeight: 700,
-                                backgroundColor: '#fed7d7',
-                                color: '#9b1c1c',
-                                border: '1px solid #feb2b2',
-                              }}
-                            >
+                            <span className="qo-badge qo-badge-danger">
                               !{' '}
                               {pt.signalReason === 'ABOVE_UCL'
                                 ? 'SIGNAL: Above UCL'
                                 : 'SIGNAL: Below LCL'}
                             </span>
                           ) : (
-                            <span
-                              style={{
-                                padding: '2px 8px',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                backgroundColor: '#f0fff4',
-                                color: '#276749',
-                              }}
-                            >
-                              In Control
-                            </span>
+                            <span className="qo-badge qo-badge-success">In Control</span>
                           )}
                         </td>
                       </tr>
@@ -1008,37 +1037,4 @@ export const SpcMonitoringView: React.FC = () => {
       )}
     </div>
   );
-};
-
-// Styles
-const kpiCardStyle: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e2e8f0',
-  borderRadius: '8px',
-  padding: '14px',
-};
-
-const kpiLabelStyle: React.CSSProperties = {
-  fontSize: '12px',
-  color: '#718096',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-};
-
-const kpiValueStyle: React.CSSProperties = {
-  fontSize: '20px',
-  fontWeight: 700,
-  color: '#2d3748',
-  marginTop: '4px',
-};
-
-const thStyle: React.CSSProperties = {
-  padding: '10px 14px',
-  fontSize: '12px',
-  fontWeight: 600,
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: '10px 14px',
 };

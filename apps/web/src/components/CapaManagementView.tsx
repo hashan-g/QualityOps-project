@@ -478,14 +478,14 @@ export const CapaManagementView: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Platform Header */}
-      <div>
-        <h2 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#2d3748' }}>
-          Corrective and Preventive Action (CAPA) Management
-        </h2>
-        <p style={{ margin: 0, fontSize: '14px', color: '#718096' }}>
-          Closed-loop nonconformance resolution: containment, root-cause investigation,
-          corrective/preventive action tracking, independent verification, and auditable closure.
-        </p>
+      <div className="qo-page-header">
+        <div>
+          <h2 className="qo-page-title">Corrective and Preventive Action (CAPA) Management</h2>
+          <p className="qo-page-subtitle">
+            Closed-loop nonconformance resolution: containment, root-cause investigation,
+            corrective/preventive action tracking, independent verification, and auditable closure.
+          </p>
+        </div>
       </div>
 
       {/* Feedback Alert */}
@@ -545,10 +545,11 @@ export const CapaManagementView: React.FC = () => {
           gap: '12px',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: '#f7fafc',
-          padding: '16px',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0',
+          backgroundColor: 'var(--qo-white)',
+          padding: '18px 20px',
+          borderRadius: 'var(--qo-radius-lg)',
+          border: '1px solid var(--qo-slate-200)',
+          boxShadow: 'var(--qo-shadow-xs)',
         }}
       >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
@@ -672,177 +673,181 @@ export const CapaManagementView: React.FC = () => {
       </div>
 
       {/* Cases Table */}
-      <div
-        style={{
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          overflowX: 'auto',
-          backgroundColor: '#ffffff',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
-              <th style={thStyle}>Case #</th>
-              <th style={thStyle}>Title &amp; Source</th>
-              <th style={thStyle}>Priority</th>
-              <th style={thStyle}>Status</th>
-              <th style={thStyle}>Assignee</th>
-              <th style={thStyle}>Actions Progress</th>
-              <th style={thStyle}>Due Date</th>
-              <th style={{ ...thStyle, textAlign: 'right' }}>Operations</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
+      <div className="qo-card">
+        <div className="qo-table-responsive">
+          <table className="qo-table">
+            <thead>
               <tr>
-                <td colSpan={8} style={{ padding: '24px', textAlign: 'center', color: '#718096' }}>
-                  Loading CAPA cases...
-                </td>
+                <th style={thStyle}>Case #</th>
+                <th style={thStyle}>Title &amp; Source</th>
+                <th style={thStyle}>Priority</th>
+                <th style={thStyle}>Status</th>
+                <th style={thStyle}>Assignee</th>
+                <th style={thStyle}>Actions Progress</th>
+                <th style={thStyle}>Due Date</th>
+                <th style={{ ...thStyle, textAlign: 'right' }}>Operations</th>
               </tr>
-            ) : cases.length === 0 ? (
-              <tr>
-                <td colSpan={8} style={{ padding: '24px', textAlign: 'center', color: '#718096' }}>
-                  No CAPA cases found matching the criteria.
-                </td>
-              </tr>
-            ) : (
-              cases.map((c) => {
-                const priorityBadge = getPriorityStyle(c.priority);
-                const statusBadge = getStatusStyle(c.status);
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    style={{ padding: '24px', textAlign: 'center', color: '#718096' }}
+                  >
+                    Loading CAPA cases...
+                  </td>
+                </tr>
+              ) : cases.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={8}
+                    style={{ padding: '24px', textAlign: 'center', color: '#718096' }}
+                  >
+                    No CAPA cases found matching the criteria.
+                  </td>
+                </tr>
+              ) : (
+                cases.map((c) => {
+                  const priorityBadge = getPriorityStyle(c.priority);
+                  const statusBadge = getStatusStyle(c.status);
 
-                return (
-                  <tr key={c.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ ...tdStyle, fontWeight: 700, color: '#2b6cb0' }}>
-                      {c.caseNumber}
-                    </td>
-                    <td style={tdStyle}>
-                      <div style={{ fontWeight: 600, color: '#2d3748' }}>{c.title}</div>
-                      <div style={{ fontSize: '11px', color: '#718096' }}>
-                        Source: {c.source.replace(/_/g, ' ')}
-                      </div>
-                    </td>
-                    <td style={tdStyle}>
-                      <span
-                        style={{
-                          ...priorityBadge,
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {c.priority}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>
-                      <span
-                        style={{
-                          ...statusBadge,
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {c.status.replace(/_/g, ' ')}
-                      </span>
-                    </td>
-                    <td style={tdStyle}>{c.assignedToName || 'Unassigned'}</td>
-                    <td style={tdStyle}>
-                      <div style={{ fontWeight: 600 }}>
-                        {c.completedActionCount} / {c.actionCount} done
-                      </div>
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '4px',
-                          backgroundColor: '#edf2f7',
-                          borderRadius: '2px',
-                          marginTop: '4px',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        <div
-                          style={{
-                            height: '100%',
-                            backgroundColor:
-                              c.completedActionCount === c.actionCount && c.actionCount > 0
-                                ? '#38a169'
-                                : '#3182ce',
-                            width: `${
-                              c.actionCount > 0
-                                ? Math.round((c.completedActionCount / c.actionCount) * 100)
-                                : 0
-                            }%`,
-                          }}
-                        />
-                      </div>
-                    </td>
-                    <td style={tdStyle}>
-                      <div>{c.dueDate || 'No due date'}</div>
-                      {c.isOverdue && (
+                  return (
+                    <tr key={c.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ ...tdStyle, fontWeight: 700, color: '#2b6cb0' }}>
+                        {c.caseNumber}
+                      </td>
+                      <td style={tdStyle}>
+                        <div style={{ fontWeight: 600, color: '#2d3748' }}>{c.title}</div>
+                        <div style={{ fontSize: '11px', color: '#718096' }}>
+                          Source: {c.source.replace(/_/g, ' ')}
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
                         <span
                           style={{
-                            backgroundColor: '#fed7d7',
-                            color: '#9b2c2c',
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            fontSize: '10px',
+                            ...priorityBadge,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
                             fontWeight: 700,
                           }}
                         >
-                          OVERDUE
+                          {c.priority}
                         </span>
-                      )}
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: 'right' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          gap: '6px',
-                          justifyContent: 'flex-end',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <button onClick={() => void loadCaseDetail(c.id)} style={btnSmallSecondary}>
-                          View Details
-                        </button>
-
-                        {canCreate && c.status !== 'CLOSED' && c.status !== 'CANCELLED' && (
-                          <button
-                            onClick={() => {
-                              setActionCaseId(c.id);
-                              setIsAddActionOpen(true);
+                      </td>
+                      <td style={tdStyle}>
+                        <span
+                          style={{
+                            ...statusBadge,
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {c.status.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td style={tdStyle}>{c.assignedToName || 'Unassigned'}</td>
+                      <td style={tdStyle}>
+                        <div style={{ fontWeight: 600 }}>
+                          {c.completedActionCount} / {c.actionCount} done
+                        </div>
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '4px',
+                            backgroundColor: '#edf2f7',
+                            borderRadius: '2px',
+                            marginTop: '4px',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              backgroundColor:
+                                c.completedActionCount === c.actionCount && c.actionCount > 0
+                                  ? '#38a169'
+                                  : '#3182ce',
+                              width: `${
+                                c.actionCount > 0
+                                  ? Math.round((c.completedActionCount / c.actionCount) * 100)
+                                  : 0
+                              }%`,
                             }}
-                            style={btnSmallAction}
+                          />
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
+                        <div>{c.dueDate || 'No due date'}</div>
+                        {c.isOverdue && (
+                          <span
+                            style={{
+                              backgroundColor: '#fed7d7',
+                              color: '#9b2c2c',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: 700,
+                            }}
                           >
-                            + Action
-                          </button>
+                            OVERDUE
+                          </span>
                         )}
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'right' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '6px',
+                            justifyContent: 'flex-end',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <button
+                            onClick={() => void loadCaseDetail(c.id)}
+                            style={btnSmallSecondary}
+                          >
+                            View Details
+                          </button>
 
-                        {canVerifyOrClose &&
-                          (c.status === 'IN_PROGRESS' || c.status === 'UNDER_REVIEW') &&
-                          c.actionCount > 0 &&
-                          c.completedActionCount === c.actionCount && (
-                            <button onClick={() => setVerifyTargetCase(c)} style={btnSmallVerify}>
-                              Verify
+                          {canCreate && c.status !== 'CLOSED' && c.status !== 'CANCELLED' && (
+                            <button
+                              onClick={() => {
+                                setActionCaseId(c.id);
+                                setIsAddActionOpen(true);
+                              }}
+                              style={btnSmallAction}
+                            >
+                              + Action
                             </button>
                           )}
 
-                        {canVerifyOrClose && c.status === 'UNDER_REVIEW' && c.verifiedBy && (
-                          <button onClick={() => setCloseTargetCase(c)} style={btnSmallClose}>
-                            Close Case
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                          {canVerifyOrClose &&
+                            (c.status === 'IN_PROGRESS' || c.status === 'UNDER_REVIEW') &&
+                            c.actionCount > 0 &&
+                            c.completedActionCount === c.actionCount && (
+                              <button onClick={() => setVerifyTargetCase(c)} style={btnSmallVerify}>
+                                Verify
+                              </button>
+                            )}
+
+                          {canVerifyOrClose && c.status === 'UNDER_REVIEW' && c.verifiedBy && (
+                            <button onClick={() => setCloseTargetCase(c)} style={btnSmallClose}>
+                              Close Case
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination Controls */}
@@ -1783,14 +1788,15 @@ const kpiLabelStyle: React.CSSProperties = {
   fontSize: '11px',
   textTransform: 'uppercase',
   fontWeight: 700,
-  color: '#718096',
-  marginBottom: '4px',
+  color: 'var(--qo-slate-500)',
+  marginBottom: '6px',
+  letterSpacing: '0.05em',
 };
 
 const kpiValueStyle: React.CSSProperties = {
-  fontSize: '20px',
+  fontSize: '24px',
   fontWeight: 700,
-  color: '#2d3748',
+  color: 'var(--qo-navy-900)',
 };
 
 const labelStyle: React.CSSProperties = {
@@ -1839,37 +1845,41 @@ const modalBackdropStyle: React.CSSProperties = {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  backgroundColor: 'rgba(15, 23, 42, 0.65)',
+  backdropFilter: 'blur(4px)',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
   zIndex: 1000,
+  padding: '16px',
 };
 
 const modalContentStyle: React.CSSProperties = {
-  backgroundColor: '#ffffff',
-  borderRadius: '8px',
+  backgroundColor: 'var(--qo-white)',
+  borderRadius: 'var(--qo-radius-xl)',
   padding: '24px',
-  width: '90%',
-  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+  width: '100%',
+  boxShadow: 'var(--qo-shadow-xl)',
+  border: '1px solid var(--qo-slate-200)',
 };
 
 const btnPrimaryStyle: React.CSSProperties = {
   padding: '8px 16px',
-  backgroundColor: '#3182ce',
+  backgroundColor: 'var(--qo-primary)',
   color: '#ffffff',
   border: 'none',
   borderRadius: '6px',
   fontSize: '13px',
   fontWeight: 600,
   cursor: 'pointer',
+  transition: 'background-color 150ms ease',
 };
 
 const btnSecondaryStyle: React.CSSProperties = {
   padding: '8px 14px',
-  backgroundColor: '#edf2f7',
-  color: '#4a5568',
-  border: '1px solid #cbd5e0',
+  backgroundColor: 'var(--qo-white)',
+  color: 'var(--qo-slate-700, #334155)',
+  border: '1px solid var(--qo-slate-300)',
   borderRadius: '6px',
   fontSize: '13px',
   fontWeight: 600,

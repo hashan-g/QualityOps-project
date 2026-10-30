@@ -337,22 +337,12 @@ export const QualityDefectsView: React.FC = () => {
   return (
     <section aria-labelledby="defects-management-heading">
       {/* Header & Controls */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="qo-page-header">
         <div>
-          <h3
-            id="defects-management-heading"
-            style={{ fontSize: '20px', margin: '0 0 4px 0', color: '#2d3748' }}
-          >
+          <h3 id="defects-management-heading" className="qo-page-title">
             Defect Management & Descriptive Analytics
           </h3>
-          <p style={{ margin: 0, fontSize: '14px', color: '#718096' }}>
+          <p className="qo-page-subtitle">
             Auditable quality findings, standardized defect classifications, and Pareto analytics
           </p>
         </div>
@@ -390,22 +380,15 @@ export const QualityDefectsView: React.FC = () => {
       </div>
 
       {/* Domain Rule Guidance Banner */}
-      <div
-        style={{
-          backgroundColor: '#f7fafc',
-          borderLeft: '4px solid #dd6b20',
-          padding: '12px 16px',
-          marginBottom: '20px',
-          fontSize: '13px',
-          color: '#4a5568',
-          borderRadius: '0 4px 4px 0',
-        }}
-      >
-        <strong>Defect Accounting Semantics:</strong> Defect findings record discrete quality
-        observations evaluated during inspections. <em>Occurrence count</em> represents defect
-        instances; <em>affected-unit count</em> represents inspected units exhibiting that defect.
-        Sums across defect findings may overlap (a single physical unit can possess multiple
-        defects) and never alter production batch disposition quantities.
+      <div className="qo-alert-banner warning">
+        <div className="qo-alert-banner-icon">&#9888;</div>
+        <div className="qo-alert-banner-content">
+          <strong>Defect Accounting Semantics:</strong> Defect findings record discrete quality
+          observations evaluated during inspections. <em>Occurrence count</em> represents defect
+          instances; <em>affected-unit count</em> represents inspected units exhibiting that defect.
+          Sums across defect findings may overlap (a single physical unit can possess multiple
+          defects) and never alter production batch disposition quantities.
+        </div>
       </div>
 
       {/* Feedback Alert */}
@@ -427,15 +410,7 @@ export const QualityDefectsView: React.FC = () => {
       )}
 
       {/* DESCRIPTIVE ANALYTICS SECTION */}
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '20px',
-          marginBottom: '24px',
-        }}
-      >
+      <div className="qo-card" style={{ padding: '20px', marginBottom: '24px' }}>
         <div
           style={{
             display: 'flex',
@@ -766,14 +741,7 @@ export const QualityDefectsView: React.FC = () => {
       </div>
 
       {/* DEFECT FINDINGS LOG TABLE */}
-      <div
-        style={{
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '20px',
-          backgroundColor: '#ffffff',
-        }}
-      >
+      <div className="qo-card" style={{ padding: '20px' }}>
         <div
           style={{
             display: 'flex',
@@ -825,8 +793,8 @@ export const QualityDefectsView: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="qo-table-responsive">
+          <table className="qo-table">
             <thead>
               <tr style={{ backgroundColor: '#f7fafc', borderBottom: '1px solid #e2e8f0' }}>
                 <th style={{ padding: '10px 12px', fontSize: '12px', color: '#4a5568' }}>Defect</th>

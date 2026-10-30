@@ -352,22 +352,12 @@ export const QualityInspectionsView: React.FC = () => {
   return (
     <section aria-labelledby="quality-inspections-heading">
       {/* Header & Controls */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="qo-page-header">
         <div>
-          <h3
-            id="quality-inspections-heading"
-            style={{ fontSize: '20px', margin: '0 0 4px 0', color: '#2d3748' }}
-          >
+          <h3 id="quality-inspections-heading" className="qo-page-title">
             Quality Inspection Management
           </h3>
-          <p style={{ margin: 0, fontSize: '14px', color: '#718096' }}>
+          <p className="qo-page-subtitle">
             Stage-gate quality sampling, disposition metrics, and immutable inspection history
           </p>
         </div>
@@ -411,22 +401,15 @@ export const QualityInspectionsView: React.FC = () => {
       </div>
 
       {/* Info notice about sample isolation */}
-      <div
-        style={{
-          backgroundColor: '#f7fafc',
-          borderLeft: '4px solid #3182ce',
-          padding: '12px 16px',
-          marginBottom: '20px',
-          fontSize: '13px',
-          color: '#4a5568',
-          borderRadius: '0 4px 4px 0',
-        }}
-      >
-        <strong>Inspection Data Rule:</strong> Quality inspections verify representative batch
-        samples at designated lifecycle stages. Sample results record pass/fail compliance and do
-        not directly mutate production batch disposition quantities. Submitted inspection records
-        are immutable; corrections require supervisor/manager authorization and produce audit trail
-        logs.
+      <div className="qo-alert-banner info">
+        <div className="qo-alert-banner-icon">&#9432;</div>
+        <div className="qo-alert-banner-content">
+          <strong>Inspection Data Rule:</strong> Quality inspections verify representative batch
+          samples at designated lifecycle stages. Sample results record pass/fail compliance and do
+          not directly mutate production batch disposition quantities. Submitted inspection records
+          are immutable; corrections require supervisor/manager authorization and produce audit
+          trail logs.
+        </div>
       </div>
 
       {/* Feedback Alert */}
@@ -448,359 +431,362 @@ export const QualityInspectionsView: React.FC = () => {
       )}
 
       {/* Filters & Search Toolbar */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px',
-          backgroundColor: '#f8fafc',
-          padding: '16px',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0',
-          marginBottom: '20px',
-        }}
-      >
-        <div style={{ flex: '1 1 200px' }}>
-          <label
-            htmlFor="filter-search"
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Search
-          </label>
-          <input
-            id="filter-search"
-            type="text"
-            placeholder="Inspection #, batch #, product..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
+      <div className="qo-card" style={{ padding: '18px 20px', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ flex: '1 1 200px' }}>
+            <label
+              htmlFor="filter-search"
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#4a5568',
+                marginBottom: '4px',
+              }}
+            >
+              Search
+            </label>
+            <input
+              id="filter-search"
+              type="text"
+              placeholder="Inspection #, batch #, product..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e0',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
 
-        <div style={{ flex: '0 1 140px' }}>
-          <label
-            htmlFor="filter-stage"
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Stage
-          </label>
-          <select
-            id="filter-stage"
-            value={stageFilter}
-            onChange={(e) => {
-              setStageFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '14px',
-              backgroundColor: '#ffffff',
-            }}
-          >
-            <option value="ALL">All Stages</option>
-            <option value="RECEIVING">Receiving</option>
-            <option value="FIRST_ARTICLE">First Article</option>
-            <option value="IN_PROCESS">In Process</option>
-            <option value="FINAL">Final</option>
-          </select>
-        </div>
+          <div style={{ flex: '0 1 140px' }}>
+            <label
+              htmlFor="filter-stage"
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#4a5568',
+                marginBottom: '4px',
+              }}
+            >
+              Stage
+            </label>
+            <select
+              id="filter-stage"
+              value={stageFilter}
+              onChange={(e) => {
+                setStageFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e0',
+                fontSize: '14px',
+                backgroundColor: '#ffffff',
+              }}
+            >
+              <option value="ALL">All Stages</option>
+              <option value="RECEIVING">Receiving</option>
+              <option value="FIRST_ARTICLE">First Article</option>
+              <option value="IN_PROCESS">In Process</option>
+              <option value="FINAL">Final</option>
+            </select>
+          </div>
 
-        <div style={{ flex: '0 1 140px' }}>
-          <label
-            htmlFor="filter-status"
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Status
-          </label>
-          <select
-            id="filter-status"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '14px',
-              backgroundColor: '#ffffff',
-            }}
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="IN_PROGRESS">In Progress</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-        </div>
+          <div style={{ flex: '0 1 140px' }}>
+            <label
+              htmlFor="filter-status"
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#4a5568',
+                marginBottom: '4px',
+              }}
+            >
+              Status
+            </label>
+            <select
+              id="filter-status"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e0',
+                fontSize: '14px',
+                backgroundColor: '#ffffff',
+              }}
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
 
-        <div style={{ flex: '0 1 140px' }}>
-          <label
-            htmlFor="filter-result"
-            style={{
-              display: 'block',
-              fontSize: '12px',
-              fontWeight: 600,
-              color: '#4a5568',
-              marginBottom: '4px',
-            }}
-          >
-            Result
-          </label>
-          <select
-            id="filter-result"
-            value={resultFilter}
-            onChange={(e) => {
-              setResultFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              border: '1px solid #cbd5e0',
-              fontSize: '14px',
-              backgroundColor: '#ffffff',
-            }}
-          >
-            <option value="ALL">All Results</option>
-            <option value="PASS">Pass</option>
-            <option value="FAIL">Fail</option>
-            <option value="CONDITIONAL">Conditional</option>
-          </select>
+          <div style={{ flex: '0 1 140px' }}>
+            <label
+              htmlFor="filter-result"
+              style={{
+                display: 'block',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: '#4a5568',
+                marginBottom: '4px',
+              }}
+            >
+              Result
+            </label>
+            <select
+              id="filter-result"
+              value={resultFilter}
+              onChange={(e) => {
+                setResultFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e0',
+                fontSize: '14px',
+                backgroundColor: '#ffffff',
+              }}
+            >
+              <option value="ALL">All Results</option>
+              <option value="PASS">Pass</option>
+              <option value="FAIL">Fail</option>
+              <option value="CONDITIONAL">Conditional</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Inspections Table */}
-      <div
-        style={{
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          overflowX: 'auto',
-          backgroundColor: '#ffffff',
-        }}
-      >
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ backgroundColor: '#f7fafc', borderBottom: '1px solid #e2e8f0' }}>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
-                Inspection #
-              </th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Batch #</th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Product</th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Stage</th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Attempt</th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
-                Sample / Pass / Fail
-              </th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
-                Pass Rate
-              </th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Result</th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Status</th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
-                Inspector
-              </th>
-              <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={11} style={{ textAlign: 'center', padding: '32px', color: '#718096' }}>
-                  Loading inspections...
-                </td>
+      <div className="qo-card">
+        <div className="qo-table-responsive">
+          <table className="qo-table">
+            <thead>
+              <tr style={{ backgroundColor: '#f7fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Inspection #
+                </th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Batch #
+                </th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Product
+                </th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Stage</th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Attempt
+                </th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Sample / Pass / Fail
+                </th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Pass Rate
+                </th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Result</th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>Status</th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Inspector
+                </th>
+                <th style={{ padding: '12px 14px', fontSize: '12px', color: '#4a5568' }}>
+                  Actions
+                </th>
               </tr>
-            ) : inspections.length === 0 ? (
-              <tr>
-                <td colSpan={11} style={{ textAlign: 'center', padding: '32px', color: '#718096' }}>
-                  No quality inspections found matching criteria.
-                </td>
-              </tr>
-            ) : (
-              inspections.map((insp) => {
-                const passRate =
-                  insp.sampleSize > 0
-                    ? ((insp.passedUnits / insp.sampleSize) * 100).toFixed(1)
-                    : '0.0';
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={11}
+                    style={{ textAlign: 'center', padding: '32px', color: '#718096' }}
+                  >
+                    Loading inspections...
+                  </td>
+                </tr>
+              ) : inspections.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={11}
+                    style={{ textAlign: 'center', padding: '32px', color: '#718096' }}
+                  >
+                    No quality inspections found matching criteria.
+                  </td>
+                </tr>
+              ) : (
+                inspections.map((insp) => {
+                  const passRate =
+                    insp.sampleSize > 0
+                      ? ((insp.passedUnits / insp.sampleSize) * 100).toFixed(1)
+                      : '0.0';
 
-                return (
-                  <tr key={insp.id} style={{ borderBottom: '1px solid #edf2f7', fontSize: '13px' }}>
-                    <td style={{ padding: '10px 14px', fontWeight: 600, color: '#2d3748' }}>
-                      {insp.inspectionNumber}
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#4a5568' }}>
-                      {insp.batchNumber || '—'}
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#4a5568' }}>
-                      {insp.productCode ? (
-                        <span>
-                          <strong>{insp.productCode}</strong>
-                          <br />
-                          <small style={{ color: '#718096' }}>{insp.productName}</small>
-                        </span>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#4a5568' }}>
-                      <span
-                        style={{
-                          backgroundColor: '#edf2f7',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {insp.stage}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#4a5568', textAlign: 'center' }}>
-                      #{insp.attemptNumber}
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#4a5568' }}>
-                      <strong>{insp.sampleSize}</strong> /{' '}
-                      <span style={{ color: '#276749' }}>{insp.passedUnits}</span> /{' '}
-                      <span style={{ color: insp.failedUnits > 0 ? '#c53030' : '#718096' }}>
-                        {insp.failedUnits}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 14px', fontWeight: 600, color: '#2d3748' }}>
-                      {passRate}%
-                    </td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 700,
-                          backgroundColor:
-                            insp.result === 'PASS'
-                              ? '#def7ec'
-                              : insp.result === 'FAIL'
-                                ? '#fde8e8'
-                                : insp.result === 'CONDITIONAL'
-                                  ? '#fef08a'
-                                  : '#f3f4f6',
-                          color:
-                            insp.result === 'PASS'
-                              ? '#03543f'
-                              : insp.result === 'FAIL'
-                                ? '#9b1c1c'
-                                : insp.result === 'CONDITIONAL'
-                                  ? '#713f12'
-                                  : '#374151',
-                        }}
-                      >
-                        {insp.result || 'PENDING'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span
-                        style={{
-                          display: 'inline-block',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          backgroundColor:
-                            insp.status === 'COMPLETED'
-                              ? '#ebf8ff'
-                              : insp.status === 'IN_PROGRESS'
-                                ? '#fefcbf'
-                                : '#edf2f7',
-                          color:
-                            insp.status === 'COMPLETED'
-                              ? '#2b6cb0'
-                              : insp.status === 'IN_PROGRESS'
-                                ? '#744210'
-                                : '#4a5568',
-                        }}
-                      >
-                        {insp.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 14px', color: '#4a5568' }}>
-                      {insp.inspectorFullName || insp.inspectorUsername || '—'}
-                    </td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          onClick={() => setSelectedInspection(insp)}
+                  return (
+                    <tr
+                      key={insp.id}
+                      style={{ borderBottom: '1px solid #edf2f7', fontSize: '13px' }}
+                    >
+                      <td style={{ padding: '10px 14px', fontWeight: 600, color: '#2d3748' }}>
+                        {insp.inspectionNumber}
+                      </td>
+                      <td style={{ padding: '10px 14px', color: '#4a5568' }}>
+                        {insp.batchNumber || '—'}
+                      </td>
+                      <td style={{ padding: '10px 14px', color: '#4a5568' }}>
+                        {insp.productCode ? (
+                          <span>
+                            <strong>{insp.productCode}</strong>
+                            <br />
+                            <small style={{ color: '#718096' }}>{insp.productName}</small>
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td style={{ padding: '10px 14px', color: '#4a5568' }}>
+                        <span
                           style={{
-                            padding: '4px 8px',
+                            backgroundColor: '#edf2f7',
+                            padding: '2px 8px',
                             borderRadius: '4px',
-                            border: '1px solid #cbd5e0',
-                            backgroundColor: '#ffffff',
-                            color: '#2b6cb0',
                             fontSize: '11px',
                             fontWeight: 600,
-                            cursor: 'pointer',
                           }}
                         >
-                          Details
-                        </button>
-
-                        {canCorrect && (
+                          {insp.stage}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 14px', color: '#4a5568', textAlign: 'center' }}>
+                        #{insp.attemptNumber}
+                      </td>
+                      <td style={{ padding: '10px 14px', color: '#4a5568' }}>
+                        <strong>{insp.sampleSize}</strong> /{' '}
+                        <span style={{ color: '#276749' }}>{insp.passedUnits}</span> /{' '}
+                        <span style={{ color: insp.failedUnits > 0 ? '#c53030' : '#718096' }}>
+                          {insp.failedUnits}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 14px', fontWeight: 600, color: '#2d3748' }}>
+                        {passRate}%
+                      </td>
+                      <td style={{ padding: '10px 14px' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            backgroundColor:
+                              insp.result === 'PASS'
+                                ? '#def7ec'
+                                : insp.result === 'FAIL'
+                                  ? '#fde8e8'
+                                  : insp.result === 'CONDITIONAL'
+                                    ? '#fef08a'
+                                    : '#f3f4f6',
+                            color:
+                              insp.result === 'PASS'
+                                ? '#03543f'
+                                : insp.result === 'FAIL'
+                                  ? '#9b1c1c'
+                                  : insp.result === 'CONDITIONAL'
+                                    ? '#713f12'
+                                    : '#374151',
+                          }}
+                        >
+                          {insp.result || 'PENDING'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 14px' }}>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            backgroundColor:
+                              insp.status === 'COMPLETED'
+                                ? '#ebf8ff'
+                                : insp.status === 'IN_PROGRESS'
+                                  ? '#fefcbf'
+                                  : '#edf2f7',
+                            color:
+                              insp.status === 'COMPLETED'
+                                ? '#2b6cb0'
+                                : insp.status === 'IN_PROGRESS'
+                                  ? '#744210'
+                                  : '#4a5568',
+                          }}
+                        >
+                          {insp.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 14px', color: '#4a5568' }}>
+                        {insp.inspectorFullName || insp.inspectorUsername || '—'}
+                      </td>
+                      <td style={{ padding: '10px 14px' }}>
+                        <div style={{ display: 'flex', gap: '6px' }}>
                           <button
-                            onClick={() => openCorrectionModal(insp)}
+                            onClick={() => setSelectedInspection(insp)}
                             style={{
                               padding: '4px 8px',
                               borderRadius: '4px',
                               border: '1px solid #cbd5e0',
-                              backgroundColor: '#fffaf0',
-                              color: '#c05621',
+                              backgroundColor: '#ffffff',
+                              color: '#2b6cb0',
                               fontSize: '11px',
                               fontWeight: 600,
                               cursor: 'pointer',
                             }}
                           >
-                            Correct
+                            Details
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+
+                          {canCorrect && (
+                            <button
+                              onClick={() => openCorrectionModal(insp)}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                border: '1px solid #cbd5e0',
+                                backgroundColor: '#fffaf0',
+                                color: '#c05621',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Correct
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination Controls */}

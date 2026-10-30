@@ -406,19 +406,12 @@ export const MasterDataView: React.FC = () => {
 
   return (
     <section aria-labelledby="master-data-heading">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="qo-page-header">
         <div>
-          <h3 id="master-data-heading" style={{ margin: 0, fontSize: '20px', color: '#1a202c' }}>
+          <h3 id="master-data-heading" className="qo-page-title">
             Master Data Management
           </h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#718096' }}>
+          <p className="qo-page-subtitle">
             Manage core operational entities: Products, Production Lines, Machines, Shifts, and
             Defect Types.
           </p>
@@ -458,21 +451,13 @@ export const MasterDataView: React.FC = () => {
 
       {/* Role permission alert banner */}
       {!canWrite && (
-        <div
-          role="note"
-          style={{
-            padding: '8px 12px',
-            backgroundColor: '#fffaf0',
-            border: '1px solid #feebc8',
-            borderRadius: '6px',
-            marginBottom: '16px',
-            fontSize: '13px',
-            color: '#c05621',
-          }}
-        >
-          <strong>Read-Only Mode:</strong> Your current role(s) (
-          <code>{user?.roles.join(', ')}</code>) grant view-only access. Only <code>ADMIN</code> and{' '}
-          <code>QUALITY_MANAGER</code> users can create, update, or deactivate master-data.
+        <div role="note" className="qo-alert-banner warning">
+          <div className="qo-alert-banner-icon">&#9888;</div>
+          <div className="qo-alert-banner-content">
+            <strong>Read-Only Mode:</strong> Your current role(s) (
+            <code>{user?.roles.join(', ')}</code>) grant view-only access. Only <code>ADMIN</code>{' '}
+            and <code>QUALITY_MANAGER</code> users can create, update, or deactivate master-data.
+          </div>
         </div>
       )}
 
@@ -543,15 +528,13 @@ export const MasterDataView: React.FC = () => {
 
       {/* Filters Bar */}
       <div
+        className="qo-card"
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           gap: '12px',
           alignItems: 'center',
-          backgroundColor: '#f7fafc',
-          border: '1px solid #edf2f7',
-          padding: '12px 16px',
-          borderRadius: '6px',
+          padding: '16px 20px',
           marginBottom: '16px',
         }}
       >
@@ -706,457 +689,465 @@ export const MasterDataView: React.FC = () => {
         id={`tabpanel-${activeTab}`}
         role="tabpanel"
         aria-labelledby={`tab-${activeTab}`}
-        style={{ overflowX: 'auto' }}
+        className="qo-card"
       >
-        {isLoading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading master data...</p>}
-        {!isLoading && totalItems === 0 && (
-          <div
-            style={{
-              padding: '24px',
-              textAlign: 'center',
-              backgroundColor: '#f7fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              color: '#718096',
-            }}
-          >
-            No records found matching current criteria.
-          </div>
-        )}
+        <div className="qo-table-responsive">
+          {isLoading && (
+            <p style={{ fontSize: '13px', color: '#718096' }}>Loading master data...</p>
+          )}
+          {!isLoading && totalItems === 0 && (
+            <div
+              style={{
+                padding: '24px',
+                textAlign: 'center',
+                backgroundColor: '#f7fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                color: '#718096',
+              }}
+            >
+              No records found matching current criteria.
+            </div>
+          )}
 
-        {!isLoading && totalItems > 0 && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Code</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Name</th>
-                {activeTab === 'products' && (
-                  <>
+          {!isLoading && totalItems > 0 && (
+            <table className="qo-table">
+              <thead>
+                <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Code</th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Name</th>
+                  {activeTab === 'products' && (
+                    <>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        Description
+                      </th>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        Target Cycle Time
+                      </th>
+                    </>
+                  )}
+                  {activeTab === 'lines' && (
                     <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      Description
+                      Location
                     </th>
-                    <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      Target Cycle Time
-                    </th>
-                  </>
-                )}
-                {activeTab === 'lines' && (
-                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                    Location
+                  )}
+                  {activeTab === 'machines' && (
+                    <>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        Production Line
+                      </th>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        Operational Status
+                      </th>
+                    </>
+                  )}
+                  {activeTab === 'shifts' && (
+                    <>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        Start Time
+                      </th>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        End Time
+                      </th>
+                    </>
+                  )}
+                  {activeTab === 'defects' && (
+                    <>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        Category
+                      </th>
+                      <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                        Severity
+                      </th>
+                    </>
+                  )}
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Status</th>
+                  <th
+                    style={{
+                      padding: '8px 12px',
+                      borderBottom: '2px solid #cbd5e0',
+                      textAlign: 'right',
+                    }}
+                  >
+                    Actions
                   </th>
-                )}
-                {activeTab === 'machines' && (
-                  <>
-                    <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      Production Line
-                    </th>
-                    <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      Operational Status
-                    </th>
-                  </>
-                )}
-                {activeTab === 'shifts' && (
-                  <>
-                    <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      Start Time
-                    </th>
-                    <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      End Time
-                    </th>
-                  </>
-                )}
-                {activeTab === 'defects' && (
-                  <>
-                    <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      Category
-                    </th>
-                    <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                      Severity
-                    </th>
-                  </>
-                )}
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Status</th>
-                <th
-                  style={{
-                    padding: '8px 12px',
-                    borderBottom: '2px solid #cbd5e0',
-                    textAlign: 'right',
-                  }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Products Rows */}
-              {activeTab === 'products' &&
-                products.map((p) => (
-                  <tr key={p.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{p.code}</td>
-                    <td style={{ padding: '8px 12px' }}>{p.name}</td>
-                    <td style={{ padding: '8px 12px', color: '#718096' }}>
-                      {p.description || 'â€”'}
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      {p.targetCycleTimeSeconds !== null ? `${p.targetCycleTimeSeconds}s` : 'â€”'}
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor: p.isActive ? '#c6f6d5' : '#fed7d7',
-                          color: p.isActive ? '#22543d' : '#742a2a',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {p.isActive ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenEdit(p)}
-                        disabled={!canWrite}
-                        title={canWrite ? 'Edit product' : 'Requires ADMIN or QUALITY_MANAGER'}
-                        style={{
-                          marginRight: '8px',
-                          backgroundColor: 'transparent',
-                          color: canWrite ? '#3182ce' : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(p.id, p.isActive, p.code)}
-                        disabled={!canWrite}
-                        title={
-                          canWrite
-                            ? p.isActive
-                              ? 'Deactivate'
-                              : 'Activate'
-                            : 'Requires ADMIN or QUALITY_MANAGER'
-                        }
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: canWrite ? (p.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {p.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                </tr>
+              </thead>
+              <tbody>
+                {/* Products Rows */}
+                {activeTab === 'products' &&
+                  products.map((p) => (
+                    <tr key={p.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{p.code}</td>
+                      <td style={{ padding: '8px 12px' }}>{p.name}</td>
+                      <td style={{ padding: '8px 12px', color: '#718096' }}>
+                        {p.description || 'â€”'}
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        {p.targetCycleTimeSeconds !== null ? `${p.targetCycleTimeSeconds}s` : 'â€”'}
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor: p.isActive ? '#c6f6d5' : '#fed7d7',
+                            color: p.isActive ? '#22543d' : '#742a2a',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {p.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleOpenEdit(p)}
+                          disabled={!canWrite}
+                          title={canWrite ? 'Edit product' : 'Requires ADMIN or QUALITY_MANAGER'}
+                          style={{
+                            marginRight: '8px',
+                            backgroundColor: 'transparent',
+                            color: canWrite ? '#3182ce' : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(p.id, p.isActive, p.code)}
+                          disabled={!canWrite}
+                          title={
+                            canWrite
+                              ? p.isActive
+                                ? 'Deactivate'
+                                : 'Activate'
+                              : 'Requires ADMIN or QUALITY_MANAGER'
+                          }
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: canWrite ? (p.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {p.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
 
-              {/* Lines Rows */}
-              {activeTab === 'lines' &&
-                lines.map((l) => (
-                  <tr key={l.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{l.code}</td>
-                    <td style={{ padding: '8px 12px' }}>{l.name}</td>
-                    <td style={{ padding: '8px 12px', color: '#718096' }}>{l.location || 'â€”'}</td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor: l.isActive ? '#c6f6d5' : '#fed7d7',
-                          color: l.isActive ? '#22543d' : '#742a2a',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {l.isActive ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenEdit(l)}
-                        disabled={!canWrite}
-                        title={
-                          canWrite ? 'Edit production line' : 'Requires ADMIN or QUALITY_MANAGER'
-                        }
-                        style={{
-                          marginRight: '8px',
-                          backgroundColor: 'transparent',
-                          color: canWrite ? '#3182ce' : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(l.id, l.isActive, l.code)}
-                        disabled={!canWrite}
-                        title={
-                          canWrite
-                            ? l.isActive
-                              ? 'Deactivate'
-                              : 'Activate'
-                            : 'Requires ADMIN or QUALITY_MANAGER'
-                        }
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: canWrite ? (l.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {l.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {/* Lines Rows */}
+                {activeTab === 'lines' &&
+                  lines.map((l) => (
+                    <tr key={l.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{l.code}</td>
+                      <td style={{ padding: '8px 12px' }}>{l.name}</td>
+                      <td style={{ padding: '8px 12px', color: '#718096' }}>
+                        {l.location || 'â€”'}
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor: l.isActive ? '#c6f6d5' : '#fed7d7',
+                            color: l.isActive ? '#22543d' : '#742a2a',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {l.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleOpenEdit(l)}
+                          disabled={!canWrite}
+                          title={
+                            canWrite ? 'Edit production line' : 'Requires ADMIN or QUALITY_MANAGER'
+                          }
+                          style={{
+                            marginRight: '8px',
+                            backgroundColor: 'transparent',
+                            color: canWrite ? '#3182ce' : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(l.id, l.isActive, l.code)}
+                          disabled={!canWrite}
+                          title={
+                            canWrite
+                              ? l.isActive
+                                ? 'Deactivate'
+                                : 'Activate'
+                              : 'Requires ADMIN or QUALITY_MANAGER'
+                          }
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: canWrite ? (l.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {l.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
 
-              {/* Machines Rows */}
-              {activeTab === 'machines' &&
-                machines.map((m) => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{m.code}</td>
-                    <td style={{ padding: '8px 12px' }}>{m.name}</td>
-                    <td style={{ padding: '8px 12px' }}>
-                      {m.productionLineName || m.productionLineId}
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor:
-                            m.status === 'RUNNING'
-                              ? '#c6f6d5'
-                              : m.status === 'DOWN'
+                {/* Machines Rows */}
+                {activeTab === 'machines' &&
+                  machines.map((m) => (
+                    <tr key={m.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{m.code}</td>
+                      <td style={{ padding: '8px 12px' }}>{m.name}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        {m.productionLineName || m.productionLineId}
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor:
+                              m.status === 'RUNNING'
+                                ? '#c6f6d5'
+                                : m.status === 'DOWN'
+                                  ? '#fed7d7'
+                                  : m.status === 'MAINTENANCE'
+                                    ? '#feebc8'
+                                    : '#edf2f7',
+                            color:
+                              m.status === 'RUNNING'
+                                ? '#22543d'
+                                : m.status === 'DOWN'
+                                  ? '#742a2a'
+                                  : m.status === 'MAINTENANCE'
+                                    ? '#7b341e'
+                                    : '#4a5568',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {m.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor: m.isActive ? '#c6f6d5' : '#fed7d7',
+                            color: m.isActive ? '#22543d' : '#742a2a',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {m.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleOpenEdit(m)}
+                          disabled={!canWrite}
+                          title={canWrite ? 'Edit machine' : 'Requires ADMIN or QUALITY_MANAGER'}
+                          style={{
+                            marginRight: '8px',
+                            backgroundColor: 'transparent',
+                            color: canWrite ? '#3182ce' : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(m.id, m.isActive, m.code)}
+                          disabled={!canWrite}
+                          title={
+                            canWrite
+                              ? m.isActive
+                                ? 'Deactivate'
+                                : 'Activate'
+                              : 'Requires ADMIN or QUALITY_MANAGER'
+                          }
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: canWrite ? (m.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {m.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                {/* Shifts Rows */}
+                {activeTab === 'shifts' &&
+                  shifts.map((s) => (
+                    <tr key={s.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{s.code}</td>
+                      <td style={{ padding: '8px 12px' }}>{s.name}</td>
+                      <td style={{ padding: '8px 12px' }}>{s.startTime}</td>
+                      <td style={{ padding: '8px 12px' }}>{s.endTime}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor: s.isActive ? '#c6f6d5' : '#fed7d7',
+                            color: s.isActive ? '#22543d' : '#742a2a',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {s.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleOpenEdit(s)}
+                          disabled={!canWrite}
+                          title={canWrite ? 'Edit shift' : 'Requires ADMIN or QUALITY_MANAGER'}
+                          style={{
+                            marginRight: '8px',
+                            backgroundColor: 'transparent',
+                            color: canWrite ? '#3182ce' : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(s.id, s.isActive, s.code)}
+                          disabled={!canWrite}
+                          title={
+                            canWrite
+                              ? s.isActive
+                                ? 'Deactivate'
+                                : 'Activate'
+                              : 'Requires ADMIN or QUALITY_MANAGER'
+                          }
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: canWrite ? (s.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {s.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                {/* Defect Types Rows */}
+                {activeTab === 'defects' &&
+                  defects.map((d) => (
+                    <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{d.code}</td>
+                      <td style={{ padding: '8px 12px' }}>{d.name}</td>
+                      <td style={{ padding: '8px 12px' }}>{d.category}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor:
+                              d.severity === 'CRITICAL'
                                 ? '#fed7d7'
-                                : m.status === 'MAINTENANCE'
+                                : d.severity === 'MAJOR'
                                   ? '#feebc8'
-                                  : '#edf2f7',
-                          color:
-                            m.status === 'RUNNING'
-                              ? '#22543d'
-                              : m.status === 'DOWN'
+                                  : '#e2e8f0',
+                            color:
+                              d.severity === 'CRITICAL'
                                 ? '#742a2a'
-                                : m.status === 'MAINTENANCE'
+                                : d.severity === 'MAJOR'
                                   ? '#7b341e'
                                   : '#4a5568',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {m.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor: m.isActive ? '#c6f6d5' : '#fed7d7',
-                          color: m.isActive ? '#22543d' : '#742a2a',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {m.isActive ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenEdit(m)}
-                        disabled={!canWrite}
-                        title={canWrite ? 'Edit machine' : 'Requires ADMIN or QUALITY_MANAGER'}
-                        style={{
-                          marginRight: '8px',
-                          backgroundColor: 'transparent',
-                          color: canWrite ? '#3182ce' : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(m.id, m.isActive, m.code)}
-                        disabled={!canWrite}
-                        title={
-                          canWrite
-                            ? m.isActive
-                              ? 'Deactivate'
-                              : 'Activate'
-                            : 'Requires ADMIN or QUALITY_MANAGER'
-                        }
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: canWrite ? (m.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {m.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-              {/* Shifts Rows */}
-              {activeTab === 'shifts' &&
-                shifts.map((s) => (
-                  <tr key={s.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{s.code}</td>
-                    <td style={{ padding: '8px 12px' }}>{s.name}</td>
-                    <td style={{ padding: '8px 12px' }}>{s.startTime}</td>
-                    <td style={{ padding: '8px 12px' }}>{s.endTime}</td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor: s.isActive ? '#c6f6d5' : '#fed7d7',
-                          color: s.isActive ? '#22543d' : '#742a2a',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {s.isActive ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenEdit(s)}
-                        disabled={!canWrite}
-                        title={canWrite ? 'Edit shift' : 'Requires ADMIN or QUALITY_MANAGER'}
-                        style={{
-                          marginRight: '8px',
-                          backgroundColor: 'transparent',
-                          color: canWrite ? '#3182ce' : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(s.id, s.isActive, s.code)}
-                        disabled={!canWrite}
-                        title={
-                          canWrite
-                            ? s.isActive
-                              ? 'Deactivate'
-                              : 'Activate'
-                            : 'Requires ADMIN or QUALITY_MANAGER'
-                        }
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: canWrite ? (s.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {s.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-              {/* Defect Types Rows */}
-              {activeTab === 'defects' &&
-                defects.map((d) => (
-                  <tr key={d.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{d.code}</td>
-                    <td style={{ padding: '8px 12px' }}>{d.name}</td>
-                    <td style={{ padding: '8px 12px' }}>{d.category}</td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor:
-                            d.severity === 'CRITICAL'
-                              ? '#fed7d7'
-                              : d.severity === 'MAJOR'
-                                ? '#feebc8'
-                                : '#e2e8f0',
-                          color:
-                            d.severity === 'CRITICAL'
-                              ? '#742a2a'
-                              : d.severity === 'MAJOR'
-                                ? '#7b341e'
-                                : '#4a5568',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {d.severity}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor: d.isActive ? '#c6f6d5' : '#fed7d7',
-                          color: d.isActive ? '#22543d' : '#742a2a',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {d.isActive ? 'ACTIVE' : 'INACTIVE'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenEdit(d)}
-                        disabled={!canWrite}
-                        title={canWrite ? 'Edit defect type' : 'Requires ADMIN or QUALITY_MANAGER'}
-                        style={{
-                          marginRight: '8px',
-                          backgroundColor: 'transparent',
-                          color: canWrite ? '#3182ce' : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleActive(d.id, d.isActive, d.code)}
-                        disabled={!canWrite}
-                        title={
-                          canWrite
-                            ? d.isActive
-                              ? 'Deactivate'
-                              : 'Activate'
-                            : 'Requires ADMIN or QUALITY_MANAGER'
-                        }
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: canWrite ? (d.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
-                          border: 'none',
-                          cursor: canWrite ? 'pointer' : 'not-allowed',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {d.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        )}
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {d.severity}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor: d.isActive ? '#c6f6d5' : '#fed7d7',
+                            color: d.isActive ? '#22543d' : '#742a2a',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {d.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleOpenEdit(d)}
+                          disabled={!canWrite}
+                          title={
+                            canWrite ? 'Edit defect type' : 'Requires ADMIN or QUALITY_MANAGER'
+                          }
+                          style={{
+                            marginRight: '8px',
+                            backgroundColor: 'transparent',
+                            color: canWrite ? '#3182ce' : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(d.id, d.isActive, d.code)}
+                          disabled={!canWrite}
+                          title={
+                            canWrite
+                              ? d.isActive
+                                ? 'Deactivate'
+                                : 'Activate'
+                              : 'Requires ADMIN or QUALITY_MANAGER'
+                          }
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: canWrite ? (d.isActive ? '#e53e3e' : '#38a169') : '#a0aec0',
+                            border: 'none',
+                            cursor: canWrite ? 'pointer' : 'not-allowed',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {d.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {/* Pagination Bar */}

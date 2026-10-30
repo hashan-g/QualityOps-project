@@ -272,19 +272,12 @@ export const ProductionBatchesView: React.FC = () => {
 
   return (
     <section aria-labelledby="batches-heading">
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="qo-page-header">
         <div>
-          <h3 id="batches-heading" style={{ margin: 0, fontSize: '20px', color: '#1a202c' }}>
+          <h3 id="batches-heading" className="qo-page-title">
             Production Batches
           </h3>
-          <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#718096' }}>
+          <p className="qo-page-subtitle">
             Manage manufacturing batch lifecycle: planning, execution, quantity disposition, and
             reconciliation.
           </p>
@@ -317,38 +310,22 @@ export const ProductionBatchesView: React.FC = () => {
 
       {/* Role permission notice */}
       {!canOperate ? (
-        <div
-          role="note"
-          style={{
-            padding: '8px 12px',
-            backgroundColor: '#fffaf0',
-            border: '1px solid #feebc8',
-            borderRadius: '6px',
-            marginBottom: '16px',
-            fontSize: '13px',
-            color: '#c05621',
-          }}
-        >
-          <strong>Read-Only Mode:</strong> Your role ({user?.roles.join(', ')}) permits viewing
-          production records only. Batch creation and execution requires <code>ADMIN</code>,{' '}
-          <code>SUPERVISOR</code>, or <code>OPERATOR</code>.
+        <div role="note" className="qo-alert-banner warning">
+          <div className="qo-alert-banner-icon">&#9888;</div>
+          <div className="qo-alert-banner-content">
+            <strong>Read-Only Mode:</strong> Your role ({user?.roles.join(', ')}) permits viewing
+            production records only. Batch creation and execution requires <code>ADMIN</code>,{' '}
+            <code>SUPERVISOR</code>, or <code>OPERATOR</code>.
+          </div>
         </div>
       ) : !canElevate ? (
-        <div
-          role="note"
-          style={{
-            padding: '8px 12px',
-            backgroundColor: '#ebf8ff',
-            border: '1px solid #bee3f8',
-            borderRadius: '6px',
-            marginBottom: '16px',
-            fontSize: '13px',
-            color: '#2b6cb0',
-          }}
-        >
-          <strong>Operator Mode:</strong> You can create batches and record in-progress quantities.
-          Marking batches as <code>COMPLETED</code> or <code>CANCELLED</code> requires{' '}
-          <code>ADMIN</code> or <code>SUPERVISOR</code> approval.
+        <div role="note" className="qo-alert-banner info">
+          <div className="qo-alert-banner-icon">&#9432;</div>
+          <div className="qo-alert-banner-content">
+            <strong>Operator Mode:</strong> You can create batches and record in-progress
+            quantities. Marking batches as <code>COMPLETED</code> or <code>CANCELLED</code> requires{' '}
+            <code>ADMIN</code> or <code>SUPERVISOR</code> approval.
+          </div>
         </div>
       ) : null}
 
@@ -371,256 +348,256 @@ export const ProductionBatchesView: React.FC = () => {
       )}
 
       {/* Filters Bar */}
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px',
-          alignItems: 'center',
-          backgroundColor: '#f7fafc',
-          border: '1px solid #edf2f7',
-          padding: '12px 16px',
-          borderRadius: '6px',
-          marginBottom: '16px',
-        }}
-      >
-        <div style={{ flex: '1', minWidth: '180px' }}>
-          <label htmlFor="batch-search" style={{ display: 'none' }}>
-            Search Batch
-          </label>
-          <input
-            id="batch-search"
-            type="search"
-            placeholder="Search batch number..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              fontSize: '13px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '4px',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
+      <div className="qo-card" style={{ padding: '16px 20px', marginBottom: '16px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
+          <div style={{ flex: '1', minWidth: '180px' }}>
+            <label htmlFor="batch-search" style={{ display: 'none' }}>
+              Search Batch
+            </label>
+            <input
+              id="batch-search"
+              type="search"
+              placeholder="Search batch number..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                fontSize: '13px',
+                border: '1px solid #cbd5e0',
+                borderRadius: '4px',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
 
-        <div>
-          <label
-            htmlFor="batch-status-filter"
-            style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
-          >
-            Status:
-          </label>
-          <select
-            id="batch-status-filter"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              padding: '6px 8px',
-              fontSize: '13px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '4px',
-            }}
-          >
-            <option value="ALL">All Statuses</option>
-            <option value="PLANNED">PLANNED</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
-            <option value="ON_HOLD">ON_HOLD</option>
-            <option value="COMPLETED">COMPLETED</option>
-            <option value="CANCELLED">CANCELLED</option>
-          </select>
-        </div>
+          <div>
+            <label
+              htmlFor="batch-status-filter"
+              style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
+            >
+              Status:
+            </label>
+            <select
+              id="batch-status-filter"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '6px 8px',
+                fontSize: '13px',
+                border: '1px solid #cbd5e0',
+                borderRadius: '4px',
+              }}
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="PLANNED">PLANNED</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="ON_HOLD">ON_HOLD</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
 
-        <div>
-          <label
-            htmlFor="batch-line-filter"
-            style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
-          >
-            Line:
-          </label>
-          <select
-            id="batch-line-filter"
-            value={lineFilter}
-            onChange={(e) => {
-              setLineFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              padding: '6px 8px',
-              fontSize: '13px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '4px',
-            }}
-          >
-            <option value="ALL">All Lines</option>
-            {lines.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.code}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <label
+              htmlFor="batch-line-filter"
+              style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
+            >
+              Line:
+            </label>
+            <select
+              id="batch-line-filter"
+              value={lineFilter}
+              onChange={(e) => {
+                setLineFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '6px 8px',
+                fontSize: '13px',
+                border: '1px solid #cbd5e0',
+                borderRadius: '4px',
+              }}
+            >
+              <option value="ALL">All Lines</option>
+              {lines.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.code}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label
-            htmlFor="batch-product-filter"
-            style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
-          >
-            Product:
-          </label>
-          <select
-            id="batch-product-filter"
-            value={productFilter}
-            onChange={(e) => {
-              setProductFilter(e.target.value);
-              setPage(1);
-            }}
-            style={{
-              padding: '6px 8px',
-              fontSize: '13px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '4px',
-            }}
-          >
-            <option value="ALL">All Products</option>
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.code} - {p.name}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label
+              htmlFor="batch-product-filter"
+              style={{ fontSize: '12px', fontWeight: 600, marginRight: '6px' }}
+            >
+              Product:
+            </label>
+            <select
+              id="batch-product-filter"
+              value={productFilter}
+              onChange={(e) => {
+                setProductFilter(e.target.value);
+                setPage(1);
+              }}
+              style={{
+                padding: '6px 8px',
+                fontSize: '13px',
+                border: '1px solid #cbd5e0',
+                borderRadius: '4px',
+              }}
+            >
+              <option value="ALL">All Products</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.code} - {p.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Table Data */}
-      <div style={{ overflowX: 'auto' }}>
-        {isLoading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading batches...</p>}
-        {!isLoading && totalItems === 0 && (
-          <div
-            style={{
-              padding: '24px',
-              textAlign: 'center',
-              backgroundColor: '#f7fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              color: '#718096',
-            }}
-          >
-            No production batches found matching criteria.
-          </div>
-        )}
+      <div className="qo-card">
+        <div className="qo-table-responsive">
+          {isLoading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading batches...</p>}
+          {!isLoading && totalItems === 0 && (
+            <div
+              style={{
+                padding: '24px',
+                textAlign: 'center',
+                backgroundColor: '#f7fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                color: '#718096',
+              }}
+            >
+              No production batches found matching criteria.
+            </div>
+          )}
 
-        {!isLoading && totalItems > 0 && (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Batch #</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Product</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                  Line / Shift
-                </th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Status</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Planned</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Produced</th>
-                <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                  Disposition
-                </th>
-                <th
-                  style={{
-                    padding: '8px 12px',
-                    borderBottom: '2px solid #cbd5e0',
-                    textAlign: 'right',
-                  }}
-                >
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {batches.map((b) => {
-                const statusColor =
-                  b.status === 'COMPLETED'
-                    ? '#22543d'
-                    : b.status === 'IN_PROGRESS'
-                      ? '#2b6cb0'
-                      : b.status === 'ON_HOLD'
-                        ? '#7b341e'
-                        : b.status === 'CANCELLED'
-                          ? '#742a2a'
-                          : '#4a5568';
-                const statusBg =
-                  b.status === 'COMPLETED'
-                    ? '#c6f6d5'
-                    : b.status === 'IN_PROGRESS'
-                      ? '#ebf8ff'
-                      : b.status === 'ON_HOLD'
-                        ? '#feebc8'
-                        : b.status === 'CANCELLED'
-                          ? '#fed7d7'
-                          : '#edf2f7';
+          {!isLoading && totalItems > 0 && (
+            <table className="qo-table">
+              <thead>
+                <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Batch #
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Product
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Line / Shift
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Status</th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Planned
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Produced
+                  </th>
+                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
+                    Disposition
+                  </th>
+                  <th
+                    style={{
+                      padding: '8px 12px',
+                      borderBottom: '2px solid #cbd5e0',
+                      textAlign: 'right',
+                    }}
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {batches.map((b) => {
+                  const statusColor =
+                    b.status === 'COMPLETED'
+                      ? '#22543d'
+                      : b.status === 'IN_PROGRESS'
+                        ? '#2b6cb0'
+                        : b.status === 'ON_HOLD'
+                          ? '#7b341e'
+                          : b.status === 'CANCELLED'
+                            ? '#742a2a'
+                            : '#4a5568';
+                  const statusBg =
+                    b.status === 'COMPLETED'
+                      ? '#c6f6d5'
+                      : b.status === 'IN_PROGRESS'
+                        ? '#ebf8ff'
+                        : b.status === 'ON_HOLD'
+                          ? '#feebc8'
+                          : b.status === 'CANCELLED'
+                            ? '#fed7d7'
+                            : '#edf2f7';
 
-                return (
-                  <tr key={b.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{b.batchNumber}</td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <div>{b.productCode}</div>
-                      <div style={{ fontSize: '11px', color: '#718096' }}>{b.productName}</div>
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <div>{b.productionLineCode}</div>
-                      <div style={{ fontSize: '11px', color: '#718096' }}>
-                        {b.shiftName} {b.machineCode ? `/ ${b.machineCode}` : ''}
-                      </div>
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor: statusBg,
-                          color: statusColor,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {b.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '8px 12px' }}>{b.plannedQuantity}</td>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{b.producedQuantity}</td>
-                    <td style={{ padding: '8px 12px', fontSize: '12px' }}>
-                      <span style={{ color: '#276749' }}>Acc: {b.acceptedQuantity}</span>{' '}
-                      <span style={{ color: '#c53030' }}>Scrap: {b.scrapQuantity}</span>{' '}
-                      <span style={{ color: '#d69e2e' }}>Rew: {b.reworkPendingQuantity}</span>
-                    </td>
-                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                      <button
-                        onClick={() => handleOpenEdit(b)}
-                        style={{
-                          backgroundColor: 'transparent',
-                          color: '#3182ce',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                          fontSize: '13px',
-                        }}
-                      >
-                        {canOperate && b.status !== 'CANCELLED' ? 'Manage' : 'View'}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+                  return (
+                    <tr key={b.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{b.batchNumber}</td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <div>{b.productCode}</div>
+                        <div style={{ fontSize: '11px', color: '#718096' }}>{b.productName}</div>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <div>{b.productionLineCode}</div>
+                        <div style={{ fontSize: '11px', color: '#718096' }}>
+                          {b.shiftName} {b.machineCode ? `/ ${b.machineCode}` : ''}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>
+                        <span
+                          style={{
+                            backgroundColor: statusBg,
+                            color: statusColor,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          {b.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '8px 12px' }}>{b.plannedQuantity}</td>
+                      <td style={{ padding: '8px 12px', fontWeight: 600 }}>{b.producedQuantity}</td>
+                      <td style={{ padding: '8px 12px', fontSize: '12px' }}>
+                        <span style={{ color: '#276749' }}>Acc: {b.acceptedQuantity}</span>{' '}
+                        <span style={{ color: '#c53030' }}>Scrap: {b.scrapQuantity}</span>{' '}
+                        <span style={{ color: '#d69e2e' }}>Rew: {b.reworkPendingQuantity}</span>
+                      </td>
+                      <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleOpenEdit(b)}
+                          style={{
+                            backgroundColor: 'transparent',
+                            color: '#3182ce',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: 600,
+                            fontSize: '13px',
+                          }}
+                        >
+                          {canOperate && b.status !== 'CANCELLED' ? 'Manage' : 'View'}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {/* Pagination */}

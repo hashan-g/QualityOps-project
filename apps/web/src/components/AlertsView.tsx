@@ -354,16 +354,14 @@ export const AlertsView: React.FC = () => {
 
       {/* Filter and Trigger Bar */}
       <div
+        className="qo-card"
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           justifyContent: 'space-between',
           alignItems: 'center',
           gap: '12px',
-          backgroundColor: '#f7fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '16px',
+          padding: '16px 20px',
           marginBottom: '20px',
         }}
       >

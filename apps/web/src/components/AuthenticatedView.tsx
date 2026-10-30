@@ -138,64 +138,106 @@ export const AuthenticatedView: React.FC = () => {
 
   if (!user) return null;
 
+  const initials = user.fullName
+    ? user.fullName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : user.username.slice(0, 2).toUpperCase();
+
   return (
-    <section aria-labelledby="authenticated-heading">
+    <section
+      aria-labelledby="authenticated-heading"
+      style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+    >
+      {/* Top Session Control Header */}
       <div
+        className="qo-card"
         style={{
+          padding: '16px 20px',
           display: 'flex',
+          flexWrap: 'wrap',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: '#ebf8ff',
-          border: '1px solid #bee3f8',
-          borderRadius: '8px',
-          padding: '16px 20px',
-          marginBottom: '24px',
+          gap: '16px',
+          backgroundColor: 'var(--qo-white)',
+          borderLeft: '4px solid var(--qo-primary)',
         }}
       >
-        <div>
-          <h2
-            id="authenticated-heading"
-            style={{ fontSize: '18px', margin: '0 0 4px 0', color: '#2b6cb0' }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--qo-navy-900)',
+              color: 'var(--qo-white)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '14px',
+              boxShadow: 'var(--qo-shadow-xs)',
+            }}
           >
-            Authenticated Session Active
-          </h2>
-          <p style={{ margin: 0, fontSize: '14px', color: '#4a5568' }}>
-            Signed in as <strong>{user.fullName}</strong> ({user.username}) &bull; Roles:{' '}
-            <strong>{user.roles.join(', ')}</strong>
-          </p>
+            {initials}
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h2
+                id="authenticated-heading"
+                style={{
+                  fontSize: '16px',
+                  margin: 0,
+                  fontWeight: 700,
+                  color: 'var(--qo-navy-900)',
+                }}
+              >
+                Authenticated Session Active
+              </h2>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#10b981',
+                }}
+                title="Active Session"
+              />
+            </div>
+            <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--qo-slate-600)' }}>
+              Signed in as <strong>{user.fullName}</strong> ({user.username}) &bull; Roles:{' '}
+              <strong>{user.roles.join(', ')}</strong>
+            </p>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
             onClick={() => setIsNotificationCenterOpen(true)}
             aria-label={`Notifications (${unreadNotificationCount} unread)`}
+            className="qo-btn qo-btn-secondary"
             style={{
               position: 'relative',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e0',
-              borderRadius: '6px',
-              padding: '8px 12px',
-              fontSize: '14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              color: '#2d3748',
+              padding: '8px 14px',
               fontWeight: 600,
             }}
           >
-            <span aria-hidden="true" style={{ fontSize: '15px' }}>
+            <span aria-hidden="true" style={{ fontSize: '14px' }}>
               🔔
             </span>
             <span>Notifications</span>
             {unreadNotificationCount > 0 && (
               <span
+                className="qo-badge qo-badge-critical"
                 style={{
-                  backgroundColor: '#e53e3e',
-                  color: '#ffffff',
-                  borderRadius: '9999px',
-                  padding: '2px 7px',
+                  padding: '2px 6px',
                   fontSize: '11px',
-                  fontWeight: 700,
+                  fontWeight: 800,
+                  borderRadius: 'var(--qo-radius-pill)',
                 }}
               >
                 {unreadNotificationCount}
@@ -204,15 +246,10 @@ export const AuthenticatedView: React.FC = () => {
           </button>
           <button
             onClick={() => void logout()}
+            className="qo-btn qo-btn-danger"
             style={{
-              backgroundColor: '#e53e3e',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '8px 16px',
-              fontSize: '14px',
+              padding: '8px 14px',
               fontWeight: 600,
-              cursor: 'pointer',
             }}
           >
             Logout
@@ -220,490 +257,338 @@ export const AuthenticatedView: React.FC = () => {
         </div>
       </div>
 
+      {/* Security Architecture Summary */}
       <div
-        style={{
-          backgroundColor: '#f7fafc',
-          border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '16px 20px',
-          marginBottom: '24px',
-          fontSize: '13px',
-          color: '#718096',
-        }}
+        className="qo-alert-banner qo-alert-info"
+        style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}
       >
-        <strong>Security Architecture:</strong> JWT access token is kept in-memory only (React
-        state). Refresh credentials are saved in HttpOnly, SameSite=Lax/Strict cookies and rotated
-        on every use. Local/session storage is not used for credentials.
+        <span aria-hidden="true" style={{ fontSize: '15px' }}>
+          🔒
+        </span>
+        <div style={{ fontSize: '12px' }}>
+          <strong>Security Architecture:</strong> JWT access token is kept in-memory only (React
+          state). Refresh credentials are saved in HttpOnly, SameSite=Lax/Strict cookies and rotated
+          on every use. Local/session storage is not used for credentials.
+        </div>
       </div>
 
       {/* Top Section Navigation */}
       <nav
         aria-label="Application Sections"
+        className="qo-card"
         style={{
+          padding: '8px',
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '12px',
-          marginBottom: '20px',
+          gap: '6px',
+          backgroundColor: 'var(--qo-white)',
         }}
       >
         <button
           onClick={() => setActiveSection('reports')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'reports' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'reports' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'reports' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'reports' ? 'active' : ''}`}
         >
-          Reports &amp; Exports
+          <span>📊</span>
+          <span>Reports &amp; Exports</span>
         </button>
 
         <button
           onClick={() => setActiveSection('alerts')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'alerts' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'alerts' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'alerts' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'alerts' ? 'active' : ''}`}
         >
-          Operational Alerts
+          <span>⚡</span>
+          <span>Operational Alerts</span>
         </button>
 
         <button
           onClick={() => setActiveSection('spc')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'spc' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'spc' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'spc' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'spc' ? 'active' : ''}`}
         >
-          SPC Monitoring
+          <span>📈</span>
+          <span>SPC Monitoring</span>
         </button>
 
         <button
           onClick={() => setActiveSection('capa')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'capa' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'capa' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'capa' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'capa' ? 'active' : ''}`}
         >
-          CAPA Management
+          <span>🎯</span>
+          <span>CAPA Management</span>
         </button>
 
         <button
           onClick={() => setActiveSection('defects')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'defects' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'defects' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'defects' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'defects' ? 'active' : ''}`}
         >
-          Defect Management
+          <span>🔍</span>
+          <span>Defect Management</span>
         </button>
 
         <button
           onClick={() => setActiveSection('inspections')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'inspections' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'inspections' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'inspections' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'inspections' ? 'active' : ''}`}
         >
-          Quality Inspections
+          <span>📋</span>
+          <span>Quality Inspections</span>
         </button>
 
         <button
           onClick={() => setActiveSection('batches')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'batches' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'batches' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'batches' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'batches' ? 'active' : ''}`}
         >
-          Production Batches
+          <span>📦</span>
+          <span>Production Batches</span>
         </button>
 
         <button
           onClick={() => setActiveSection('downtime')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'downtime' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'downtime' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'downtime' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'downtime' ? 'active' : ''}`}
         >
-          Downtime Events
+          <span>⏱️</span>
+          <span>Downtime Events</span>
         </button>
 
         <button
           onClick={() => setActiveSection('master-data')}
-          style={{
-            padding: '10px 18px',
-            borderRadius: '6px',
-            border: activeSection === 'master-data' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-            backgroundColor: activeSection === 'master-data' ? '#ebf8ff' : '#ffffff',
-            color: activeSection === 'master-data' ? '#2b6cb0' : '#4a5568',
-            fontWeight: 600,
-            fontSize: '14px',
-            cursor: 'pointer',
-          }}
+          className={`qo-nav-item-btn ${activeSection === 'master-data' ? 'active' : ''}`}
         >
-          Master Data
+          <span>⚙️</span>
+          <span>Master Data</span>
         </button>
 
         {isAdmin && (
           <button
             onClick={() => setActiveSection('users')}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '6px',
-              border: activeSection === 'users' ? '2px solid #3182ce' : '1px solid #cbd5e0',
-              backgroundColor: activeSection === 'users' ? '#ebf8ff' : '#ffffff',
-              color: activeSection === 'users' ? '#2b6cb0' : '#4a5568',
-              fontWeight: 600,
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
+            className={`qo-nav-item-btn ${activeSection === 'users' ? 'active' : ''}`}
           >
-            User Administration
+            <span>👥</span>
+            <span>User Administration</span>
           </button>
         )}
       </nav>
 
-      {activeSection === 'reports' ? (
-        <ReportsView />
-      ) : activeSection === 'alerts' ? (
-        <AlertsView />
-      ) : activeSection === 'spc' ? (
-        <SpcMonitoringView />
-      ) : activeSection === 'capa' ? (
-        <CapaManagementView />
-      ) : activeSection === 'defects' ? (
-        <QualityDefectsView />
-      ) : activeSection === 'inspections' ? (
-        <QualityInspectionsView />
-      ) : activeSection === 'batches' ? (
-        <ProductionBatchesView />
-      ) : activeSection === 'downtime' ? (
-        <DowntimeView />
-      ) : activeSection === 'master-data' ? (
-        <MasterDataView />
-      ) : isAdmin ? (
-        <section
-          aria-labelledby="admin-panel-heading"
-          style={{
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '20px',
-            backgroundColor: '#ffffff',
-          }}
-        >
-          <h3 id="admin-panel-heading" style={{ marginTop: 0, fontSize: '18px', color: '#2d3748' }}>
-            Admin User Administration (Role: ADMIN)
-          </h3>
+      {/* Main Section Content View */}
+      <div style={{ minHeight: '400px' }}>
+        {activeSection === 'reports' ? (
+          <ReportsView />
+        ) : activeSection === 'alerts' ? (
+          <AlertsView />
+        ) : activeSection === 'spc' ? (
+          <SpcMonitoringView />
+        ) : activeSection === 'capa' ? (
+          <CapaManagementView />
+        ) : activeSection === 'defects' ? (
+          <QualityDefectsView />
+        ) : activeSection === 'inspections' ? (
+          <QualityInspectionsView />
+        ) : activeSection === 'batches' ? (
+          <ProductionBatchesView />
+        ) : activeSection === 'downtime' ? (
+          <DowntimeView />
+        ) : activeSection === 'master-data' ? (
+          <MasterDataView />
+        ) : isAdmin ? (
+          <section aria-labelledby="admin-panel-heading" className="qo-card">
+            <div className="qo-card-header">
+              <h3 id="admin-panel-heading" className="qo-card-title">
+                Admin User Administration (Role: ADMIN)
+              </h3>
+            </div>
 
-          {/* New User Provisioning Form */}
-          <form
-            onSubmit={handleCreateUser}
-            style={{
-              backgroundColor: '#f7fafc',
-              border: '1px solid #edf2f7',
-              borderRadius: '6px',
-              padding: '16px',
-              marginBottom: '20px',
-            }}
-          >
-            <h4 style={{ margin: '0 0 12px 0', fontSize: '15px' }}>Provision New User</h4>
-            {provisionMessage && (
-              <div
-                role="status"
+            <div className="qo-card-body">
+              {/* New User Provisioning Form */}
+              <form
+                onSubmit={handleCreateUser}
                 style={{
-                  padding: '8px 12px',
-                  marginBottom: '12px',
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  backgroundColor: provisionMessage.includes('successfully')
-                    ? '#c6f6d5'
-                    : '#fed7d7',
-                  color: provisionMessage.includes('successfully') ? '#22543d' : '#742a2a',
+                  backgroundColor: 'var(--qo-slate-50)',
+                  border: '1px solid var(--qo-slate-200)',
+                  borderRadius: 'var(--qo-radius-lg)',
+                  padding: '20px',
+                  marginBottom: '24px',
                 }}
               >
-                {provisionMessage}
-              </div>
-            )}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px',
-                marginBottom: '12px',
-              }}
-            >
-              <div>
-                <label
-                  htmlFor="admin-username"
+                <h4
                   style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    marginBottom: '4px',
+                    margin: '0 0 14px 0',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: 'var(--qo-navy-900)',
                   }}
                 >
-                  Username
-                </label>
-                <input
-                  id="admin-username"
-                  type="text"
-                  required
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
+                  Provision New User
+                </h4>
+                {provisionMessage && (
+                  <div
+                    role="status"
+                    className={`qo-alert-banner ${
+                      provisionMessage.includes('successfully')
+                        ? 'qo-alert-success'
+                        : 'qo-alert-danger'
+                    }`}
+                  >
+                    {provisionMessage}
+                  </div>
+                )}
+                <div
                   style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    fontSize: '13px',
-                    border: '1px solid #cbd5e0',
-                    borderRadius: '4px',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="admin-email"
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    marginBottom: '4px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '14px',
+                    marginBottom: '16px',
                   }}
                 >
-                  Email
-                </label>
-                <input
-                  id="admin-email"
-                  type="email"
-                  required
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    fontSize: '13px',
-                    border: '1px solid #cbd5e0',
-                    borderRadius: '4px',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="admin-fullname"
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    marginBottom: '4px',
-                  }}
-                >
-                  Full Name
-                </label>
-                <input
-                  id="admin-fullname"
-                  type="text"
-                  required
-                  value={newFullName}
-                  onChange={(e) => setNewFullName(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    fontSize: '13px',
-                    border: '1px solid #cbd5e0',
-                    borderRadius: '4px',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="admin-password"
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    marginBottom: '4px',
-                  }}
-                >
-                  Temporary Password (min 8 chars)
-                </label>
-                <input
-                  id="admin-password"
-                  type="password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    fontSize: '13px',
-                    border: '1px solid #cbd5e0',
-                    borderRadius: '4px',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="admin-role"
-                  style={{
-                    display: 'block',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    marginBottom: '4px',
-                  }}
-                >
-                  Initial Role
-                </label>
-                <select
-                  id="admin-role"
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value as CanonicalRole)}
-                  style={{
-                    width: '100%',
-                    padding: '6px 8px',
-                    fontSize: '13px',
-                    border: '1px solid #cbd5e0',
-                    borderRadius: '4px',
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <option value="VIEWER">VIEWER</option>
-                  <option value="OPERATOR">OPERATOR</option>
-                  <option value="INSPECTOR">INSPECTOR</option>
-                  <option value="SUPERVISOR">SUPERVISOR</option>
-                  <option value="QUALITY_MANAGER">QUALITY_MANAGER</option>
-                  <option value="ADMIN">ADMIN</option>
-                </select>
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={isProvisioning}
-              style={{
-                backgroundColor: '#38a169',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: isProvisioning ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {isProvisioning ? 'Creating...' : 'Create User'}
-            </button>
-          </form>
+                  <div>
+                    <label htmlFor="admin-username" className="qo-form-label">
+                      Username
+                    </label>
+                    <input
+                      id="admin-username"
+                      type="text"
+                      required
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      className="qo-form-control"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="admin-email" className="qo-form-label">
+                      Email
+                    </label>
+                    <input
+                      id="admin-email"
+                      type="email"
+                      required
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="qo-form-control"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="admin-fullname" className="qo-form-label">
+                      Full Name
+                    </label>
+                    <input
+                      id="admin-fullname"
+                      type="text"
+                      required
+                      value={newFullName}
+                      onChange={(e) => setNewFullName(e.target.value)}
+                      className="qo-form-control"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="admin-password" className="qo-form-label">
+                      Temporary Password (min 8 chars)
+                    </label>
+                    <input
+                      id="admin-password"
+                      type="password"
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="qo-form-control"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="admin-role" className="qo-form-label">
+                      Initial Role
+                    </label>
+                    <select
+                      id="admin-role"
+                      value={newRole}
+                      onChange={(e) => setNewRole(e.target.value as CanonicalRole)}
+                      className="qo-form-control"
+                    >
+                      <option value="VIEWER">VIEWER</option>
+                      <option value="OPERATOR">OPERATOR</option>
+                      <option value="INSPECTOR">INSPECTOR</option>
+                      <option value="SUPERVISOR">SUPERVISOR</option>
+                      <option value="QUALITY_MANAGER">QUALITY_MANAGER</option>
+                      <option value="ADMIN">ADMIN</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" disabled={isProvisioning} className="qo-btn qo-btn-primary">
+                  {isProvisioning ? 'Creating...' : 'Create User'}
+                </button>
+              </form>
 
-          {/* User Table */}
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '15px' }}>Existing Users</h4>
-          {isLoadingUsers && <p style={{ fontSize: '13px', color: '#718096' }}>Loading users...</p>}
-          {userError && <p style={{ fontSize: '13px', color: '#e53e3e' }}>{userError}</p>}
-          {!isLoadingUsers && (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#edf2f7', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>
-                    Username
-                  </th>
-                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Name</th>
-                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Email</th>
-                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Roles</th>
-                  <th style={{ padding: '8px 12px', borderBottom: '2px solid #cbd5e0' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 600 }}>{u.username}</td>
-                    <td style={{ padding: '8px 12px' }}>{u.fullName}</td>
-                    <td style={{ padding: '8px 12px' }}>{u.email}</td>
-                    <td style={{ padding: '8px 12px' }}>{u.roles.join(', ')}</td>
-                    <td style={{ padding: '8px 12px' }}>
-                      <span
-                        style={{
-                          backgroundColor: u.isActive ? '#c6f6d5' : '#fed7d7',
-                          color: u.isActive ? '#22543d' : '#742a2a',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                        }}
-                      >
-                        {u.isActive ? 'ACTIVE' : 'DISABLED'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-      ) : (
-        <div
-          style={{
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '20px',
-            backgroundColor: '#ffffff',
-            color: '#4a5568',
-            fontSize: '14px',
-          }}
-        >
-          <h3 style={{ marginTop: 0, fontSize: '16px', color: '#2d3748' }}>Standard User Access</h3>
-          <p style={{ margin: 0 }}>
-            You are logged in with role(s): <strong>{user.roles.join(', ')}</strong>. Access to user
-            administration is restricted to users with the <code>ADMIN</code> role.
-          </p>
-        </div>
-      )}
+              {/* User Table */}
+              <h4
+                style={{
+                  margin: '0 0 12px 0',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: 'var(--qo-navy-900)',
+                }}
+              >
+                Existing Users
+              </h4>
+              {isLoadingUsers && (
+                <p style={{ fontSize: '13px', color: 'var(--qo-slate-500)' }}>Loading users...</p>
+              )}
+              {userError && (
+                <div role="alert" className="qo-alert-banner qo-alert-danger">
+                  {userError}
+                </div>
+              )}
+              {!isLoadingUsers && (
+                <div className="qo-table-responsive">
+                  <table className="qo-table">
+                    <thead>
+                      <tr>
+                        <th>Username</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((u) => (
+                        <tr key={u.id}>
+                          <td style={{ fontWeight: 600 }}>{u.username}</td>
+                          <td>{u.fullName}</td>
+                          <td>{u.email}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                              {u.roles.map((r) => (
+                                <span key={r} className="qo-badge qo-badge-neutral">
+                                  {r}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td>
+                            <span
+                              className={`qo-badge ${
+                                u.isActive ? 'qo-badge-success' : 'qo-badge-critical'
+                              }`}
+                            >
+                              {u.isActive ? 'ACTIVE' : 'DISABLED'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
+        ) : (
+          <div className="qo-card" style={{ padding: '24px' }}>
+            <h3 style={{ marginTop: 0, fontSize: '16px', color: 'var(--qo-navy-900)' }}>
+              Standard User Access
+            </h3>
+            <p style={{ margin: 0, color: 'var(--qo-slate-600)' }}>
+              You are logged in with role(s): <strong>{user.roles.join(', ')}</strong>. Access to
+              user administration is restricted to users with the <code>ADMIN</code> role.
+            </p>
+          </div>
+        )}
+      </div>
+
       <NotificationCenter
         isOpen={isNotificationCenterOpen}
         onClose={() => setIsNotificationCenterOpen(false)}
@@ -713,3 +598,5 @@ export const AuthenticatedView: React.FC = () => {
     </section>
   );
 };
+
+export default AuthenticatedView;

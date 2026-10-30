@@ -61,15 +61,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       }
 
       const data = (await res.json()) as {
-        notifications: NotificationResponse[];
-        total: number;
-        unreadCount: number;
+        items?: NotificationResponse[];
+        notifications?: NotificationResponse[];
+        total?: number;
+        unreadCount?: number;
       };
 
-      setNotifications(data.notifications);
-      setUnreadCount(data.unreadCount);
+      const itemsList = data.items || data.notifications || [];
+      setNotifications(itemsList);
+      const count = data.unreadCount ?? 0;
+      setUnreadCount(count);
       if (onUnreadCountChange) {
-        onUnreadCountChange(data.unreadCount);
+        onUnreadCountChange(count);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error loading notifications');
@@ -166,18 +169,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     return null;
   }
 
-  const getSeverityStyle = (severity: string) => {
+  const getSeverityBadgeClass = (severity: string) => {
     switch (severity) {
       case 'CRITICAL':
-        return { bg: '#fed7d7', text: '#9b2c2c', border: '#feb2b2' };
+        return 'qo-badge-critical';
       case 'HIGH':
-        return { bg: '#feebc8', text: '#9c4221', border: '#fbd38d' };
+        return 'qo-badge-high';
       case 'MEDIUM':
-        return { bg: '#fefcbf', text: '#744210', border: '#faf089' };
+        return 'qo-badge-medium';
       case 'LOW':
-        return { bg: '#e2e8f0', text: '#4a5568', border: '#cbd5e0' };
+        return 'qo-badge-low';
       default:
-        return { bg: '#ebf8ff', text: '#2b6cb0', border: '#bee3f8' };
+        return 'qo-badge-neutral';
     }
   };
 
@@ -186,63 +189,38 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       role="dialog"
       aria-label="Notification Center"
       aria-modal="true"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
+      className="qo-modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
+        className="qo-modal-panel"
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          width: '90%',
-          maxWidth: '560px',
-          maxHeight: '85vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-          overflow: 'hidden',
+          maxWidth: '580px',
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid #e2e8f0',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <div>
-            <h3 style={{ margin: 0, fontSize: '18px', color: '#1a202c' }}>Notifications</h3>
-            <span style={{ fontSize: '13px', color: '#718096' }}>
-              {unreadCount} unread notification{unreadCount === 1 ? '' : 's'}
+        <div className="qo-modal-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span aria-hidden="true" style={{ fontSize: '18px' }}>
+              🔔
             </span>
+            <div>
+              <h3 className="qo-modal-title" style={{ fontSize: '16px' }}>
+                Notifications
+              </h3>
+              <span style={{ fontSize: '12px', color: 'var(--qo-slate-500)' }}>
+                {unreadCount} unread notification{unreadCount === 1 ? '' : 's'}
+              </span>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             {unreadCount > 0 && (
               <button
                 onClick={() => void handleMarkAllAsRead()}
                 disabled={isMarkingAll}
-                style={{
-                  fontSize: '12px',
-                  padding: '6px 12px',
-                  backgroundColor: '#edf2f7',
-                  border: '1px solid #cbd5e0',
-                  borderRadius: '4px',
-                  cursor: isMarkingAll ? 'not-allowed' : 'pointer',
-                  color: '#4a5568',
-                  fontWeight: 600,
-                }}
+                className="qo-btn qo-btn-secondary qo-btn-sm"
               >
                 {isMarkingAll ? 'Marking...' : 'Mark all as read'}
               </button>
@@ -250,15 +228,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
             <button
               onClick={onClose}
               aria-label="Close notifications"
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '20px',
-                lineHeight: 1,
-                cursor: 'pointer',
-                color: '#718096',
-                padding: '4px 8px',
-              }}
+              className="qo-btn qo-btn-ghost qo-btn-sm"
+              style={{ fontSize: '18px', padding: '4px 8px', lineHeight: 1 }}
             >
               &times;
             </button>
@@ -269,112 +240,95 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         <div
           style={{
             padding: '8px 20px',
-            backgroundColor: '#f7fafc',
-            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: 'var(--qo-slate-50)',
+            borderBottom: '1px solid var(--qo-slate-200)',
             display: 'flex',
             gap: '8px',
           }}
         >
           <button
             onClick={() => setUnreadOnly(false)}
-            style={{
-              padding: '4px 10px',
-              fontSize: '12px',
-              fontWeight: !unreadOnly ? 600 : 400,
-              backgroundColor: !unreadOnly ? '#3182ce' : 'transparent',
-              color: !unreadOnly ? '#ffffff' : '#4a5568',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            className={`qo-btn qo-btn-sm ${!unreadOnly ? 'qo-btn-primary' : 'qo-btn-ghost'}`}
           >
             All
           </button>
           <button
             onClick={() => setUnreadOnly(true)}
-            style={{
-              padding: '4px 10px',
-              fontSize: '12px',
-              fontWeight: unreadOnly ? 600 : 400,
-              backgroundColor: unreadOnly ? '#3182ce' : 'transparent',
-              color: unreadOnly ? '#ffffff' : '#4a5568',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            className={`qo-btn qo-btn-sm ${unreadOnly ? 'qo-btn-primary' : 'qo-btn-ghost'}`}
           >
             Unread Only ({unreadCount})
           </button>
         </div>
 
         {/* Body content */}
-        <div
-          style={{
-            padding: '16px 20px',
-            overflowY: 'auto',
-            flex: 1,
-          }}
-        >
+        <div className="qo-modal-body" style={{ padding: '16px 20px' }}>
           {isLoading ? (
             <div
               role="status"
-              style={{ textAlign: 'center', padding: '32px', color: '#718096', fontSize: '14px' }}
-            >
-              Loading notifications...
-            </div>
-          ) : error ? (
-            <div
-              role="alert"
               style={{
-                backgroundColor: '#fff5f5',
-                border: '1px solid #feb2b2',
-                color: '#c53030',
-                padding: '12px',
-                borderRadius: '6px',
+                textAlign: 'center',
+                padding: '36px',
+                color: 'var(--qo-slate-500)',
                 fontSize: '13px',
               }}
             >
-              {error}
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  border: '2px solid var(--qo-slate-200)',
+                  borderTopColor: 'var(--qo-primary)',
+                  borderRadius: '50%',
+                  animation: 'qo-spin 0.8s linear infinite',
+                  margin: '0 auto 8px auto',
+                }}
+              />
+              Loading notifications...
+            </div>
+          ) : error ? (
+            <div role="alert" className="qo-alert-banner qo-alert-danger">
+              <div>{error}</div>
               <button
                 onClick={() => void fetchNotifications()}
-                style={{
-                  display: 'block',
-                  marginTop: '8px',
-                  backgroundColor: '#c53030',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                }}
+                className="qo-btn qo-btn-danger qo-btn-sm"
+                style={{ marginTop: '8px' }}
               >
                 Retry
               </button>
             </div>
           ) : notifications.length === 0 ? (
             <div
-              style={{ textAlign: 'center', padding: '36px', color: '#718096', fontSize: '14px' }}
+              style={{
+                textAlign: 'center',
+                padding: '40px 20px',
+                color: 'var(--qo-slate-500)',
+                fontSize: '13px',
+              }}
             >
-              No {unreadOnly ? 'unread ' : ''}notifications found.
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>📭</div>
+              <div>No {unreadOnly ? 'unread ' : ''}notifications found.</div>
             </div>
           ) : (
             <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
               {notifications.map((n) => {
                 const isUnread = !n.readAt;
-                const style = getSeverityStyle(n.severity);
+                const badgeClass = getSeverityBadgeClass(n.severity);
                 return (
                   <li
                     key={n.id}
                     style={{
-                      borderBottom: '1px solid #edf2f7',
-                      padding: '12px 0',
+                      borderBottom: '1px solid var(--qo-slate-100)',
+                      padding: '12px 14px',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '4px',
-                      backgroundColor: isUnread ? '#f7fafc' : 'transparent',
-                      paddingLeft: isUnread ? '8px' : '0',
-                      borderLeft: isUnread ? '3px solid #3182ce' : 'none',
+                      backgroundColor: isUnread ? 'var(--qo-primary-subtle)' : 'transparent',
+                      borderRadius: 'var(--qo-radius-md)',
+                      marginBottom: '6px',
+                      borderLeft: isUnread
+                        ? '3px solid var(--qo-primary)'
+                        : '3px solid transparent',
+                      transition: 'background-color var(--qo-transition-fast)',
                     }}
                   >
                     <div
@@ -384,36 +338,31 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         alignItems: 'flex-start',
                       }}
                     >
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        <span
-                          style={{
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            backgroundColor: style.bg,
-                            color: style.text,
-                            border: `1px solid ${style.border}`,
-                          }}
-                        >
-                          {n.severity}
-                        </span>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '6px',
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <span className={`qo-badge ${badgeClass}`}>{n.severity}</span>
                         {n.channel && (
-                          <span
-                            style={{
-                              fontSize: '11px',
-                              color: '#718096',
-                              backgroundColor: '#edf2f7',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
-                            }}
-                          >
+                          <span className="qo-badge qo-badge-neutral" style={{ fontSize: '10px' }}>
                             {n.channel}
                           </span>
                         )}
-                        <strong style={{ fontSize: '14px', color: '#2d3748' }}>{n.title}</strong>
+                        <strong style={{ fontSize: '13px', color: 'var(--qo-navy-900)' }}>
+                          {n.title}
+                        </strong>
                       </div>
-                      <span style={{ fontSize: '12px', color: '#a0aec0' }}>
+                      <span
+                        style={{
+                          fontSize: '11px',
+                          color: 'var(--qo-slate-400)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {new Date(n.createdAt).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -421,7 +370,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                       </span>
                     </div>
 
-                    <p style={{ margin: '4px 0', fontSize: '13px', color: '#4a5568' }}>
+                    <p style={{ margin: '4px 0', fontSize: '13px', color: 'var(--qo-slate-700)' }}>
                       {n.message}
                     </p>
 
@@ -439,12 +388,15 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: '#3182ce',
+                            color: 'var(--qo-primary)',
                             fontSize: '12px',
                             fontWeight: 600,
                             cursor: 'pointer',
                             padding: 0,
-                            textDecoration: 'underline',
+                            textDecoration: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
                           }}
                         >
                           View related {n.entityType.replace(/_/g, ' ').toLowerCase()} &rarr;
@@ -457,15 +409,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         <button
                           onClick={() => void handleMarkAsRead(n.id)}
                           disabled={markingId === n.id}
-                          style={{
-                            fontSize: '11px',
-                            padding: '3px 8px',
-                            backgroundColor: '#ffffff',
-                            border: '1px solid #cbd5e0',
-                            borderRadius: '4px',
-                            cursor: markingId === n.id ? 'not-allowed' : 'pointer',
-                            color: '#4a5568',
-                          }}
+                          className="qo-btn qo-btn-secondary qo-btn-sm"
+                          style={{ fontSize: '11px', padding: '3px 8px' }}
                         >
                           {markingId === n.id ? 'Updating...' : 'Mark as read'}
                         </button>
@@ -481,3 +426,5 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     </div>
   );
 };
+
+export default NotificationCenter;

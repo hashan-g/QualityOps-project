@@ -277,13 +277,13 @@ export const ReportsView: React.FC = () => {
         fontFamily: 'system-ui, sans-serif',
       }}
     >
-      <div style={{ marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1a202c', margin: '0 0 6px 0' }}>
-          Manufacturing Reports & Safe Exports
-        </h2>
-        <p style={{ color: '#4a5568', margin: 0, fontSize: '14px' }}>
-          Standardized operational reports, CSV/XLSX/PDF exports, and automated report scheduling.
-        </p>
+      <div className="qo-page-header">
+        <div>
+          <h2 className="qo-page-title">Manufacturing Reports & Safe Exports</h2>
+          <p className="qo-page-subtitle">
+            Standardized operational reports, CSV/XLSX/PDF exports, and automated report scheduling.
+          </p>
+        </div>
       </div>
 
       {errorMessage && (
@@ -304,16 +304,7 @@ export const ReportsView: React.FC = () => {
       )}
 
       {/* Filter and Selection Card */}
-      <div
-        style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '8px',
-          border: '1px solid #e2e8f0',
-          padding: '20px',
-          marginBottom: '24px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-        }}
-      >
+      <div className="qo-card" style={{ padding: '20px', marginBottom: '24px' }}>
         <div
           style={{
             display: 'grid',

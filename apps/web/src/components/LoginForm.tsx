@@ -5,6 +5,7 @@ export const LoginForm: React.FC = () => {
   const { login, isLoading, error, clearError } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,127 +35,182 @@ export const LoginForm: React.FC = () => {
   return (
     <section
       aria-labelledby="login-heading"
+      className="qo-card"
       style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '8px',
-        padding: '24px',
-        maxWidth: '400px',
-        margin: '0 auto',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        maxWidth: '440px',
+        margin: '40px auto',
+        boxShadow: 'var(--qo-shadow-lg)',
+        border: '1px solid var(--qo-slate-200)',
       }}
     >
-      <h2
-        id="login-heading"
-        style={{ fontSize: '20px', marginTop: 0, marginBottom: '16px', color: '#2d3748' }}
+      <div
+        style={{
+          padding: '24px 28px 16px 28px',
+          borderBottom: '1px solid var(--qo-slate-100)',
+          backgroundColor: 'var(--qo-slate-50)',
+          borderRadius: 'var(--qo-radius-lg) var(--qo-radius-lg) 0 0',
+        }}
       >
-        Sign In
-      </h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+          <div
+            style={{
+              width: '28px',
+              height: '28px',
+              background: 'linear-gradient(135deg, var(--qo-navy-900) 0%, var(--qo-primary) 100%)',
+              borderRadius: '6px',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 800,
+              fontSize: '14px',
+            }}
+          >
+            Q
+          </div>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: 'var(--qo-primary)',
+            }}
+          >
+            QualityOps Enterprise
+          </span>
+        </div>
+        <h2
+          id="login-heading"
+          style={{
+            fontSize: '20px',
+            fontWeight: 700,
+            margin: '0 0 4px 0',
+            color: 'var(--qo-navy-900)',
+          }}
+        >
+          Sign In to QualityOps
+        </h2>
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--qo-slate-500)' }}>
+          Enter your authenticated operator or administrator credentials.
+        </p>
+      </div>
 
-      {displayedError && (
+      <div style={{ padding: '24px 28px' }}>
+        {displayedError && (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="qo-alert-banner qo-alert-danger"
+            style={{ marginBottom: '20px' }}
+          >
+            <span style={{ fontSize: '16px', lineHeight: 1 }} aria-hidden="true">
+              ⚠️
+            </span>
+            <div style={{ flex: 1, fontSize: '13px', fontWeight: 500 }}>{displayedError}</div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div style={{ marginBottom: '18px' }}>
+            <label htmlFor="login-username" className="qo-form-label">
+              Username or Email
+            </label>
+            <input
+              id="login-username"
+              type="text"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={isLoading}
+              required
+              aria-required="true"
+              placeholder="e.g. admin or operator@plant.local"
+              className="qo-form-control"
+              style={{ fontSize: '14px' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '5px',
+              }}
+            >
+              <label htmlFor="login-password" className="qo-form-label" style={{ margin: 0 }}>
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: '12px',
+                  color: 'var(--qo-primary)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {showPassword ? 'Hide Password' : 'Show Password'}
+              </button>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+                required
+                aria-required="true"
+                placeholder="Enter password"
+                className="qo-form-control"
+                style={{ fontSize: '14px' }}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="qo-btn qo-btn-primary"
+            style={{
+              width: '100%',
+              padding: '11px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              boxShadow: 'var(--qo-shadow-xs)',
+            }}
+          >
+            {isLoading ? 'Authenticating...' : 'Sign In'}
+          </button>
+        </form>
+
         <div
-          role="alert"
-          aria-live="polite"
           style={{
-            backgroundColor: '#fff5f5',
-            color: '#c53030',
-            border: '1px solid #feb2b2',
-            borderRadius: '6px',
-            padding: '12px',
-            marginBottom: '16px',
-            fontSize: '14px',
+            marginTop: '20px',
+            paddingTop: '16px',
+            borderTop: '1px solid var(--qo-slate-100)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            fontSize: '12px',
+            color: 'var(--qo-slate-500)',
           }}
         >
-          {displayedError}
+          <span style={{ fontSize: '14px' }}>🔒</span>
+          <span>Argon2id Verification &bull; In-Memory Access Token</span>
         </div>
-      )}
-
-      <form onSubmit={handleSubmit} noValidate>
-        <div style={{ marginBottom: '16px' }}>
-          <label
-            htmlFor="login-username"
-            style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: 600,
-              marginBottom: '6px',
-              color: '#4a5568',
-            }}
-          >
-            Username or Email
-          </label>
-          <input
-            id="login-username"
-            type="text"
-            autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            disabled={isLoading}
-            required
-            aria-required="true"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
-
-        <div style={{ marginBottom: '20px' }}>
-          <label
-            htmlFor="login-password"
-            style={{
-              display: 'block',
-              fontSize: '14px',
-              fontWeight: 600,
-              marginBottom: '6px',
-              color: '#4a5568',
-            }}
-          >
-            Password
-          </label>
-          <input
-            id="login-password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            required
-            aria-required="true"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid #cbd5e0',
-              borderRadius: '6px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-            }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          style={{
-            width: '100%',
-            backgroundColor: isLoading ? '#a0aec0' : '#3182ce',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '10px 16px',
-            fontSize: '15px',
-            fontWeight: 600,
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.2s',
-          }}
-        >
-          {isLoading ? 'Authenticating...' : 'Sign In'}
-        </button>
-      </form>
+      </div>
     </section>
   );
 };
+
+export default LoginForm;
