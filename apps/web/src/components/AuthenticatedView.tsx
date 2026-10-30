@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { UserResponse, CanonicalRole } from '@qualityops/contracts';
+import { OverviewDashboard, type ActiveSection } from './OverviewDashboard';
 import { MasterDataView } from './MasterDataView';
 import { ProductionBatchesView } from './ProductionBatchesView';
 import { DowntimeView } from './DowntimeView';
@@ -11,23 +12,33 @@ import { SpcMonitoringView } from './SpcMonitoringView';
 import { ReportsView } from './ReportsView';
 import { AlertsView } from './AlertsView';
 import { NotificationCenter } from './NotificationCenter';
+import {
+  IconDashboard,
+  IconBatches,
+  IconDowntime,
+  IconInspections,
+  IconDefects,
+  IconCapa,
+  IconSpc,
+  IconReports,
+  IconAlerts,
+  IconBell,
+  IconMasterData,
+  IconUsers,
+  IconLogout,
+  IconMenu,
+  IconClose,
+} from './icons';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
   const isAdmin = user?.roles.includes('ADMIN');
 
-  const [activeSection, setActiveSection] = useState<
-    | 'reports'
-    | 'alerts'
-    | 'spc'
-    | 'capa'
-    | 'defects'
-    | 'inspections'
-    | 'batches'
-    | 'downtime'
-    | 'master-data'
-    | 'users'
-  >('reports');
+  // Default active landing view: Overview Dashboard
+  const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
+
+  // Mobile drawer state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   // Notification Center state
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
@@ -147,455 +158,563 @@ export const AuthenticatedView: React.FC = () => {
         .slice(0, 2)
     : user.username.slice(0, 2).toUpperCase();
 
+  const handleNavClick = (section: ActiveSection) => {
+    setActiveSection(section);
+    setMobileMenuOpen(false);
+  };
+
+  // Human-readable titles for topbar breadcrumb
+  const sectionLabels: Record<ActiveSection, { category: string; title: string }> = {
+    overview: { category: 'OVERVIEW', title: 'Executive Dashboard' },
+    batches: { category: 'OPERATIONS', title: 'Production Batches' },
+    downtime: { category: 'OPERATIONS', title: 'Downtime Tracking' },
+    inspections: { category: 'QUALITY MANAGEMENT', title: 'Quality Inspections' },
+    defects: { category: 'QUALITY MANAGEMENT', title: 'Defect Analytics & Pareto' },
+    capa: { category: 'QUALITY MANAGEMENT', title: 'CAPA Closed-Loop' },
+    spc: { category: 'INSIGHTS', title: 'SPC Control Charts' },
+    reports: { category: 'INSIGHTS', title: 'Reports & Safe Exports' },
+    alerts: { category: 'INSIGHTS', title: 'Operational Alerts' },
+    'master-data': { category: 'ADMINISTRATION', title: 'Master Data Repository' },
+    users: { category: 'ADMINISTRATION', title: 'User Administration' },
+  };
+
+  const currentLabel = sectionLabels[activeSection] || {
+    category: 'QUALITYOPS',
+    title: 'Platform',
+  };
+
   return (
-    <section
-      aria-labelledby="authenticated-heading"
-      style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
-    >
-      {/* Top Session Control Header */}
-      <div
-        className="qo-card"
-        style={{
-          padding: '16px 20px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '16px',
-          backgroundColor: 'var(--qo-white)',
-          borderLeft: '4px solid var(--qo-primary)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--qo-navy-900)',
-              color: 'var(--qo-white)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: '14px',
-              boxShadow: 'var(--qo-shadow-xs)',
-            }}
-          >
-            {initials}
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2
-                id="authenticated-heading"
-                style={{
-                  fontSize: '16px',
-                  margin: 0,
-                  fontWeight: 700,
-                  color: 'var(--qo-navy-900)',
-                }}
-              >
-                Authenticated Session Active
-              </h2>
-              <span
-                style={{
-                  display: 'inline-block',
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#10b981',
-                }}
-                title="Active Session"
-              />
+    <div className="qo-app-layout">
+      {/* Enterprise Left Sidebar */}
+      <aside className={`qo-sidebar ${mobileMenuOpen ? 'open' : ''}`} aria-label="Main Navigation">
+        <div className="qo-sidebar-brand">
+          <div className="qo-sidebar-brand-left">
+            <div className="qo-sidebar-brand-icon" aria-hidden="true">
+              Q
             </div>
-            <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--qo-slate-600)' }}>
-              Signed in as <strong>{user.fullName}</strong> ({user.username}) &bull; Roles:{' '}
-              <strong>{user.roles.join(', ')}</strong>
-            </p>
+            <div>
+              <div className="qo-sidebar-brand-name">QualityOps</div>
+              <div style={{ fontSize: '11px', color: 'var(--qo-slate-400)' }}>
+                Industrial Analytics
+              </div>
+            </div>
           </div>
+          <span className="qo-sidebar-brand-badge">Plant 01</span>
+          {mobileMenuOpen && (
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="qo-btn-ghost"
+              style={{
+                color: 'white',
+                padding: '4px',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+              }}
+              aria-label="Close navigation"
+            >
+              <IconClose size={20} />
+            </button>
+          )}
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <button
-            onClick={() => setIsNotificationCenterOpen(true)}
-            aria-label={`Notifications (${unreadNotificationCount} unread)`}
-            className="qo-btn qo-btn-secondary"
-            style={{
-              position: 'relative',
-              padding: '8px 14px',
-              fontWeight: 600,
-            }}
-          >
-            <span aria-hidden="true" style={{ fontSize: '14px' }}>
-              🔔
-            </span>
-            <span>Notifications</span>
-            {unreadNotificationCount > 0 && (
-              <span
-                className="qo-badge qo-badge-critical"
-                style={{
-                  padding: '2px 6px',
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  borderRadius: 'var(--qo-radius-pill)',
-                }}
-              >
-                {unreadNotificationCount}
+        <nav className="qo-sidebar-nav">
+          {/* Group 1: Overview */}
+          <div className="qo-sidebar-group">
+            <span className="qo-sidebar-group-title">Overview</span>
+            <button
+              onClick={() => handleNavClick('overview')}
+              className={`qo-sidebar-link ${activeSection === 'overview' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconDashboard size={18} />
               </span>
-            )}
-          </button>
-          <button
-            onClick={() => void logout()}
-            className="qo-btn qo-btn-danger"
-            style={{
-              padding: '8px 14px',
-              fontWeight: 600,
-            }}
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+              <span>Dashboard</span>
+            </button>
+          </div>
 
-      {/* Security Architecture Summary */}
+          {/* Group 2: Operations */}
+          <div className="qo-sidebar-group">
+            <span className="qo-sidebar-group-title">Operations</span>
+            <button
+              onClick={() => handleNavClick('batches')}
+              className={`qo-sidebar-link ${activeSection === 'batches' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconBatches size={18} />
+              </span>
+              <span>Production Batches</span>
+            </button>
+            <button
+              onClick={() => handleNavClick('downtime')}
+              className={`qo-sidebar-link ${activeSection === 'downtime' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconDowntime size={18} />
+              </span>
+              <span>Downtime Events</span>
+            </button>
+          </div>
+
+          {/* Group 3: Quality Management */}
+          <div className="qo-sidebar-group">
+            <span className="qo-sidebar-group-title">Quality Management</span>
+            <button
+              onClick={() => handleNavClick('inspections')}
+              className={`qo-sidebar-link ${activeSection === 'inspections' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconInspections size={18} />
+              </span>
+              <span>Quality Inspections</span>
+            </button>
+            <button
+              onClick={() => handleNavClick('defects')}
+              className={`qo-sidebar-link ${activeSection === 'defects' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconDefects size={18} />
+              </span>
+              <span>Defect Management</span>
+            </button>
+            <button
+              onClick={() => handleNavClick('capa')}
+              className={`qo-sidebar-link ${activeSection === 'capa' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconCapa size={18} />
+              </span>
+              <span>CAPA Management</span>
+            </button>
+          </div>
+
+          {/* Group 4: Insights */}
+          <div className="qo-sidebar-group">
+            <span className="qo-sidebar-group-title">Insights</span>
+            <button
+              onClick={() => handleNavClick('spc')}
+              className={`qo-sidebar-link ${activeSection === 'spc' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconSpc size={18} />
+              </span>
+              <span>SPC Monitoring</span>
+            </button>
+            <button
+              onClick={() => handleNavClick('reports')}
+              className={`qo-sidebar-link ${activeSection === 'reports' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconReports size={18} />
+              </span>
+              <span>Reports &amp; Exports</span>
+            </button>
+            <button
+              onClick={() => handleNavClick('alerts')}
+              className={`qo-sidebar-link ${activeSection === 'alerts' ? 'active' : ''}`}
+            >
+              <span className="qo-sidebar-link-icon">
+                <IconAlerts size={18} />
+              </span>
+              <span>Operational Alerts</span>
+            </button>
+          </div>
+
+          {/* Group 5: Administration */}
+          {isAdmin && (
+            <div className="qo-sidebar-group">
+              <span className="qo-sidebar-group-title">Administration</span>
+              <button
+                onClick={() => handleNavClick('master-data')}
+                className={`qo-sidebar-link ${activeSection === 'master-data' ? 'active' : ''}`}
+              >
+                <span className="qo-sidebar-link-icon">
+                  <IconMasterData size={18} />
+                </span>
+                <span>Master Data</span>
+              </button>
+              <button
+                onClick={() => handleNavClick('users')}
+                className={`qo-sidebar-link ${activeSection === 'users' ? 'active' : ''}`}
+              >
+                <span className="qo-sidebar-link-icon">
+                  <IconUsers size={18} />
+                </span>
+                <span>User Administration</span>
+              </button>
+            </div>
+          )}
+        </nav>
+
+        {/* Sidebar Footer — Security Telemetry */}
+        <div className="qo-sidebar-footer">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: '#10b981',
+                display: 'inline-block',
+              }}
+            />
+            <span style={{ fontWeight: 600, color: 'var(--qo-slate-200)', fontSize: '11.5px' }}>
+              Session Active
+            </span>
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--qo-slate-400)', lineHeight: '1.4' }}>
+            Argon2id + Secure HttpOnly Token Handling
+          </div>
+        </div>
+      </aside>
+
+      {/* Backdrop for mobile drawer */}
       <div
-        className="qo-alert-banner qo-alert-info"
-        style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}
-      >
-        <span aria-hidden="true" style={{ fontSize: '15px' }}>
-          🔒
-        </span>
-        <div style={{ fontSize: '12px' }}>
-          <strong>Security Architecture:</strong> JWT access token is kept in-memory only (React
-          state). Refresh credentials are saved in HttpOnly, SameSite=Lax/Strict cookies and rotated
-          on every use. Local/session storage is not used for credentials.
-        </div>
-      </div>
+        className={`qo-sidebar-backdrop ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
 
-      {/* Top Section Navigation */}
-      <nav
-        aria-label="Application Sections"
-        className="qo-card"
-        style={{
-          padding: '8px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '6px',
-          backgroundColor: 'var(--qo-white)',
-        }}
-      >
-        <button
-          onClick={() => setActiveSection('reports')}
-          className={`qo-nav-item-btn ${activeSection === 'reports' ? 'active' : ''}`}
-        >
-          <span>📊</span>
-          <span>Reports &amp; Exports</span>
-        </button>
+      {/* Main Content Area & Topbar */}
+      <div className="qo-main-wrapper">
+        <header className="qo-topbar">
+          <div className="qo-topbar-left">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="qo-topbar-menu-btn"
+              aria-label="Toggle navigation menu"
+            >
+              <IconMenu size={18} />
+            </button>
+            <div className="qo-topbar-breadcrumb">
+              <span style={{ fontWeight: 500 }}>{currentLabel.category}</span>
+              <span style={{ opacity: 0.5 }}>/</span>
+              <span className="qo-topbar-section-title">{currentLabel.title}</span>
+            </div>
+          </div>
 
-        <button
-          onClick={() => setActiveSection('alerts')}
-          className={`qo-nav-item-btn ${activeSection === 'alerts' ? 'active' : ''}`}
-        >
-          <span>⚡</span>
-          <span>Operational Alerts</span>
-        </button>
+          <div className="qo-topbar-right">
+            {/* Notification Center Trigger */}
+            <button
+              onClick={() => setIsNotificationCenterOpen(true)}
+              aria-label={`Notifications (${unreadNotificationCount} unread)`}
+              className="qo-btn qo-btn-secondary qo-btn-sm"
+              style={{ position: 'relative', padding: '6px 12px' }}
+            >
+              <IconBell size={16} />
+              <span>Notifications</span>
+              {unreadNotificationCount > 0 && (
+                <span
+                  className="qo-badge qo-badge-critical"
+                  style={{
+                    padding: '1px 5px',
+                    fontSize: '10px',
+                    borderRadius: 'var(--qo-radius-pill)',
+                  }}
+                >
+                  {unreadNotificationCount}
+                </span>
+              )}
+            </button>
 
-        <button
-          onClick={() => setActiveSection('spc')}
-          className={`qo-nav-item-btn ${activeSection === 'spc' ? 'active' : ''}`}
-        >
-          <span>📈</span>
-          <span>SPC Monitoring</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('capa')}
-          className={`qo-nav-item-btn ${activeSection === 'capa' ? 'active' : ''}`}
-        >
-          <span>🎯</span>
-          <span>CAPA Management</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('defects')}
-          className={`qo-nav-item-btn ${activeSection === 'defects' ? 'active' : ''}`}
-        >
-          <span>🔍</span>
-          <span>Defect Management</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('inspections')}
-          className={`qo-nav-item-btn ${activeSection === 'inspections' ? 'active' : ''}`}
-        >
-          <span>📋</span>
-          <span>Quality Inspections</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('batches')}
-          className={`qo-nav-item-btn ${activeSection === 'batches' ? 'active' : ''}`}
-        >
-          <span>📦</span>
-          <span>Production Batches</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('downtime')}
-          className={`qo-nav-item-btn ${activeSection === 'downtime' ? 'active' : ''}`}
-        >
-          <span>⏱️</span>
-          <span>Downtime Events</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('master-data')}
-          className={`qo-nav-item-btn ${activeSection === 'master-data' ? 'active' : ''}`}
-        >
-          <span>⚙️</span>
-          <span>Master Data</span>
-        </button>
-
-        {isAdmin && (
-          <button
-            onClick={() => setActiveSection('users')}
-            className={`qo-nav-item-btn ${activeSection === 'users' ? 'active' : ''}`}
-          >
-            <span>👥</span>
-            <span>User Administration</span>
-          </button>
-        )}
-      </nav>
-
-      {/* Main Section Content View */}
-      <div style={{ minHeight: '400px' }}>
-        {activeSection === 'reports' ? (
-          <ReportsView />
-        ) : activeSection === 'alerts' ? (
-          <AlertsView />
-        ) : activeSection === 'spc' ? (
-          <SpcMonitoringView />
-        ) : activeSection === 'capa' ? (
-          <CapaManagementView />
-        ) : activeSection === 'defects' ? (
-          <QualityDefectsView />
-        ) : activeSection === 'inspections' ? (
-          <QualityInspectionsView />
-        ) : activeSection === 'batches' ? (
-          <ProductionBatchesView />
-        ) : activeSection === 'downtime' ? (
-          <DowntimeView />
-        ) : activeSection === 'master-data' ? (
-          <MasterDataView />
-        ) : isAdmin ? (
-          <section aria-labelledby="admin-panel-heading" className="qo-card">
-            <div className="qo-card-header">
-              <h3 id="admin-panel-heading" className="qo-card-title">
-                Admin User Administration (Role: ADMIN)
-              </h3>
+            {/* User Profile Chip */}
+            <div className="qo-user-chip">
+              <div className="qo-user-avatar">{initials}</div>
+              <div className="qo-user-meta">
+                <span className="qo-user-name">{user.fullName || user.username}</span>
+                <span className="qo-user-role">{user.roles[0] || 'VIEWER'}</span>
+              </div>
             </div>
 
-            <div className="qo-card-body">
-              {/* New User Provisioning Form */}
-              <form
-                onSubmit={handleCreateUser}
-                style={{
-                  backgroundColor: 'var(--qo-slate-50)',
-                  border: '1px solid var(--qo-slate-200)',
-                  borderRadius: 'var(--qo-radius-lg)',
-                  padding: '20px',
-                  marginBottom: '24px',
-                }}
-              >
-                <h4
+            {/* Logout Action */}
+            <button
+              onClick={() => void logout()}
+              className="qo-logout-btn"
+              title="Sign out of QualityOps"
+            >
+              <IconLogout size={15} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </header>
+
+        {/* Main View Port */}
+        <main className="qo-main-content">
+          {activeSection === 'overview' ? (
+            <OverviewDashboard onNavigate={(sec) => handleNavClick(sec)} />
+          ) : activeSection === 'batches' ? (
+            <ProductionBatchesView />
+          ) : activeSection === 'downtime' ? (
+            <DowntimeView />
+          ) : activeSection === 'inspections' ? (
+            <QualityInspectionsView />
+          ) : activeSection === 'defects' ? (
+            <QualityDefectsView />
+          ) : activeSection === 'capa' ? (
+            <CapaManagementView />
+          ) : activeSection === 'spc' ? (
+            <SpcMonitoringView />
+          ) : activeSection === 'reports' ? (
+            <ReportsView />
+          ) : activeSection === 'alerts' ? (
+            <AlertsView />
+          ) : activeSection === 'master-data' ? (
+            <MasterDataView />
+          ) : isAdmin ? (
+            <section aria-labelledby="admin-panel-heading" className="qo-card">
+              <div className="qo-card-header">
+                <div>
+                  <h2 id="admin-panel-heading" className="qo-card-title">
+                    User Administration &amp; Identity Provisioning
+                  </h2>
+                  <p
+                    style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--qo-slate-500)' }}
+                  >
+                    Manage authorized users, role assignments, and authentication status.
+                  </p>
+                </div>
+              </div>
+
+              <div className="qo-card-body">
+                {/* Provision New User Form with strict autofill protection */}
+                <form
+                  onSubmit={handleCreateUser}
+                  autoComplete="off"
                   style={{
-                    margin: '0 0 14px 0',
-                    fontSize: '14px',
+                    backgroundColor: 'var(--qo-slate-50)',
+                    border: '1px solid var(--qo-slate-200)',
+                    borderRadius: 'var(--qo-radius-lg)',
+                    padding: '20px',
+                    marginBottom: '24px',
+                  }}
+                >
+                  <h3
+                    style={{
+                      margin: '0 0 14px 0',
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      color: 'var(--qo-navy-900)',
+                    }}
+                  >
+                    Provision New User Account
+                  </h3>
+                  {provisionMessage && (
+                    <div
+                      role="status"
+                      className={`qo-alert-banner ${
+                        provisionMessage.includes('successfully')
+                          ? 'qo-alert-success'
+                          : 'qo-alert-danger'
+                      }`}
+                    >
+                      {provisionMessage}
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                      gap: '14px',
+                      marginBottom: '16px',
+                    }}
+                  >
+                    <div>
+                      <label htmlFor="admin-new-username" className="qo-form-label">
+                        Username *
+                      </label>
+                      <input
+                        id="admin-new-username"
+                        name="new-username-field"
+                        type="text"
+                        required
+                        autoComplete="off"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                        className="qo-form-control"
+                        placeholder="e.g. jdoe"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="admin-new-email" className="qo-form-label">
+                        Email Address *
+                      </label>
+                      <input
+                        id="admin-new-email"
+                        name="new-email-field"
+                        type="email"
+                        required
+                        autoComplete="off"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        className="qo-form-control"
+                        placeholder="e.g. jdoe@factory.local"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="admin-new-fullname" className="qo-form-label">
+                        Full Name *
+                      </label>
+                      <input
+                        id="admin-new-fullname"
+                        name="new-fullname-field"
+                        type="text"
+                        required
+                        autoComplete="off"
+                        value={newFullName}
+                        onChange={(e) => setNewFullName(e.target.value)}
+                        className="qo-form-control"
+                        placeholder="e.g. Jane Doe"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="admin-new-password" className="qo-form-label">
+                        Temporary Password (min 8 chars) *
+                      </label>
+                      <input
+                        id="admin-new-password"
+                        name="new-user-temporary-password"
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="qo-form-control"
+                        placeholder="Min 8 characters"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="admin-new-role" className="qo-form-label">
+                        Initial Role Assignment *
+                      </label>
+                      <select
+                        id="admin-new-role"
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value as CanonicalRole)}
+                        className="qo-form-control"
+                      >
+                        <option value="VIEWER">VIEWER</option>
+                        <option value="OPERATOR">OPERATOR</option>
+                        <option value="INSPECTOR">INSPECTOR</option>
+                        <option value="SUPERVISOR">SUPERVISOR</option>
+                        <option value="QUALITY_MANAGER">QUALITY_MANAGER</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button type="submit" disabled={isProvisioning} className="qo-btn qo-btn-primary">
+                    {isProvisioning ? 'Creating Account...' : 'Provision User'}
+                  </button>
+                </form>
+
+                {/* User List Table */}
+                <h3
+                  style={{
+                    margin: '0 0 12px 0',
+                    fontSize: '15px',
                     fontWeight: 700,
                     color: 'var(--qo-navy-900)',
                   }}
                 >
-                  Provision New User
-                </h4>
-                {provisionMessage && (
-                  <div
-                    role="status"
-                    className={`qo-alert-banner ${
-                      provisionMessage.includes('successfully')
-                        ? 'qo-alert-success'
-                        : 'qo-alert-danger'
-                    }`}
-                  >
-                    {provisionMessage}
+                  Authorized Users Repository
+                </h3>
+                {isLoadingUsers && (
+                  <p style={{ fontSize: '13px', color: 'var(--qo-slate-500)' }}>Loading users...</p>
+                )}
+                {userError && (
+                  <div role="alert" className="qo-alert-banner qo-alert-danger">
+                    {userError}
                   </div>
                 )}
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                    gap: '14px',
-                    marginBottom: '16px',
-                  }}
-                >
-                  <div>
-                    <label htmlFor="admin-username" className="qo-form-label">
-                      Username
-                    </label>
-                    <input
-                      id="admin-username"
-                      type="text"
-                      required
-                      value={newUsername}
-                      onChange={(e) => setNewUsername(e.target.value)}
-                      className="qo-form-control"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="admin-email" className="qo-form-label">
-                      Email
-                    </label>
-                    <input
-                      id="admin-email"
-                      type="email"
-                      required
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      className="qo-form-control"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="admin-fullname" className="qo-form-label">
-                      Full Name
-                    </label>
-                    <input
-                      id="admin-fullname"
-                      type="text"
-                      required
-                      value={newFullName}
-                      onChange={(e) => setNewFullName(e.target.value)}
-                      className="qo-form-control"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="admin-password" className="qo-form-label">
-                      Temporary Password (min 8 chars)
-                    </label>
-                    <input
-                      id="admin-password"
-                      type="password"
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="qo-form-control"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="admin-role" className="qo-form-label">
-                      Initial Role
-                    </label>
-                    <select
-                      id="admin-role"
-                      value={newRole}
-                      onChange={(e) => setNewRole(e.target.value as CanonicalRole)}
-                      className="qo-form-control"
-                    >
-                      <option value="VIEWER">VIEWER</option>
-                      <option value="OPERATOR">OPERATOR</option>
-                      <option value="INSPECTOR">INSPECTOR</option>
-                      <option value="SUPERVISOR">SUPERVISOR</option>
-                      <option value="QUALITY_MANAGER">QUALITY_MANAGER</option>
-                      <option value="ADMIN">ADMIN</option>
-                    </select>
-                  </div>
-                </div>
-                <button type="submit" disabled={isProvisioning} className="qo-btn qo-btn-primary">
-                  {isProvisioning ? 'Creating...' : 'Create User'}
-                </button>
-              </form>
-
-              {/* User Table */}
-              <h4
-                style={{
-                  margin: '0 0 12px 0',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  color: 'var(--qo-navy-900)',
-                }}
-              >
-                Existing Users
-              </h4>
-              {isLoadingUsers && (
-                <p style={{ fontSize: '13px', color: 'var(--qo-slate-500)' }}>Loading users...</p>
-              )}
-              {userError && (
-                <div role="alert" className="qo-alert-banner qo-alert-danger">
-                  {userError}
-                </div>
-              )}
-              {!isLoadingUsers && (
-                <div className="qo-table-responsive">
-                  <table className="qo-table">
-                    <thead>
-                      <tr>
-                        <th>Username</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Roles</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((u) => (
-                        <tr key={u.id}>
-                          <td style={{ fontWeight: 600 }}>{u.username}</td>
-                          <td>{u.fullName}</td>
-                          <td>{u.email}</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                              {u.roles.map((r) => (
-                                <span key={r} className="qo-badge qo-badge-neutral">
-                                  {r}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`qo-badge ${
-                                u.isActive ? 'qo-badge-success' : 'qo-badge-critical'
-                              }`}
-                            >
-                              {u.isActive ? 'ACTIVE' : 'DISABLED'}
-                            </span>
-                          </td>
+                {!isLoadingUsers && (
+                  <div className="qo-table-responsive">
+                    <table className="qo-table">
+                      <thead>
+                        <tr>
+                          <th>Username</th>
+                          <th>Full Name</th>
+                          <th>Email Address</th>
+                          <th>Assigned Roles</th>
+                          <th>Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      </thead>
+                      <tbody>
+                        {users.map((u) => (
+                          <tr key={u.id}>
+                            <td style={{ fontWeight: 600 }}>{u.username}</td>
+                            <td>{u.fullName}</td>
+                            <td>{u.email}</td>
+                            <td>
+                              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                {u.roles.map((r) => (
+                                  <span key={r} className="qo-badge qo-badge-neutral">
+                                    {r}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td>
+                              <span
+                                className={`qo-badge ${
+                                  u.isActive ? 'qo-badge-success' : 'qo-badge-critical'
+                                }`}
+                              >
+                                {u.isActive ? 'ACTIVE' : 'DISABLED'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : (
+            <div className="qo-card" style={{ padding: '24px' }}>
+              <h2 style={{ marginTop: 0, fontSize: '16px', color: 'var(--qo-navy-900)' }}>
+                Standard User Access
+              </h2>
+              <p style={{ margin: 0, color: 'var(--qo-slate-600)' }}>
+                You are logged in with role(s): <strong>{user.roles.join(', ')}</strong>. Access to
+                user administration is restricted to users with the <code>ADMIN</code> role.
+              </p>
             </div>
-          </section>
-        ) : (
-          <div className="qo-card" style={{ padding: '24px' }}>
-            <h3 style={{ marginTop: 0, fontSize: '16px', color: 'var(--qo-navy-900)' }}>
-              Standard User Access
-            </h3>
-            <p style={{ margin: 0, color: 'var(--qo-slate-600)' }}>
-              You are logged in with role(s): <strong>{user.roles.join(', ')}</strong>. Access to
-              user administration is restricted to users with the <code>ADMIN</code> role.
-            </p>
-          </div>
-        )}
+          )}
+
+          {/* Clean Enterprise Footer */}
+          <footer
+            style={{
+              marginTop: '40px',
+              paddingTop: '20px',
+              borderTop: '1px solid var(--qo-slate-200)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              fontSize: '12.5px',
+              color: 'var(--qo-slate-500)',
+            }}
+          >
+            <div>
+              &copy; {new Date().getFullYear()} QualityOps &bull; Manufacturing Quality &amp;
+              Process Analytics
+            </div>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <span>Protected with Argon2id</span>
+              <span>Secure Session Token Handling</span>
+            </div>
+          </footer>
+        </main>
       </div>
 
       <NotificationCenter
         isOpen={isNotificationCenterOpen}
         onClose={() => setIsNotificationCenterOpen(false)}
-        onNavigate={(sec) => setActiveSection(sec)}
+        onNavigate={(sec) => handleNavClick(sec)}
         onUnreadCountChange={(cnt) => setUnreadNotificationCount(cnt)}
       />
-    </section>
+    </div>
   );
 };
 

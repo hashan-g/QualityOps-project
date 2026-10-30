@@ -11,15 +11,14 @@ import { SpcMonitoringView } from './components/SpcMonitoringView.js';
 import { ReportsView } from './components/ReportsView.js';
 import { AlertsView } from './components/AlertsView.js';
 import { NotificationCenter } from './components/NotificationCenter.js';
+import { OverviewDashboard } from './components/OverviewDashboard.js';
 import { AuthProvider } from './context/AuthContext.js';
 
 describe('QualityOps Web — Phase 10 Reporting, Exports & Operational Alerts Shell', () => {
-  it('renders the platform screen with title and phase 10 tag', () => {
+  it('renders the platform screen with clean branding and title', () => {
     const html = renderToString(<App />);
 
     expect(html).toContain('QualityOps Platform');
-    expect(html).toContain('Phase 12: Notification Engine &amp; Email Delivery');
-    expect(html).toContain('PostgreSQL 18');
     expect(html).toContain('Manufacturing Quality &amp; Process Analytics Platform');
   });
 
@@ -182,5 +181,20 @@ describe('QualityOps Web — Phase 10 Reporting, Exports & Operational Alerts Sh
     );
 
     expect(html).toBe('');
+  });
+
+  it('renders OverviewDashboard structure with KPI cards and activity grid', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <OverviewDashboard onNavigate={() => {}} />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('Overview &amp; Operational Dashboard');
+    expect(html).toContain('Operational Quick Actions');
+    expect(html).toContain('Recent Production Batches');
+    expect(html).toContain('Operational Exceptions &amp; Alerts');
+    expect(html).toContain('Recent Quality Inspections');
+    expect(html).toContain('Corrective &amp; Preventive Actions (CAPA)');
   });
 });

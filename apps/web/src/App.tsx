@@ -6,6 +6,10 @@ import { AuthenticatedView } from './components/AuthenticatedView';
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
+  if (isAuthenticated) {
+    return <AuthenticatedView />;
+  }
+
   return (
     <div className="qo-app-wrapper">
       {/* Enterprise Application Header */}
@@ -20,32 +24,10 @@ const AppContent: React.FC = () => {
                 <h1 className="qo-brand-title" style={{ fontSize: '18px', margin: 0 }}>
                   QualityOps Platform
                 </h1>
-                <span
-                  className="qo-badge qo-badge-medium"
-                  style={{
-                    fontSize: '11px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    fontWeight: 700,
-                  }}
-                >
-                  Phase 12: Notification Engine &amp; Email Delivery
-                </span>
-                <span
-                  className="qo-badge qo-badge-success"
-                  style={{
-                    fontSize: '11px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.04em',
-                    fontWeight: 700,
-                  }}
-                >
-                  PostgreSQL 18
-                </span>
               </div>
               <p
                 className="qo-brand-subtitle"
-                style={{ fontSize: '12px', margin: 0, color: 'var(--qo-slate-500)' }}
+                style={{ fontSize: '12.5px', margin: 0, color: 'var(--qo-slate-500)' }}
               >
                 Manufacturing Quality &amp; Process Analytics Platform &mdash; Defect Findings,
                 Descriptive Analytics, Inspections &amp; Production Batches
@@ -59,7 +41,7 @@ const AppContent: React.FC = () => {
       <main
         style={{
           flex: 1,
-          padding: '24px 0 48px 0',
+          padding: '40px 0 60px 0',
         }}
       >
         <div className="qo-container">
@@ -70,16 +52,15 @@ const AppContent: React.FC = () => {
               className="qo-card"
               style={{
                 textAlign: 'center',
-                padding: '64px 24px',
-                color: 'var(--qo-slate-500)',
-                maxWidth: '480px',
-                margin: '40px auto',
+                padding: '48px 32px',
+                maxWidth: '440px',
+                margin: '20px auto',
               }}
             >
               <div
                 style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '36px',
+                  height: '36px',
                   border: '3px solid var(--qo-slate-200)',
                   borderTopColor: 'var(--qo-primary)',
                   borderRadius: '50%',
@@ -87,17 +68,31 @@ const AppContent: React.FC = () => {
                   margin: '0 auto 16px auto',
                 }}
               />
-              <div style={{ fontWeight: 600, fontSize: '15px', color: 'var(--qo-navy-900)' }}>
+              <h2
+                style={{
+                  fontWeight: 600,
+                  fontSize: '16px',
+                  color: 'var(--qo-navy-900)',
+                  margin: 0,
+                }}
+              >
                 Verifying session status...
-              </div>
-              <div style={{ fontSize: '13px', marginTop: '4px' }}>
-                Connecting to PostgreSQL 18 &amp; validating security tokens
-              </div>
+              </h2>
+              <p
+                style={{
+                  fontSize: '13.5px',
+                  color: 'var(--qo-slate-500)',
+                  marginTop: '6px',
+                  marginBottom: 0,
+                }}
+              >
+                Connecting to services &amp; validating security tokens
+              </p>
             </div>
-          ) : isAuthenticated ? (
-            <AuthenticatedView />
           ) : (
-            <LoginForm />
+            <div style={{ maxWidth: '480px', margin: '0 auto' }}>
+              <LoginForm />
+            </div>
           )}
         </div>
       </main>
@@ -107,21 +102,27 @@ const AppContent: React.FC = () => {
           borderTop: '1px solid var(--qo-slate-200)',
           backgroundColor: 'var(--qo-white)',
           padding: '16px 0',
-          fontSize: '12px',
+          fontSize: '12.5px',
           color: 'var(--qo-slate-500)',
         }}
       >
         <div
           className="qo-container"
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+          }}
         >
           <div>
-            &copy; {new Date().getFullYear()} QualityOps &bull; Enterprise Manufacturing Quality
-            &amp; Process Analytics
+            &copy; {new Date().getFullYear()} QualityOps | Manufacturing Quality &amp; Process
+            Analytics
           </div>
           <div style={{ display: 'flex', gap: '16px' }}>
-            <span>SOC 2 Type II Compliant Invariant</span>
-            <span>Argon2id + HTTP-Only Session Security</span>
+            <span>Protected with Argon2id</span>
+            <span>Secure Session Token Handling</span>
           </div>
         </div>
       </footer>

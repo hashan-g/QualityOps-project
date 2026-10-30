@@ -665,6 +665,36 @@ export const SpcMonitoringView: React.FC = () => {
         </div>
       )}
 
+      {/* Initial Guidance Empty State when primary filters are unselected */}
+      {!isLoading && !chartData && !errorMessage && (
+        <div className="qo-card" style={{ padding: '32px' }}>
+          <div className="qo-empty-state">
+            <div className="qo-empty-state-icon">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+            </div>
+            <h3 className="qo-empty-state-title">Select Filters to Compute Control Limits</h3>
+            <p className="qo-empty-state-desc">
+              Choose a Product and Production Line from the controls above to retrieve completed
+              inspection subgroups and plot empirical 3-sigma p-Chart limits.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Results Workspace */}
       {!isLoading && chartData && (
         <>
