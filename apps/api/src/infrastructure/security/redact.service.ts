@@ -16,6 +16,11 @@ const SENSITIVE_KEYS = new Set([
   'secret',
   'jwt_access_secret',
   'cookie_secret',
+  'smtp_pass',
+  'smtppass',
+  'smtp_password',
+  'smtppassword',
+  'pass',
 ]);
 
 /**

@@ -175,6 +175,63 @@ export const EnvironmentSchema = z
         }
         return parsed;
       }),
+    EMAIL_ENABLED: z
+      .string()
+      .default('false')
+      .transform((val) => val === 'true'),
+    EMAIL_MOCK_DELIVERY: z
+      .string()
+      .default('false')
+      .transform((val) => val === 'true'),
+    SMTP_HOST: z.string().default('localhost'),
+    SMTP_PORT: z
+      .string()
+      .default('587')
+      .refine(
+        (val) => {
+          const parsed = parseInt(val, 10);
+          return !isNaN(parsed) && parsed > 0 && parsed <= 65535;
+        },
+        { message: 'SMTP_PORT must be an integer between 1 and 65535' },
+      )
+      .transform((val) => parseInt(val, 10)),
+    SMTP_SECURE: z
+      .string()
+      .default('false')
+      .transform((val) => val === 'true'),
+    SMTP_USER: z.string().optional(),
+    SMTP_PASS: z.string().optional(),
+    SMTP_CONNECTION_TIMEOUT_MS: z
+      .string()
+      .default('5000')
+      .transform((val) => {
+        const parsed = parseInt(val, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+          throw new Error('SMTP_CONNECTION_TIMEOUT_MS must be a positive integer');
+        }
+        return parsed;
+      }),
+    EMAIL_FROM: z.string().default('QualityOps Notifications <notifications@qualityops.local>'),
+    EMAIL_MAX_ATTACHMENT_SIZE_BYTES: z
+      .string()
+      .default('10485760')
+      .transform((val) => {
+        const parsed = parseInt(val, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+          throw new Error('EMAIL_MAX_ATTACHMENT_SIZE_BYTES must be a positive integer');
+        }
+        return parsed;
+      }),
+    EMAIL_MAX_RETRY_ATTEMPTS: z
+      .string()
+      .default('3')
+      .transform((val) => {
+        const parsed = parseInt(val, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+          throw new Error('EMAIL_MAX_RETRY_ATTEMPTS must be a positive integer');
+        }
+        return parsed;
+      }),
   })
   .refine(
     (data) => {
@@ -194,12 +251,28 @@ export const EnvironmentSchema = z
         if (data.DATABASE_URL.includes('replace_with_a_local_only_password')) {
           return false;
         }
+        if (data.EMAIL_ENABLED) {
+          if (data.EMAIL_MOCK_DELIVERY) {
+            return false;
+          }
+          if (
+            !data.SMTP_HOST ||
+            data.SMTP_HOST === 'localhost' ||
+            data.SMTP_HOST === '127.0.0.1' ||
+            data.SMTP_HOST.trim().length === 0
+          ) {
+            return false;
+          }
+          if (!data.EMAIL_FROM || data.EMAIL_FROM.trim().length === 0) {
+            return false;
+          }
+        }
       }
       return true;
     },
     {
       message:
-        'In production, JWT_ACCESS_SECRET and COOKIE_SECRET must be set and at least 32 characters long, and DATABASE_URL must not contain default placeholder credentials',
+        'In production, JWT_ACCESS_SECRET and COOKIE_SECRET must be set and at least 32 characters long, DATABASE_URL must not contain default placeholder credentials, and if EMAIL_ENABLED is true, real non-localhost SMTP_HOST and EMAIL_FROM must be configured with mock delivery disabled',
       path: ['JWT_ACCESS_SECRET'],
     },
   );

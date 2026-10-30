@@ -37,7 +37,7 @@ const AppContent: React.FC = () => {
               borderRadius: '4px',
             }}
           >
-            Phase 10: Reporting, Exports &amp; Operational Alerts
+            Phase 12: Notification Engine &amp; Email Delivery
           </span>
           <span
             style={{

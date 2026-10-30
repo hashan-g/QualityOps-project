@@ -1567,6 +1567,7 @@ export const CreateScheduledReportSchema = z.object({
   cadence: ScheduleCadenceSchema,
   timezone: z.string().min(1).max(50).default('UTC'),
   isEnabled: z.boolean().default(true),
+  recipients: z.array(z.string().email()).optional().default([]),
 });
 export type CreateScheduledReport = z.infer<typeof CreateScheduledReportSchema>;
 
@@ -1577,6 +1578,7 @@ export const UpdateScheduledReportSchema = z.object({
   cadence: ScheduleCadenceSchema.optional(),
   timezone: z.string().min(1).max(50).optional(),
   isEnabled: z.boolean().optional(),
+  recipients: z.array(z.string().email()).optional(),
 });
 export type UpdateScheduledReport = z.infer<typeof UpdateScheduledReportSchema>;
 
@@ -1592,6 +1594,7 @@ export const ScheduledReportResponseSchema = z.object({
   createdBy: z.string().uuid().nullable(),
   nextRunAt: z.string().datetime(),
   lastRunAt: z.string().datetime().nullable(),
+  recipients: z.array(z.string().email()).optional().default([]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -1675,3 +1678,81 @@ export const AlertEvaluationResultSchema = z.object({
   errors: z.array(z.string()),
 });
 export type AlertEvaluationResult = z.infer<typeof AlertEvaluationResultSchema>;
+
+// ==============================================================================
+// 12. Notification & Email Delivery Contracts (Phase 12)
+// ==============================================================================
+
+export const NotificationSeveritySchema = z.enum(['INFO', 'LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+export type NotificationSeverity = z.infer<typeof NotificationSeveritySchema>;
+
+export const NotificationChannelSchema = z.enum(['IN_APP', 'EMAIL']);
+export type NotificationChannel = z.infer<typeof NotificationChannelSchema>;
+
+export const NotificationEntityTypeSchema = z.enum([
+  'OPERATIONAL_ALERT',
+  'REPORT_RUN',
+  'SCHEDULED_REPORT',
+  'CAPA_CASE',
+  'QUALITY_INSPECTION',
+]);
+export type NotificationEntityType = z.infer<typeof NotificationEntityTypeSchema>;
+
+export const NotificationResponseSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  title: z.string(),
+  message: z.string(),
+  severity: NotificationSeveritySchema,
+  channel: NotificationChannelSchema,
+  entityType: NotificationEntityTypeSchema.nullable().optional(),
+  entityId: z.string().uuid().nullable().optional(),
+  metadata: z.record(z.unknown()),
+  readAt: z.string().datetime().nullable(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type NotificationResponse = z.infer<typeof NotificationResponseSchema>;
+
+export const NotificationListFilterSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+  unreadOnly: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
+});
+export type NotificationListFilter = z.infer<typeof NotificationListFilterSchema>;
+
+export const NotificationListResponseSchema = z.object({
+  notifications: z.array(NotificationResponseSchema),
+  total: z.number().int(),
+  unreadCount: z.number().int(),
+  limit: z.number().int(),
+  offset: z.number().int(),
+});
+export type NotificationListResponse = z.infer<typeof NotificationListResponseSchema>;
+
+export const EmailDeliveryStatusSchema = z.enum(['PENDING', 'SENDING', 'SENT', 'FAILED']);
+export type EmailDeliveryStatus = z.infer<typeof EmailDeliveryStatusSchema>;
+
+export const EmailDeliveryResponseSchema = z.object({
+  id: z.string().uuid(),
+  notificationId: z.string().uuid().nullable(),
+  recipientEmail: z.string().email(),
+  recipientUserId: z.string().uuid().nullable(),
+  subject: z.string(),
+  bodyText: z.string(),
+  bodyHtml: z.string().nullable().optional(),
+  status: EmailDeliveryStatusSchema,
+  attemptCount: z.number().int(),
+  maxAttempts: z.number().int(),
+  nextAttemptAt: z.string().datetime(),
+  sentAt: z.string().datetime().nullable(),
+  lastError: z.string().nullable().optional(),
+  artifactId: z.string().uuid().nullable().optional(),
+  reportRunId: z.string().uuid().nullable().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type EmailDeliveryResponse = z.infer<typeof EmailDeliveryResponseSchema>;

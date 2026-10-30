@@ -8,6 +8,7 @@ import { generateCsv } from './exports/csv.exporter.js';
 import { generateXlsx, type XlsxColumn } from './exports/xlsx.exporter.js';
 import { generatePdf, type PdfColumn } from './exports/pdf.exporter.js';
 import { artifactStorage, type ArtifactStorageService } from './exports/artifact.storage.js';
+import { notificationsService } from '../notifications/notifications.service.js';
 import { auditService, type AuditService } from '../audit/audit.service.js';
 import {
   type ReportType,
@@ -266,13 +267,21 @@ export class ReportsService {
         fileSizeBytes: saved.sizeBytes,
       });
 
-      return {
+      const completedRun: ReportRunResponse = {
         ...run,
         status: 'SUCCEEDED',
         artifactId,
         fileSizeBytes: saved.sizeBytes,
         completedAt: new Date().toISOString(),
       };
+
+      try {
+        await notificationsService.dispatchScheduledReportDelivery(completedRun, schedule);
+      } catch (dispatchErr) {
+        console.warn(`[ReportsService] Failed to dispatch report delivery: ${dispatchErr}`);
+      }
+
+      return completedRun;
     } catch (err) {
       const safeError = err instanceof Error ? err.message : 'Unknown generation failure';
       await this.schedulesRepo.completeReportRun(run.id, {

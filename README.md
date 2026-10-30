@@ -1,6 +1,6 @@
 # QualityOps — Manufacturing Quality & Process Analytics Platform
 
-**Phase 10: Reporting, Exports & Operational Alerts**  
+**Phase 12: Notification Engine, Configured Email Delivery & Operational Dispatch**  
 **Status:** Implemented & Verified Baseline  
 **Date:** October 2026  
 **Owner:** Project owner / developer
@@ -9,10 +9,10 @@
 
 ## 1. Product Purpose
 
-QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, process analytics, closed-loop corrective action, statistical process monitoring (SPC), standardized reporting, secure exports, and operational alert surveillance.
+QualityOps is an engineering platform designed for manufacturing quality tracking, defect management, process analytics, closed-loop corrective action, statistical process monitoring (SPC), standardized reporting, secure exports, operational alert surveillance, and multi-channel notification dispatch.
 
-> **Phase 10 Scope Guard Notice:**  
-> This phase establishes standardized reporting catalogues (Production Performance, Inspection Summary, Defect Analysis, CAPA Status, SPC Summary), safe data exports (CSV with formula-injection neutralization, styled XLSX, vector PDF), scheduled recurring reports with transactional atomic execution (`FOR UPDATE SKIP LOCKED`), and operational exception alerts with partial-index deduplication. **Automated email transmission is documented as deferred pending a configured provider; no fake email deliveries are simulated.**
+> **Phase 12 Scope Guard Notice:**  
+> This phase establishes in-app notifications, durable email delivery tracking, asynchronous worker dispatch (`FOR UPDATE SKIP LOCKED`), configurable SMTP transport with strict production validation, operational alerts and scheduled report routing to authorized roles, and an authenticated in-app Notification Center. Outbound webhooks and SMS delivery remain out of scope until dedicated providers and signing mechanisms are introduced.
 
 ---
 
@@ -20,7 +20,7 @@ QualityOps is an engineering platform designed for manufacturing quality trackin
 
 The repository is structured as an npm workspace monorepo with an auxiliary Python analytics microservice:
 
-- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, Reports & Safe Exports view with on-screen preview, CSV/XLSX/PDF triggers, and schedule management, Operational Alerts view with severity triage, KPI summary, evaluation trigger, and mandatory resolution modal, SPC Monitoring view with variable stepped limits, CAPA management view, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view, downtime tracking, and master-data management shell)
+- **Web Client (`apps/web`):** React 19 + TypeScript + Vite 6 (In-memory access token state, Notification Center & Bell widget with live unread badge, Reports & Safe Exports view with on-screen preview, CSV/XLSX/PDF triggers, recipient configuration, and schedule management, Operational Alerts view with severity triage, KPI summary, evaluation trigger, and mandatory resolution modal, SPC Monitoring view with variable stepped limits, CAPA management view, defect findings repository with Pareto and descriptive analytics, quality inspections view, production batches view, downtime tracking, and master-data management shell)
 - **Backend API (`apps/api`):** Node.js 24 LTS + Express + TypeScript + `pg` connection pool + Argon2id + JWT + Reporting Engine (CSV RFC 4180 / ExcelJS / PDFKit), Scheduled Report Runner, Operational Alerts Evaluator with idempotent partial unique constraints, SPC Analytics module with timeout handling and 503 fallback, CAPA Management, Defect Management, Descriptive Analytics, Quality Inspections, Production Management, Downtime & Master Data modules + Audit Logging service
 - **Analytics Microservice (`services/analytics`):** Python 3.12+ + FastAPI + Pydantic v2 + Uvicorn (Stateless, isolated calculations, zero direct database access, variable p-chart control limits, strict 20-subgroup guardrail, degenerate baseline detection, unrounded 3-sigma signal detection)
 - **Shared Contracts (`packages/contracts`):** TypeScript types & Zod validation schemas for Report queries, summaries, rows, export options, Scheduled Reports, Report Runs, Operational Alerts, evaluation results, SPC p-charts, CAPA cases, actions, defect findings, and master data
@@ -170,6 +170,10 @@ npm run dev
   - `POST /api/v1/alerts/evaluate` (Manual trigger for alert rules evaluation across inspections, CAPAs, and SPC signals)
   - `POST /api/v1/alerts/:id/acknowledge` (Transition alert from OPEN to ACKNOWLEDGED with actor audit)
   - `POST /api/v1/alerts/:id/resolve` (Transition alert to RESOLVED with mandatory documented notes)
+- **Notification Engine Endpoints (Authenticated Users):**
+  - `GET /api/v1/notifications` (List current user's in-app notifications with unread count, filters, and pagination)
+  - `PATCH /api/v1/notifications/:id/read` (Mark single in-app notification as read with strict ownership check)
+  - `POST /api/v1/notifications/mark-all-read` (Mark all current user's notifications as read)
 
 ---
 
@@ -196,6 +200,7 @@ All quality commands can be executed from the root workspace:
 | `npm run db:reset-admin-password` | Safely resets password for an existing administrator account             |
 | `npm run reports:run-scheduled`   | Executes due recurring scheduled reports with atomic row locking         |
 | `npm run alerts:evaluate`         | Evaluates operational alert rules and records deduplicated anomalies     |
+| `npm run notifications:deliver`   | Processes pending outbound email deliveries with retries and row locking |
 
 ---
 
@@ -223,6 +228,8 @@ All quality commands can be executed from the root workspace:
 - [Phase 10 Report & Export Workflow](file:///docs/reports/report-export-workflow.md)
 - [Phase 10 Operational Alert Rules](file:///docs/alerts/operational-alert-rules.md)
 - [Phase 10 Reporting & Alerts API Contract](file:///docs/api/phase-10-reporting-alerts-contract.md)
+- [Phase 11 Security Review & Hardening Report](file:///docs/security/phase-11-security-review.md)
+- [Phase 12 Notifications & Email Delivery Contract](file:///docs/api/notifications-contract.md)
 - [Phase 1 Acceptance Checklist](file:///docs/phase-1/acceptance-checklist.md)
 - [Phase 2 Acceptance Checklist](file:///docs/phase-2/acceptance-checklist.md)
 - [Phase 3 Acceptance Checklist](file:///docs/phase-3/acceptance-checklist.md)
@@ -233,3 +240,5 @@ All quality commands can be executed from the root workspace:
 - [Phase 8 Acceptance Checklist](file:///docs/phase-8/acceptance-checklist.md)
 - [Phase 9 Acceptance Checklist](file:///docs/phase-9/acceptance-checklist.md)
 - [Phase 10 Acceptance Checklist](file:///docs/phase-10/acceptance-checklist.md)
+- [Phase 11 Acceptance Checklist](file:///docs/phase-11/acceptance-checklist.md)
+- [Phase 12 Acceptance Checklist](file:///docs/phase-12/acceptance-checklist.md)

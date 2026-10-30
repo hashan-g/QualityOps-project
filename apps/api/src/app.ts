@@ -15,6 +15,7 @@ import { qualityRouter } from './routes/quality/index.js';
 import { analyticsRouter } from './routes/analytics/index.js';
 import { reportsRouter } from './routes/reports/reports.router.js';
 import { alertsRouter } from './routes/alerts/alerts.router.js';
+import { notificationsRouter } from './routes/notifications/notifications.router.js';
 
 export function createApp(): Express {
   const app = express();
@@ -55,6 +56,9 @@ export function createApp(): Express {
   // Reporting, Exports & Operational Alerts routes (Phase 10)
   app.use('/api/v1/reports', reportsRouter);
   app.use('/api/v1/alerts', alertsRouter);
+
+  // Notifications & Email Delivery routes (Phase 12)
+  app.use('/api/v1/notifications', notificationsRouter);
 
   // Health and readiness endpoints
   app.use('/api/v1/health', healthRouter);

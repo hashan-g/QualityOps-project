@@ -55,6 +55,7 @@ export const ReportsView: React.FC = () => {
   const [isLoadingSchedules, setIsLoadingSchedules] = useState<boolean>(false);
   const [showCreateSchedule, setShowCreateSchedule] = useState<boolean>(false);
   const [scheduleName, setScheduleName] = useState<string>('');
+  const [scheduleRecipients, setScheduleRecipients] = useState<string>('');
   const [scheduleCadence, setScheduleCadence] = useState<ScheduleCadence>('WEEKLY');
   const [scheduleFormat, setScheduleFormat] = useState<ExportFormat>('PDF');
   const [selectedScheduleRuns, setSelectedScheduleRuns] = useState<ReportRunResponse[] | null>(
@@ -213,6 +214,11 @@ export const ReportsView: React.FC = () => {
     if (!scheduleName.trim() || !accessToken) return;
 
     try {
+      const recipientList = scheduleRecipients
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
       const res = await fetch('/api/v1/reports/schedules', {
         method: 'POST',
         headers: {
@@ -224,6 +230,7 @@ export const ReportsView: React.FC = () => {
           reportType,
           format: scheduleFormat,
           cadence: scheduleCadence,
+          recipients: recipientList,
           filters: {
             productId: productId || undefined,
             productionLineId: productionLineId || undefined,
@@ -238,6 +245,7 @@ export const ReportsView: React.FC = () => {
 
       setShowCreateSchedule(false);
       setScheduleName('');
+      setScheduleRecipients('');
       void fetchSchedules();
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Failed to create schedule');
@@ -973,6 +981,33 @@ export const ReportsView: React.FC = () => {
               Create Scheduled Report
             </h3>
             <form onSubmit={handleCreateScheduleSubmit}>
+              <div style={{ marginBottom: '14px' }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    marginBottom: '4px',
+                  }}
+                >
+                  Email Recipients (comma-separated, optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. manager@factory.local, supervisor@factory.local"
+                  value={scheduleRecipients}
+                  onChange={(e) => setScheduleRecipients(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    border: '1px solid #cbd5e0',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
               <div style={{ marginBottom: '14px' }}>
                 <label
                   style={{

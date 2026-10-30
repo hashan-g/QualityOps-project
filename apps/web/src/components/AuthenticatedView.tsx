@@ -10,6 +10,7 @@ import { CapaManagementView } from './CapaManagementView';
 import { SpcMonitoringView } from './SpcMonitoringView';
 import { ReportsView } from './ReportsView';
 import { AlertsView } from './AlertsView';
+import { NotificationCenter } from './NotificationCenter';
 
 export const AuthenticatedView: React.FC = () => {
   const { user, accessToken, logout } = useAuth();
@@ -27,6 +28,30 @@ export const AuthenticatedView: React.FC = () => {
     | 'master-data'
     | 'users'
   >('reports');
+
+  // Notification Center state
+  const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (accessToken) {
+      void fetchUnreadCount();
+    }
+  }, [accessToken]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/v1/notifications?limit=1&unreadOnly=true', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadNotificationCount(data.unreadCount ?? 0);
+      }
+    } catch {
+      // Graceful fallback
+    }
+  };
 
   // Admin user list state
   const [users, setUsers] = useState<UserResponse[]>([]);
@@ -139,21 +164,60 @@ export const AuthenticatedView: React.FC = () => {
             <strong>{user.roles.join(', ')}</strong>
           </p>
         </div>
-        <button
-          onClick={() => void logout()}
-          style={{
-            backgroundColor: '#e53e3e',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '8px 16px',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          Logout
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <button
+            onClick={() => setIsNotificationCenterOpen(true)}
+            aria-label={`Notifications (${unreadNotificationCount} unread)`}
+            style={{
+              position: 'relative',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e0',
+              borderRadius: '6px',
+              padding: '8px 12px',
+              fontSize: '14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: '#2d3748',
+              fontWeight: 600,
+            }}
+          >
+            <span aria-hidden="true" style={{ fontSize: '15px' }}>
+              🔔
+            </span>
+            <span>Notifications</span>
+            {unreadNotificationCount > 0 && (
+              <span
+                style={{
+                  backgroundColor: '#e53e3e',
+                  color: '#ffffff',
+                  borderRadius: '9999px',
+                  padding: '2px 7px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                }}
+              >
+                {unreadNotificationCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => void logout()}
+            style={{
+              backgroundColor: '#e53e3e',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       <div
@@ -640,6 +704,12 @@ export const AuthenticatedView: React.FC = () => {
           </p>
         </div>
       )}
+      <NotificationCenter
+        isOpen={isNotificationCenterOpen}
+        onClose={() => setIsNotificationCenterOpen(false)}
+        onNavigate={(sec) => setActiveSection(sec)}
+        onUnreadCountChange={(cnt) => setUnreadNotificationCount(cnt)}
+      />
     </section>
   );
 };

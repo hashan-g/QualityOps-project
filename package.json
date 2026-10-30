@@ -27,7 +27,8 @@
     "db:bootstrap-admin": "tsx apps/api/src/scripts/bootstrap-admin.ts",
     "db:reset-admin-password": "tsx apps/api/src/scripts/reset-admin-password.ts",
     "reports:run-scheduled": "npm run reports:run-scheduled -w @qualityops/api",
-    "alerts:evaluate": "npm run alerts:evaluate -w @qualityops/api"
+    "alerts:evaluate": "npm run alerts:evaluate -w @qualityops/api",
+    "notifications:deliver": "npm run notifications:deliver -w @qualityops/api"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

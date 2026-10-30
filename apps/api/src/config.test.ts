@@ -188,5 +188,68 @@ describe('Configuration & Environment Resolution Tests', () => {
       });
       expect(parsedTest.success).toBe(true);
     });
+
+    describe('Phase 12: Email configuration hardening', () => {
+      it('defaults EMAIL_ENABLED and EMAIL_MOCK_DELIVERY to false', () => {
+        const parsed = EnvironmentSchema.safeParse({});
+        expect(parsed.success).toBe(true);
+        if (parsed.success) {
+          expect(parsed.data.EMAIL_ENABLED).toBe(false);
+          expect(parsed.data.EMAIL_MOCK_DELIVERY).toBe(false);
+          expect(parsed.data.SMTP_PORT).toBe(587);
+          expect(parsed.data.EMAIL_MAX_RETRY_ATTEMPTS).toBe(3);
+        }
+      });
+
+      it('accepts valid production SMTP configuration with mock delivery disabled', () => {
+        const parsed = EnvironmentSchema.safeParse({
+          ...validProdEnv,
+          EMAIL_ENABLED: 'true',
+          EMAIL_MOCK_DELIVERY: 'false',
+          SMTP_HOST: 'smtp.mailgun.org',
+          SMTP_PORT: '587',
+          EMAIL_FROM: 'QualityOps Production <alerts@qualityops.io>',
+        });
+        expect(parsed.success).toBe(true);
+      });
+
+      it('rejects mock delivery in production when email is enabled', () => {
+        const parsed = EnvironmentSchema.safeParse({
+          ...validProdEnv,
+          EMAIL_ENABLED: 'true',
+          EMAIL_MOCK_DELIVERY: 'true',
+          SMTP_HOST: 'smtp.mailgun.org',
+        });
+        expect(parsed.success).toBe(false);
+      });
+
+      it('rejects localhost or 127.0.0.1 SMTP_HOST in production when email is enabled', () => {
+        const parsedLocalhost = EnvironmentSchema.safeParse({
+          ...validProdEnv,
+          EMAIL_ENABLED: 'true',
+          SMTP_HOST: 'localhost',
+        });
+        expect(parsedLocalhost.success).toBe(false);
+
+        const parsedLoopback = EnvironmentSchema.safeParse({
+          ...validProdEnv,
+          EMAIL_ENABLED: 'true',
+          SMTP_HOST: '127.0.0.1',
+        });
+        expect(parsedLoopback.success).toBe(false);
+      });
+
+      it('rejects invalid SMTP_PORT bounds', () => {
+        const parsedNegative = EnvironmentSchema.safeParse({
+          SMTP_PORT: '-1',
+        });
+        expect(parsedNegative.success).toBe(false);
+
+        const parsedTooHigh = EnvironmentSchema.safeParse({
+          SMTP_PORT: '70000',
+        });
+        expect(parsedTooHigh.success).toBe(false);
+      });
+    });
   });
 });

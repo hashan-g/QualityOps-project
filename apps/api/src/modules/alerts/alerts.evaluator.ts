@@ -3,6 +3,7 @@ import { pool } from '../../infrastructure/database/pool.js';
 import { alertsRepository, type AlertsRepository } from './alerts.repository.js';
 import { spcService } from '../analytics/spc/spc.service.js';
 import { config } from '../../config.js';
+import { notificationsService } from '../notifications/notifications.service.js';
 import type { AlertEvaluationResult } from '@qualityops/contracts';
 
 export class AlertsEvaluator {
@@ -83,6 +84,11 @@ export class AlertsEvaluator {
 
       if (created) {
         generated++;
+        try {
+          await notificationsService.dispatchAlertNotifications(created, client);
+        } catch (notifErr) {
+          console.warn(`[AlertsEvaluator] Failed to dispatch alert notification: ${notifErr}`);
+        }
       } else {
         skipped++;
       }
@@ -149,6 +155,11 @@ export class AlertsEvaluator {
 
       if (created) {
         generated++;
+        try {
+          await notificationsService.dispatchAlertNotifications(created, client);
+        } catch (notifErr) {
+          console.warn(`[AlertsEvaluator] Failed to dispatch alert notification: ${notifErr}`);
+        }
       } else {
         skipped++;
       }
@@ -236,6 +247,13 @@ export class AlertsEvaluator {
 
             if (created) {
               generated++;
+              try {
+                await notificationsService.dispatchAlertNotifications(created, client);
+              } catch (notifErr) {
+                console.warn(
+                  `[AlertsEvaluator] Failed to dispatch alert notification: ${notifErr}`,
+                );
+              }
             } else {
               skipped++;
             }

@@ -42,7 +42,7 @@ export class SchedulesRepository {
     const sql = `
       SELECT
         id, name, report_type, filters, format, cadence, timezone,
-        is_enabled, created_by, next_run_at, last_run_at, created_at, updated_at
+        is_enabled, created_by, next_run_at, last_run_at, recipients, created_at, updated_at
       FROM scheduled_reports
       ORDER BY created_at DESC;
     `;
@@ -60,7 +60,7 @@ export class SchedulesRepository {
     const sql = `
       SELECT
         id, name, report_type, filters, format, cadence, timezone,
-        is_enabled, created_by, next_run_at, last_run_at, created_at, updated_at
+        is_enabled, created_by, next_run_at, last_run_at, recipients, created_at, updated_at
       FROM scheduled_reports
       WHERE id = $1;
     `;
@@ -80,8 +80,8 @@ export class SchedulesRepository {
 
     const sql = `
       INSERT INTO scheduled_reports (
-        name, report_type, filters, format, cadence, timezone, is_enabled, created_by, next_run_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        name, report_type, filters, format, cadence, timezone, is_enabled, created_by, next_run_at, recipients
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *;
     `;
     const params = [
@@ -94,6 +94,7 @@ export class SchedulesRepository {
       input.isEnabled ?? true,
       createdBy,
       nextRunAt.toISOString(),
+      JSON.stringify(input.recipients ?? []),
     ];
 
     const res = await this.query(client, sql, params);
@@ -133,8 +134,12 @@ export class SchedulesRepository {
       params.push(input.timezone);
     }
     if (input.isEnabled !== undefined) {
-      updates.push(`is_enabled = $${pIdx++}`);
+      updates.push(`is_enabled = ${pIdx++}`);
       params.push(input.isEnabled);
+    }
+    if (input.recipients !== undefined) {
+      updates.push(`recipients = ${pIdx++}`);
+      params.push(JSON.stringify(input.recipients));
     }
 
     const sql = `
@@ -302,6 +307,11 @@ export class SchedulesRepository {
       createdBy: row.created_by ? String(row.created_by) : null,
       nextRunAt: new Date(row.next_run_at as string | Date).toISOString(),
       lastRunAt: row.last_run_at ? new Date(row.last_run_at as string | Date).toISOString() : null,
+      recipients: Array.isArray(row.recipients)
+        ? (row.recipients as string[])
+        : typeof row.recipients === 'string'
+          ? JSON.parse(row.recipients)
+          : [],
       createdAt: new Date(row.created_at as string | Date).toISOString(),
       updatedAt: new Date(row.updated_at as string | Date).toISOString(),
     };

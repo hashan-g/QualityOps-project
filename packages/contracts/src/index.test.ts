@@ -82,6 +82,14 @@ import {
   AlertListFilterSchema,
   ResolveAlertSchema,
   AlertEvaluationResultSchema,
+  NotificationSeveritySchema,
+  NotificationChannelSchema,
+  NotificationEntityTypeSchema,
+  NotificationResponseSchema,
+  NotificationListFilterSchema,
+  NotificationListResponseSchema,
+  EmailDeliveryStatusSchema,
+  EmailDeliveryResponseSchema,
 } from './index.js';
 
 describe('Contracts — Foundation Schemas', () => {
@@ -1533,6 +1541,123 @@ describe('Contracts — Phase 4 Master Data Management Schemas', () => {
           errors: [],
         };
         expect(AlertEvaluationResultSchema.safeParse(result).success).toBe(true);
+      });
+    });
+
+    describe('12. Notification & Email Delivery Contracts', () => {
+      it('validates notification enums and channel values', () => {
+        expect(NotificationSeveritySchema.safeParse('CRITICAL').success).toBe(true);
+        expect(NotificationSeveritySchema.safeParse('INVALID').success).toBe(false);
+        expect(NotificationChannelSchema.safeParse('IN_APP').success).toBe(true);
+        expect(NotificationChannelSchema.safeParse('EMAIL').success).toBe(true);
+        expect(NotificationChannelSchema.safeParse('WEBHOOK').success).toBe(false);
+        expect(NotificationEntityTypeSchema.safeParse('OPERATIONAL_ALERT').success).toBe(true);
+        expect(NotificationEntityTypeSchema.safeParse('REPORT_RUN').success).toBe(true);
+      });
+
+      it('validates NotificationResponseSchema', () => {
+        const valid = {
+          id: '11111111-1111-1111-1111-111111111111',
+          userId: '22222222-2222-2222-2222-222222222222',
+          title: 'High Inspection Failure Rate Alert',
+          message: 'Inspection #INS-001 has 35% failure rate',
+          severity: 'CRITICAL',
+          channel: 'IN_APP',
+          entityType: 'OPERATIONAL_ALERT',
+          entityId: '33333333-3333-3333-3333-333333333333',
+          metadata: { failureRate: 0.35 },
+          readAt: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        expect(NotificationResponseSchema.safeParse(valid).success).toBe(true);
+      });
+
+      it('validates NotificationListFilterSchema and default pagination', () => {
+        const parsed = NotificationListFilterSchema.safeParse({});
+        expect(parsed.success).toBe(true);
+        if (parsed.success) {
+          expect(parsed.data.limit).toBe(20);
+          expect(parsed.data.offset).toBe(0);
+          expect(parsed.data.unreadOnly).toBeUndefined();
+        }
+
+        const unreadFilter = NotificationListFilterSchema.safeParse({ unreadOnly: 'true' });
+        expect(unreadFilter.success).toBe(true);
+        if (unreadFilter.success) {
+          expect(unreadFilter.data.unreadOnly).toBe(true);
+        }
+      });
+
+      it('validates NotificationListResponseSchema', () => {
+        const response = {
+          notifications: [
+            {
+              id: '11111111-1111-1111-1111-111111111111',
+              userId: '22222222-2222-2222-2222-222222222222',
+              title: 'Test Notification',
+              message: 'Test message',
+              severity: 'INFO',
+              channel: 'IN_APP',
+              entityType: null,
+              entityId: null,
+              metadata: {},
+              readAt: null,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+          total: 1,
+          unreadCount: 1,
+          limit: 20,
+          offset: 0,
+        };
+
+        expect(NotificationListResponseSchema.safeParse(response).success).toBe(true);
+      });
+
+      it('validates EmailDeliveryStatusSchema and EmailDeliveryResponseSchema', () => {
+        expect(EmailDeliveryStatusSchema.safeParse('PENDING').success).toBe(true);
+        expect(EmailDeliveryStatusSchema.safeParse('SENT').success).toBe(true);
+        expect(EmailDeliveryStatusSchema.safeParse('FAILED').success).toBe(true);
+
+        const emailDelivery = {
+          id: '55555555-5555-5555-5555-555555555555',
+          notificationId: null,
+          recipientEmail: 'quality.lead@company.local',
+          recipientUserId: '22222222-2222-2222-2222-222222222222',
+          subject: 'Weekly Inspection Report',
+          bodyText: 'Please find attached the weekly report.',
+          status: 'PENDING',
+          attemptCount: 0,
+          maxAttempts: 3,
+          nextAttemptAt: new Date().toISOString(),
+          sentAt: null,
+          lastError: null,
+          artifactId: '44444444-4444-4444-4444-444444444444',
+          reportRunId: '33333333-3333-3333-3333-333333333333',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        expect(EmailDeliveryResponseSchema.safeParse(emailDelivery).success).toBe(true);
+      });
+
+      it('validates CreateScheduledReportSchema with optional recipients', () => {
+        const createWithRecipients = {
+          name: 'Weekly Quality Summary',
+          reportType: 'inspection-summary',
+          filters: {},
+          format: 'PDF',
+          cadence: 'WEEKLY',
+          recipients: ['manager@factory.local', 'lead@factory.local'],
+        };
+        const parsed = CreateScheduledReportSchema.safeParse(createWithRecipients);
+        expect(parsed.success).toBe(true);
+        if (parsed.success) {
+          expect(parsed.data.recipients).toEqual(['manager@factory.local', 'lead@factory.local']);
+        }
       });
     });
   });

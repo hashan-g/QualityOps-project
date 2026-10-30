@@ -95,6 +95,12 @@ describe('Database Schema & Migration Constraints', () => {
   );
   const migration005Sql = fs.readFileSync(migration005Path, 'utf-8');
 
+  const migration006Path = path.resolve(
+    process.cwd(),
+    '../../database/migrations/006_notifications.sql',
+  );
+  const migration006Sql = fs.readFileSync(migration006Path, 'utf-8');
+
   describe('assertConstraintViolation Helper Integrity', () => {
     it('rolls back to savepoint and validates error code and constraint on violation', async () => {
       const executedQueries: string[] = [];
@@ -329,6 +335,23 @@ describe('Database Schema & Migration Constraints', () => {
       expect(downSection).toContain('ALTER TABLE shifts DROP COLUMN IF EXISTS is_active');
     });
 
+    it('migration 006 creates notifications, email_deliveries, adds scheduled_reports recipients, and down migration cleanly drops them', () => {
+      expect(migration006Sql).toContain('CREATE TABLE notifications');
+      expect(migration006Sql).toContain('CREATE TABLE email_deliveries');
+      expect(migration006Sql).toContain(
+        'ALTER TABLE scheduled_reports ADD COLUMN IF NOT EXISTS recipients JSONB',
+      );
+      expect(migration006Sql).toContain('idx_notifications_user_created');
+      expect(migration006Sql).toContain('idx_email_deliveries_pending');
+
+      const downSection = migration006Sql.split('-- Down Migration')[1] ?? '';
+      expect(downSection).toContain('DROP TABLE IF EXISTS notifications CASCADE');
+      expect(downSection).toContain('DROP TABLE IF EXISTS email_deliveries CASCADE');
+      expect(downSection).toContain(
+        'ALTER TABLE scheduled_reports DROP COLUMN IF EXISTS recipients',
+      );
+    });
+
     it('migration 005 creates scheduled_reports, report_runs, operational_alerts and down migration cleanly drops them', () => {
       expect(migration005Sql).toContain('CREATE TABLE scheduled_reports');
       expect(migration005Sql).toContain('CREATE TABLE report_runs');
@@ -404,6 +427,8 @@ describe('Database Schema & Migration Constraints', () => {
           'scheduled_reports',
           'report_runs',
           'operational_alerts',
+          'notifications',
+          'email_deliveries',
         ];
 
         for (const table of requiredTables) {
@@ -415,6 +440,12 @@ describe('Database Schema & Migration Constraints', () => {
           "SELECT column_name FROM information_schema.columns WHERE table_name = 'shifts' AND column_name = 'is_active';",
         );
         expect(shiftColRes.rows.length).toBe(1);
+
+        // Verify scheduled_reports.recipients column added in migration 006
+        const recipientColRes = await client.query<{ column_name: string }>(
+          "SELECT column_name FROM information_schema.columns WHERE table_name = 'scheduled_reports' AND column_name = 'recipients';",
+        );
+        expect(recipientColRes.rows.length).toBe(1);
 
         // 3. Test check constraints inside an isolated rolled-back transaction
         await client.query('BEGIN;');

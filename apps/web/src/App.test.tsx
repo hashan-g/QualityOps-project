@@ -10,6 +10,7 @@ import { CapaManagementView } from './components/CapaManagementView.js';
 import { SpcMonitoringView } from './components/SpcMonitoringView.js';
 import { ReportsView } from './components/ReportsView.js';
 import { AlertsView } from './components/AlertsView.js';
+import { NotificationCenter } from './components/NotificationCenter.js';
 import { AuthProvider } from './context/AuthContext.js';
 
 describe('QualityOps Web — Phase 10 Reporting, Exports & Operational Alerts Shell', () => {
@@ -17,7 +18,7 @@ describe('QualityOps Web — Phase 10 Reporting, Exports & Operational Alerts Sh
     const html = renderToString(<App />);
 
     expect(html).toContain('QualityOps Platform');
-    expect(html).toContain('Phase 10: Reporting, Exports &amp; Operational Alerts');
+    expect(html).toContain('Phase 12: Notification Engine &amp; Email Delivery');
     expect(html).toContain('PostgreSQL 18');
     expect(html).toContain('Manufacturing Quality &amp; Process Analytics Platform');
   });
@@ -158,5 +159,28 @@ describe('QualityOps Web — Phase 10 Reporting, Exports & Operational Alerts Sh
     expect(html).toContain('All Statuses');
     expect(html).toContain('All Severities');
     expect(html).toContain('All Rule Types');
+  });
+
+  it('renders NotificationCenter structure and accessibility attributes when open', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <NotificationCenter isOpen={true} onClose={() => {}} onNavigate={() => {}} />
+      </AuthProvider>,
+    );
+
+    expect(html).toContain('role="dialog"');
+    expect(html).toContain('aria-label="Notification Center"');
+    expect(html).toContain('Notifications');
+    expect(html).toContain('Unread Only');
+  });
+
+  it('renders nothing when NotificationCenter isOpen is false', () => {
+    const html = renderToString(
+      <AuthProvider>
+        <NotificationCenter isOpen={false} onClose={() => {}} onNavigate={() => {}} />
+      </AuthProvider>,
+    );
+
+    expect(html).toBe('');
   });
 });
