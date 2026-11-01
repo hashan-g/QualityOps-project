@@ -590,7 +590,7 @@ export const QualityDefectsView: React.FC = () => {
 
             {/* Entity Breakdown Navigation */}
             <div>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                 {(
                   [
                     { id: 'type', label: 'By Defect Type' },

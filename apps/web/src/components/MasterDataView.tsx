@@ -488,6 +488,9 @@ export const MasterDataView: React.FC = () => {
           gap: '8px',
           borderBottom: '2px solid #e2e8f0',
           marginBottom: '16px',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          maxWidth: '100%',
         }}
       >
         {(
@@ -518,6 +521,8 @@ export const MasterDataView: React.FC = () => {
                 color: isActive ? '#3182ce' : '#718096',
                 cursor: 'pointer',
                 marginBottom: '-2px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
               }}
             >
               {label}

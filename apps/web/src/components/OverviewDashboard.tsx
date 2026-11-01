@@ -140,12 +140,16 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
       {/* Dashboard Page Header */}
       <div className="qo-page-header">
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <IconDashboard size={24} style={{ color: 'var(--qo-primary)' }} />
-            <h1 className="qo-page-title" style={{ margin: 0 }}>
-              Overview &amp; Operational Dashboard
-            </h1>
-            <span className="qo-badge qo-badge-neutral">Plant 01 &bull; Production</span>
+          <div className="qo-page-header-title-row">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <IconDashboard size={22} style={{ color: 'var(--qo-primary)', flexShrink: 0 }} />
+              <h1 className="qo-page-title" style={{ margin: 0 }}>
+                Overview &amp; Operational Dashboard
+              </h1>
+            </div>
+            <span className="qo-badge qo-badge-neutral" style={{ alignSelf: 'flex-start' }}>
+              Plant 01 &bull; Production
+            </span>
           </div>
           <p className="qo-page-subtitle">
             Executive manufacturing overview, real-time quality control exceptions, and shop-floor
@@ -153,7 +157,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div>
           <button
             onClick={() => void fetchDashboardData()}
             disabled={isLoading}
@@ -179,10 +183,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
 
       {/* KPI Summary Cards Grid */}
       <section aria-label="Operational Key Performance Indicators">
-        <div
-          className="qo-kpi-grid"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))' }}
-        >
+        <div className="qo-kpi-grid">
           {/* Batches KPI */}
           <div className="qo-kpi-card" style={{ borderTopColor: 'var(--qo-primary)' }}>
             <div
@@ -346,42 +347,45 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
             </p>
           </div>
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <div className="qo-quick-actions-container">
             <button
               onClick={() => onNavigate('batches')}
-              className="qo-btn qo-btn-secondary qo-btn-sm"
+              className="qo-btn qo-btn-secondary qo-btn-sm qo-quick-action-btn"
             >
               <IconPlus size={14} />
               <span>Production Batches</span>
             </button>
             <button
               onClick={() => onNavigate('inspections')}
-              className="qo-btn qo-btn-secondary qo-btn-sm"
+              className="qo-btn qo-btn-secondary qo-btn-sm qo-quick-action-btn"
             >
               <IconPlus size={14} />
               <span>Quality Inspections</span>
             </button>
             <button
               onClick={() => onNavigate('defects')}
-              className="qo-btn qo-btn-secondary qo-btn-sm"
+              className="qo-btn qo-btn-secondary qo-btn-sm qo-quick-action-btn"
             >
               <IconPlus size={14} />
               <span>Record Defect</span>
             </button>
             <button
               onClick={() => onNavigate('capa')}
-              className="qo-btn qo-btn-secondary qo-btn-sm"
+              className="qo-btn qo-btn-secondary qo-btn-sm qo-quick-action-btn"
             >
               <IconPlus size={14} />
               <span>Create CAPA</span>
             </button>
-            <button onClick={() => onNavigate('spc')} className="qo-btn qo-btn-secondary qo-btn-sm">
+            <button
+              onClick={() => onNavigate('spc')}
+              className="qo-btn qo-btn-secondary qo-btn-sm qo-quick-action-btn"
+            >
               <IconSpc size={14} />
               <span>SPC Monitoring</span>
             </button>
             <button
               onClick={() => onNavigate('reports')}
-              className="qo-btn qo-btn-primary qo-btn-sm"
+              className="qo-btn qo-btn-primary qo-btn-sm qo-quick-action-btn"
             >
               <IconReports size={14} />
               <span>Generate Report</span>
@@ -391,13 +395,7 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ onNavigate
       </section>
 
       {/* 2x2 Activity Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))',
-          gap: '20px',
-        }}
-      >
+      <div className="qo-dashboard-activity-grid">
         {/* Recent Production Batches */}
         <div className="qo-card">
           <div className="qo-card-header">

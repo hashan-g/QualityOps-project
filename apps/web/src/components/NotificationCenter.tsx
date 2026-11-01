@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import type { NotificationResponse } from '@qualityops/contracts';
+import { IconBell, IconClose } from './icons';
 
 interface NotificationCenterProps {
   isOpen: boolean;
@@ -86,6 +87,26 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
       void fetchNotifications();
     }
   }, [isOpen, fetchNotifications]);
+
+  // Lock body scroll and listen for Escape key when open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const handleMarkAsRead = async (id: string) => {
     if (!accessToken) return;
@@ -201,11 +222,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         }}
       >
         {/* Header */}
-        <div className="qo-modal-header">
+        <div className="qo-modal-header" style={{ flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span aria-hidden="true" style={{ fontSize: '18px' }}>
-              🔔
-            </span>
+            <IconBell size={18} style={{ color: 'var(--qo-primary)', flexShrink: 0 }} />
             <div>
               <h3 className="qo-modal-title" style={{ fontSize: '16px' }}>
                 Notifications
@@ -215,7 +234,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
               </span>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
             {unreadCount > 0 && (
               <button
                 onClick={() => void handleMarkAllAsRead()}
@@ -229,9 +248,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
               onClick={onClose}
               aria-label="Close notifications"
               className="qo-btn qo-btn-ghost qo-btn-sm"
-              style={{ fontSize: '18px', padding: '4px 8px', lineHeight: 1 }}
+              style={{ padding: '6px', lineHeight: 1 }}
             >
-              &times;
+              <IconClose size={18} />
             </button>
           </div>
         </div>

@@ -39,6 +39,43 @@ export const AuthenticatedView: React.FC = () => {
 
   // Mobile drawer state
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState<boolean>(false);
+
+  // Close menus on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (mobileMenuOpen) setMobileMenuOpen(false);
+        if (isProfileMenuOpen) setIsProfileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen, isProfileMenuOpen]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [mobileMenuOpen]);
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+    const handleDocClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.qo-user-chip-container')) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('click', handleDocClick);
+    return () => document.removeEventListener('click', handleDocClick);
+  }, [isProfileMenuOpen]);
 
   // Notification Center state
   const [isNotificationCenterOpen, setIsNotificationCenterOpen] = useState<boolean>(false);
@@ -200,22 +237,13 @@ export const AuthenticatedView: React.FC = () => {
             </div>
           </div>
           <span className="qo-sidebar-brand-badge">Plant 01</span>
-          {mobileMenuOpen && (
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="qo-btn-ghost"
-              style={{
-                color: 'white',
-                padding: '4px',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-              }}
-              aria-label="Close navigation"
-            >
-              <IconClose size={20} />
-            </button>
-          )}
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="qo-drawer-close-btn"
+            aria-label="Close navigation menu"
+          >
+            <IconClose size={20} />
+          </button>
         </div>
 
         <nav className="qo-sidebar-nav">
@@ -346,7 +374,7 @@ export const AuthenticatedView: React.FC = () => {
           )}
         </nav>
 
-        {/* Sidebar Footer — Security Telemetry */}
+        {/* Sidebar Footer — Security Telemetry & Session Actions */}
         <div className="qo-sidebar-footer">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span
@@ -356,15 +384,34 @@ export const AuthenticatedView: React.FC = () => {
                 borderRadius: '50%',
                 backgroundColor: '#10b981',
                 display: 'inline-block',
+                flexShrink: 0,
               }}
             />
             <span style={{ fontWeight: 600, color: 'var(--qo-slate-200)', fontSize: '11.5px' }}>
-              Session Active
+              Session Active ({user.username})
             </span>
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--qo-slate-400)', lineHeight: '1.4' }}>
+          <div
+            style={{
+              fontSize: '11px',
+              color: 'var(--qo-slate-400)',
+              lineHeight: '1.4',
+              marginBottom: '10px',
+            }}
+          >
             Argon2id + Secure HttpOnly Token Handling
           </div>
+          <button
+            onClick={() => {
+              setMobileMenuOpen(false);
+              void logout();
+            }}
+            className="qo-logout-btn qo-drawer-logout-btn"
+            style={{ width: '100%', justifyContent: 'center' }}
+          >
+            <IconLogout size={14} />
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
 
@@ -387,8 +434,8 @@ export const AuthenticatedView: React.FC = () => {
               <IconMenu size={18} />
             </button>
             <div className="qo-topbar-breadcrumb">
-              <span style={{ fontWeight: 500 }}>{currentLabel.category}</span>
-              <span style={{ opacity: 0.5 }}>/</span>
+              <span className="qo-breadcrumb-category">{currentLabel.category}</span>
+              <span className="qo-breadcrumb-separator">/</span>
               <span className="qo-topbar-section-title">{currentLabel.title}</span>
             </div>
           </div>
@@ -398,38 +445,69 @@ export const AuthenticatedView: React.FC = () => {
             <button
               onClick={() => setIsNotificationCenterOpen(true)}
               aria-label={`Notifications (${unreadNotificationCount} unread)`}
-              className="qo-btn qo-btn-secondary qo-btn-sm"
-              style={{ position: 'relative', padding: '6px 12px' }}
+              className="qo-btn qo-btn-secondary qo-btn-sm qo-topbar-notif-btn"
+              style={{ position: 'relative' }}
             >
               <IconBell size={16} />
-              <span>Notifications</span>
+              <span className="qo-btn-text-desktop">Notifications</span>
               {unreadNotificationCount > 0 && (
-                <span
-                  className="qo-badge qo-badge-critical"
-                  style={{
-                    padding: '1px 5px',
-                    fontSize: '10px',
-                    borderRadius: 'var(--qo-radius-pill)',
-                  }}
-                >
+                <span className="qo-badge qo-badge-critical qo-topbar-badge">
                   {unreadNotificationCount}
                 </span>
               )}
             </button>
 
-            {/* User Profile Chip */}
-            <div className="qo-user-chip">
-              <div className="qo-user-avatar">{initials}</div>
-              <div className="qo-user-meta">
-                <span className="qo-user-name">{user.fullName || user.username}</span>
-                <span className="qo-user-role">{user.roles[0] || 'VIEWER'}</span>
-              </div>
+            {/* User Profile Chip / Menu */}
+            <div className="qo-user-chip-container">
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="qo-user-chip"
+                aria-label={`User profile menu for ${user.fullName || user.username}`}
+                aria-expanded={isProfileMenuOpen}
+              >
+                <div className="qo-user-avatar">{initials}</div>
+                <div className="qo-user-meta">
+                  <span className="qo-user-name">{user.fullName || user.username}</span>
+                  <span className="qo-user-role">{user.roles[0] || 'VIEWER'}</span>
+                </div>
+              </button>
+
+              {isProfileMenuOpen && (
+                <div className="qo-user-menu-dropdown">
+                  <div className="qo-user-menu-header">
+                    <div className="qo-user-avatar" style={{ width: '34px', height: '34px' }}>
+                      {initials}
+                    </div>
+                    <div className="qo-user-menu-info">
+                      <div className="qo-user-menu-name">{user.fullName || user.username}</div>
+                      <div className="qo-user-menu-email">{user.email || user.username}</div>
+                      <div style={{ marginTop: '4px' }}>
+                        <span className="qo-badge qo-badge-neutral" style={{ fontSize: '10px' }}>
+                          {user.roles.join(', ')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="qo-user-menu-divider" />
+                  <button
+                    onClick={() => {
+                      setIsProfileMenuOpen(false);
+                      void logout();
+                    }}
+                    className="qo-user-menu-logout-btn"
+                  >
+                    <IconLogout size={14} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/* Logout Action */}
+            {/* Standalone Desktop Logout Action */}
             <button
               onClick={() => void logout()}
-              className="qo-logout-btn"
+              className="qo-logout-btn qo-topbar-logout-desktop"
               title="Sign out of QualityOps"
             >
               <IconLogout size={15} />
